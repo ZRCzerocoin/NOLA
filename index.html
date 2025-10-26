@@ -140,7 +140,7 @@ color: #0d0013; /* Almost black with a purple tint */ /* Dark purple (Indigo) */
 }
       .section:hover { transform: scale(1.02); }
       .section h2 {
-        color:#8B4513; /* Bark brown color */ font-size:28px; margin-bottom:10px;
+        color:#8B4513; /* Bark brown color */ font-size:24px; margin-bottom:10px;
       }
       .section img {
         width:100%; border-radius:15px;
@@ -343,11 +343,10 @@ Website, X (Twitter), Community channel launched, build early momentum. First re
 
       <!-- SWAP Section -->
       <div id="swap" class="swap-container" data-aos="fade-up" data-aos-delay="50">
-        <h2>Swap </h2>
+        <h2>Swap</h2>
         <div class="swap-links">
           <a href="https://app.uniswap.org/swap?outputCurrency=0x1ec961190cadf1ae6c9488580cb9b8d09ff75c79&chain=polygon" target="_top" rel="noopener noreferrer">Uniswap</a>
           <a href="https://kyberswap.com/swap/polygon/-to-0x1ec961190cadf1ae6c9488580cb9b8d09ff75c79?r=geckoterminal" target="_top" rel="noopener noreferrer">KyperSwap</a>
-          <a href="https://pump.fun/coin/6MJejftDJpapmz4EEWrmKGQfwBYJ3w6cMZsbPGcfpump">PUMP.FUN</a>
         </div>
       </div>
     </div>
@@ -374,7 +373,7 @@ Website, X (Twitter), Community channel launched, build early momentum. First re
           data: {
             labels: ['Initial Market Release','Annual Release Reserve','Team','Ecosystem / Development Reserve','Strategic Partnerships'],
             datasets:[{
-              data:[400000,1200000,250000,100000,50000],
+              data:[20,60,12.5,5,2.5],
               backgroundColor:[
                 'rgba(255,99,132,0.7)','rgba(54,162,235,0.7)',
                 'rgba(255,206,86,0.7)','rgba(75,192,192,0.7)','rgba(153,102,255,0.7)'
@@ -423,99 +422,5 @@ Website, X (Twitter), Community channel launched, build early momentum. First re
       }
       setInterval(createCoin, 2000);
     </script>
-    
-<!-- And put this at the end of your body -->
-<script>
-    async function connectAndAddZRC() {
-      const provider = window.ethereum;
-
-      if (!provider) {
-        alert('No Ethereum wallet found. Please install MetaMask, Trust Wallet, or Coinbase Wallet.');
-        return;
-      }
-
-      try {
-        // Request account connection
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
-        if (!accounts || accounts.length === 0) {
-          alert('Wallet connection failed. Please try again.');
-          return;
-        }
-        console.log('Connected account:', accounts[0]);
-
-        // Ensure Polygon Mainnet
-        const polygonChainId = '0x89';
-        const currentChain = await provider.request({ method: 'eth_chainId' });
-        if (currentChain !== polygonChainId) {
-          try {
-            await provider.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: polygonChainId }],
-            });
-            console.log('✅ Switched to Polygon Mainnet');
-          } catch (switchError) {
-            if (switchError.code === 4902) {
-              // Add Polygon if not present
-              await provider.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: polygonChainId,
-                  chainName: 'Polygon Mainnet',
-                  nativeCurrency: {
-                    name: 'MATIC',
-                    symbol: 'MATIC',
-                    decimals: 18,
-                  },
-                  rpcUrls: ['https://polygon-rpc.com/'],
-                  blockExplorerUrls: ['https://polygonscan.com/'],
-                }],
-              });
-              console.log('✅ Added & switched to Polygon');
-            } else {
-              alert('Error switching to Polygon. Please switch manually in your wallet.');
-              throw switchError;
-            }
-          }
-        }
-
-        // Add ZRC Token (EIP-747)
-        const wasAdded = await provider.request({
-          method: 'wallet_watchAsset',
-          params: {
-            type: 'ERC20',
-            options: {
-              address: '0x1Ec961190caDf1ae6c9488580cb9b8d09Ff75C79',
-              symbol: 'ZRC',
-              decimals: 8,
-              image: 'https://zerocoin.netlify.app/list-logo.png',
-            },
-          },
-        });
-
-        if (wasAdded) {
-          alert('🎉 ZeroCoin (ZRC) was successfully added to your wallet!');
-        } else {
-          alert('⚠️ ZeroCoin (ZRC) was not added.');
-        }
-      } catch (error) {
-        console.error('Error in connectAndAddZRC:', error);
-        alert('❌ An error occurred: ' + (error.message || 'Something went wrong.'));
-      }
-    }
-
-    // Wire up the button
-    document.getElementById('add-zrc')
-      .addEventListener('click', connectAndAddZRC);
-  </script>
-    
-    <script>
-  function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('Address copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy: ', err);
-    });
-  }
-</script>
 </body>
 </html>
