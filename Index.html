@@ -4,434 +4,400 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NOLA-NOL~</title>
-  <!-- Optional: Favicon for browser tab and MetaMask -->
-  <link rel="icon" href="https://zerocoin.netlify.app/list-logo.png" type="image/png" />
 
-  <!-- Optional: Theme color (helps on mobile, including MetaMask mobile browser) -->
+  <!-- Favicon and App Icons (root) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5B2C6F" />
+
+  <!-- Theme color (helps on mobile, including MetaMask mobile browser) -->
   <meta name="theme-color" content="#5B2C6F" />
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3WHYB7FRHZ"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-3WHYB7FRHZ');
-    </script>
-    <!-- Favicon and App Icons -->
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon000.png" />
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon000-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon000-16x16.png" />
-    <link rel="manifest" href="site.webmanifest" />
-    <link rel="icon" type="image/png" sizes="192x192" href="android-chrome000-192x192.png" />
-    <link rel="icon" type="image/png" sizes="512x512" href="android-chrome000-512x512.png" />
-    <link rel="shortcut icon" href="favicon000.ico" />
-    <!-- AOS CSS for Scrolling Animations -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
 
-    <style>
-      .scroll-down-arrow {
-    position: fixed; /* Sits on top of everything */
-    top: 20px; /* Adjust the position as needed */
-    left: 50%; /* Center horizontally */
-transform: translateX(-50%) translateY(0); /* Adjust X or Y offsets as needed */        color: #333; /* Adjust color to match your theme */
-    z-index: 9999; /* Ensures it is above all other content */
-    animation: bounce 2s infinite; /* Adds continuous bounce animation */
-    cursor: pointer; /* Changes the cursor to indicate interactivity */
-    display: block; /* Initially visible */
-}
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3WHYB7FRHZ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-3WHYB7FRHZ');
+  </script>
 
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
+  <!-- AOS CSS for Scrolling Animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+
+  <style>
+    .scroll-down-arrow {
+      position: fixed; /* Sits on top of everything */
+      top: 20px; /* Adjust the position as needed */
+      left: 50%; /* Center horizontally */
+      transform: translateX(-50%) translateY(0); /* Adjust X or Y offsets as needed */
+      color: #333; /* Adjust color to match your theme */
+      z-index: 9999; /* Ensures it is above all other content */
+      animation: bounce-arrow 2s infinite; /* Continuous bounce animation */
+      cursor: pointer; /* Changes the cursor to indicate interactivity */
+      display: block; /* Initially visible */
+    }
+
+    @keyframes bounce-arrow {
+      0%, 20%, 50%, 80%, 100% {
         transform: translateY(0) translateX(-50%);
-    }
-    40% {
+      }
+      40% {
         transform: translateY(-10px) translateX(-50%);
-    }
-    60% {
+      }
+      60% {
         transform: translateY(-5px) translateX(-50%);
+      }
     }
-}
 
-@keyframes shimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-      /* Smooth Scrolling */
-      html { scroll-behavior: smooth; }
-      /* Global Styles */
+    @keyframes shimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Smooth Scrolling */
+    html { scroll-behavior: smooth; }
+
+    /* Global Styles */
     body {
-         font-family: Arial, sans-serif;
-         text-align: center;
-         background: url('background.png') no-repeat center center fixed;
- background-size: cover;
-      background-attachment: fixed; 
-      opacity: 0.9; /* Add this line to reduce shininess 
-color: #0d0013; /* Almost black with a purple tint */ /* Dark purple (Indigo) */  
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: url('background.png') no-repeat center center fixed;
+      background-size: cover;
+      background-attachment: fixed;
+      opacity: 0.9; /* Slightly reduce brightness */
+      color: #0d0013; /* Almost black with a purple tint */
       font-weight: bold;
-      margin: 0; padding: 50px;
-         position: relative; overflow-x: hidden;
-       }
-      /* Infinity Background Watermark */
+      margin: 0;
+      padding: 50px;
+      position: relative;
+      overflow-x: hidden;
+    }
 
-      /* Falling Coins Background */
-      .falling-coins {
-        position: fixed; top: 0; left: 0;
-        width: 100%; height: 100%;
-        z-index: -1; pointer-events: none;
-      }
-      .coin {
-        position: absolute;
-        width: 20px; height: 20px;
-        background: transparent;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px; font-weight: bold;
-        color: rgba(255,255,255,0.8);
-        text-shadow: 0 0 5px #fff;
-        opacity: 0.5;
-        animation: fall 15s linear infinite, fadeOut 15s ease-in-out infinite;
-      }
-      @keyframes fall {
-        0%   { transform: translateY(-50px) scale(1); opacity: 1; }
-        100% { transform: translateY(100vh) scale(0.6); opacity: 0; }
-      }
-      @keyframes fadeOut {
-        0%,70% { opacity:1; } 100% { opacity:0; }
-      }
-      /* Main Content */
-/* Main Content */
-      .content {
-        position: relative; z-index: 10;
-        max-width: 900px; margin: auto;
-      }
-      img.logo { width: 150px; border-radius:50%; margin-bottom:20px; }
-      h1 { font-size: 42px; }
--     p { font-size: 26px; max-width:700px; margin:10px auto; line-height:1.6; }
-+     p {
-+       font-size: 26px;
-+       max-width: 700px;
-+       margin: 10px auto;
-+       line-height: 1.6;
-+       color: #8B8000;/* Add this line to reduce shininess ;          /* ← add this */
-+     }
-      /* Buttons */
-      .btn {
-        display:inline-block; padding:13px 23px;
-        font-size:16px;
-        background-color:#ffcc00; color:#121212;
-        text-decoration:none; border-radius:8px;
-        margin:15px auto;
-        transition:transform 0.3s ease;
-        animation:bounce 3s infinite;
-      }
-      .btn:hover { transform: scale(1.05); }
-      @keyframes bounce {
-        0%,20%,50%,80%,100% { transform: translateY(0); }
-        40% { transform: translateY(-15px); }
-        60% { transform: translateY(-8px); }
-      }
-      /* Section Layout */
-.section {
-    background: rgba(255, 255, 255, 0.8); /* 80% opacity */
-    padding: 35px;
-    margin: 50px auto;
-    border: 2px solid #ffcc00;
-    border-radius: 15px;
-    max-width: 700px;
-    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
-    transition: transform 0.3s ease;
-}
-      .section:hover { transform: scale(1.02); }
-      .section h2 {
-        color:#8B4513; /* Bark brown color */ font-size:28px; margin-bottom:10px;
-      }
-      .section img {
-        width:100%; border-radius:15px;
-        margin-top:20px;
-        box-shadow:0 4px 10px rgba(255,204,0,0.4);
-      }
-      /* Tokenomics Pie Chart Canvas */
-      #tokenomicsChartContainer {
-        position: relative; height:400px; width:100%; margin:20px auto;
-      }
-      /* Contact Floating Section */
-      /* Contact Floating Section */
-.contact {
-  position: fixed;
-  left: 15px;
-  bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+    /* Falling Coins Background */
+    .falling-coins {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1; pointer-events: none;
+    }
+    .coin {
+      position: absolute;
+      width: 20px; height: 20px;
+      background: transparent;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: bold;
+      color: rgba(255,255,255,0.8);
+      text-shadow: 0 0 5px #fff;
+      opacity: 0.5;
+      animation: fall 15s linear infinite, fadeOut 15s ease-in-out infinite;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-50px) scale(1); opacity: 1; }
+      100% { transform: translateY(100vh) scale(0.6); opacity: 0; }
+    }
+    @keyframes fadeOut {
+      0%,70% { opacity:1; } 100% { opacity:0; }
+    }
 
-.contact a {
-  display: inline-block;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-}
+    /* Main Content */
+    .content {
+      position: relative; z-index: 10;
+      max-width: 900px; margin: auto;
+    }
+    img.logo { width: 150px; border-radius:50%; margin-bottom:20px; }
+    h1 { font-size: 42px; }
 
-.contact a:hover {
-  transform: scale(1.1);
-}
+    p {
+      font-size: 26px;
+      max-width: 700px;
+      margin: 10px auto;
+      line-height: 1.6;
+      color: #8B8000;
+    }
 
-.contact img {
-  width: 35px;
-  height: 35px;
-  display: block;
-  border-radius: 50%;       /* Makes it circular */
-  object-fit: cover;        /* Ensures image fills the circle */
-  background-color: #fff;   /* Optional: Add background */
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2); /* Optional: Subtle shadow */
-}
-      /* Swap Section Styles */
-      .swap-container {
-        background-color: transparent;
-        padding:20px; margin:20px auto;
-        border-radius:8px; max-width:800px;
-        text-align:center;
-      }
-      .swap-container h2 { margin-bottom:20px; }
-      .swap-links {
-        display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
-      }
-      .swap-links a {
-        background-color:#666600;
-        border-radius:12px;
-        padding:20px; width:120px; height:60px;
-        font-weight:bold;
-        display:flex; flex-direction:column;
-        align-items:center; justify-content:center;
-        text-decoration:none; color:#1a0033;
-        font-size:14px;
-        transition:transform 0.2s;
-      }
-      .swap-links a:hover { transform:scale(1.05); }
+    /* Buttons */
+    .btn {
+      display:inline-block;
+      padding:13px 23px;
+      font-size:16px;
+      background-color:#ffcc00;
+      color:#121212;
+      text-decoration:none;
+      border-radius:8px;
+      margin:15px auto;
+      transition:transform 0.3s ease;
+      animation: bounce-btn 3s infinite;
+    }
+    .btn:hover { transform: scale(1.05); }
 
-      /* — HORIZONTAL SUPPLY VISUALIZER STYLES — */
-      #supply-visualizer {
-        margin: 60px auto;
-        max-width: 800px;
-        color: #fff;
-        text-align: left;
-      }
-      #supply-visualizer h2 {
-        font-size: 24px;
-        color: #8B4513;
-        margin-bottom: 15px;
-      }
-      .supply-track {
-        position: relative;
-        width: 100%;
-        height: 40px;
-        background: #000;
-        border: 3px solid #7c3aed;
-        border-radius: 20px;
-        overflow: hidden;
-      }
-      .supply-track .unreleased {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: #1f1f1f;
-      }
-      .supply-track .released-fill {
-        position: absolute;
-        top: 0; left: 0;
-        height: 100%;
-        width: var(--released-percent);
-        max-width: 100%;
-        background: linear-gradient(270deg, #8b5cf6, #c4b5fd, #8b5cf6);
-        background-size: 400% 400%;
-        animation: gradientMove 1s ease infinite;
-      }
-      @keyframes gradientMove {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      .supply-stats {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
-        font-size: 16px;
-      }
-    </style>
-  </head>
-  <body>
+    @keyframes bounce-btn {
+      0%,20%,50%,80%,100% { transform: translateY(0); }
+      40% { transform: translateY(-15px); }
+      60% { transform: translateY(-8px); }
+    }
+
+    /* Section Layout */
+    .section {
+      background: rgba(255, 255, 255, 0.8); /* 80% opacity */
+      padding: 35px;
+      margin: 50px auto;
+      border: 2px solid #ffcc00;
+      border-radius: 15px;
+      max-width: 700px;
+      box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+    .section:hover { transform: scale(1.02); }
+    .section h2 {
+      color:#8B4513; /* Bark brown color */ font-size:28px; margin-bottom:10px;
+    }
+    .section img {
+      width:100%; border-radius:15px;
+      margin-top:20px;
+      box-shadow:0 4px 10px rgba(255,204,0,0.4);
+    }
+
+    /* Tokenomics Pie Chart Canvas */
+    #tokenomicsChartContainer {
+      position: relative; height:400px; width:100%; margin:20px auto;
+    }
+
+    /* Contact Floating Section */
+    .contact {
+      position: fixed;
+      left: 15px;
+      bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .contact a { display: inline-block; text-decoration: none; transition: transform 0.2s ease; }
+    .contact a:hover { transform: scale(1.1); }
+    .contact img {
+      width: 35px; height: 35px; display: block;
+      border-radius: 50%; object-fit: cover;
+      background-color: #fff; box-shadow: 0 0 3px rgba(0,0,0,0.2);
+    }
+
+    /* Swap Section Styles */
+    .swap-container {
+      background-color: transparent; padding:20px; margin:20px auto;
+      border-radius:8px; max-width:800px; text-align:center;
+    }
+    .swap-container h2 { margin-bottom:20px; }
+    .swap-links { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+    .swap-links a {
+      background-color:#666600; border-radius:12px; padding:20px;
+      width:120px; height:60px; font-weight:bold; display:flex;
+      flex-direction:column; align-items:center; justify-content:center;
+      text-decoration:none; color:#1a0033; font-size:14px; transition:transform 0.2s;
+    }
+    .swap-links a:hover { transform:scale(1.05); }
+
+    /* HORIZONTAL SUPPLY VISUALIZER STYLES */
+    #supply-visualizer { margin: 60px auto; max-width: 800px; color: #fff; text-align: left; }
+    #supply-visualizer h2 { font-size: 24px; color: #8B4513; margin-bottom: 15px; }
+    .supply-track {
+      position: relative; width: 100%; height: 40px; background: #000;
+      border: 3px solid #7c3aed; border-radius: 20px; overflow: hidden;
+    }
+    .supply-track .unreleased {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #1f1f1f;
+    }
+    .supply-track .released-fill {
+      position: absolute; top: 0; left: 0; height: 100%;
+      width: var(--released-percent); max-width: 100%;
+      background: linear-gradient(270deg, #8b5cf6, #c4b5fd, #8b5cf6);
+      background-size: 400% 400%; animation: gradientMove 1s ease infinite;
+    }
+    @keyframes gradientMove {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .supply-stats { display: flex; justify-content: space-between; margin-top: 10px; font-size: 16px; }
+  </style>
+</head>
+<body>
   <div class="scroll-down-arrow" id="scrollArrow">▼</div>
-        <div class="content">
-   <div class="falling-coins"></div>
-<img src="wallets1.gif" alt="ZeroCoin ∞ Logo" class="logo" />
-          <h1 style="color: purple;">NOLA</h1>
-<p style="color: black;" data-aos="fade-up" data-aos-delay="10">
-  NOLA ~ NOL is a compact, high-integrity token ecosystem on Polygon with a fixed 2 million supply. Its release strategy is paced to support durability and future-oriented development.
-</p>
-<a href="whitepaper.html" class="btn">Whitepaper</a>
-<a href="#swap" class="btn">Live Chart & Distribution</a>
-<br/>
-<!-- Connect & add ZRC button -->
-<button id="add-zrc" class="btn">Connect Wallet & Add NOL</button> <!-- Tokenomics Section with Pie Chart -->
-      <div class="section" id="tokenomicsSection" data-aos-delay="30">
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
-  Total Supply: <strong style="color: black;">=2 million ZRC</strong> No additional minting. Transparent "+7 years" plan and stability for long-term decentralization.
-</p>
-        <div id="tokenomicsChartContainer">
-          <canvas id="tokenomicsChart"></canvas>
-        </div>
-        <img src="moon1.png" alt="Tokenomics" data-aos="fade-up" data-aos-delay="80" />
+  <div class="content">
+    <div class="falling-coins"></div>
+    <img src="wallets1.gif" alt="ZeroCoin ∞ Logo" class="logo" />
+    <h1 style="color: purple;">NOLA</h1>
+    <p style="color: black;" data-aos="fade-up" data-aos-delay="10">
+      NOLA ~ NOL is a compact, high-integrity token ecosystem on Polygon with a fixed 2 million supply. Its release strategy is paced to support durability and future-oriented development.
+    </p>
+    <a href="whitepaper.html" class="btn">Whitepaper</a>
+    <a href="#swap" class="btn">Live Chart & Distribution</a>
+    <br/>
+    <!-- Connect & add ZRC button -->
+    <button id="add-zrc" class="btn">Connect Wallet & Add NOL</button>
+
+    <!-- Tokenomics Section with Pie Chart -->
+    <div class="section" id="tokenomicsSection" data-aos-delay="30">
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
+        Total Supply: <strong style="color: black;">=2 million ZRC</strong> No additional minting. Transparent "+7 years" plan and stability for long-term decentralization.
+      </p>
+      <div id="tokenomicsChartContainer">
+        <canvas id="tokenomicsChart"></canvas>
       </div>
-
-      <!-- Technical Specifications Section -->
-      <div class="section" data-aos-delay="30">
-        <h2>Technical Specifications</h2>
-<p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
-  Blockchain: <strong style="color: black;">Polygon</strong>
-</p>
-        <p style="color: #8B8000;"  data-aos="fade-up" data-aos-delay="75">
-          Decimals: <strong>6</strong> – Creation Date: OCTOBER 27, 2025.
-        </p> 
-          With just 2 million tokens ever existing, NOLA brings scarcity, reliability, and long-term commitment to the Polygon chain. Built for those who think beyond the moment.  
-        </p>
-        <img src="moon2.png" alt="Technical Specifications" data-aos="fade-up" data-aos-delay="100" />
-      </div>
-
-      <!-- Cross-Chain Bridging Section -->
-      <!-- Roadmap Section -->
-      <div class="section" data-aos-delay="30">
-        <h2>Roadmap</h2>
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
-  <strong style="color: black;">2025:</strong> Building🏗: Official launch of NOL on Polygon network, Initial liquidity added using single-sided strategy. 
-Website, X (Twitter), Community channel launched, build early momentum. First release of 20% of total supply (400,000 NOL). 
-</p>
-        
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="80">
-  <strong style="color: black;">2025 Q4:</strong> Expansion: Activation of reserved liquidity at pre-defined price points, With Progress report on supply distribution and ecosystem health 
-</p>
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="110">
-  <strong style="color: black;">2026 and Beyond:</strong> Sustainability: Controlled annual release of 10% of the supply (200,000 NOL/year)
-
-</p>
-        <a href="whitepaper.html" class="btn">Whitepaper</a>
-        <img src="moon3.png" alt="Roadmap" data-aos="fade-up" data-aos-delay="150" />
-      </div>
-
-<div class="section" data-aos-delay="30">
-  <h2>NOL Chart </h2>
-  <iframe 
-    height="500" 
-    width="100%" 
-    id="geckoterminal-embed" 
-    title="GeckoTerminal Embed" 
-    src="https://www.geckoterminal.com/polygon_pos/pools/0x9f0d584329f2222dd71b0da3a4071c718d4f9e1d210f98fdb50c77adcdcda196?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=price&resolution=15m" 
-    frameborder="0" 
-    allow="clipboard-write" 
-    allowfullscreen>
-  </iframe>
-</div>
-      
-
-      <!-- — HORIZONTAL SUPPLY VISUALIZER SECTION — -->
-      <section id="supply-visualizer" data-aos-delay="30">
-        <h2> Released NOL </h2>
-        <div class="supply-track">
-          <div class="unreleased"></div>
-          <div class="released-fill"></div>
-        </div>
-        <div class="supply-stats">
-          <span>Released: <strong id="released-amount">0</strong> NOL</span>
-          <span>Remaining: <strong id="remaining-amount">0</strong> NOL</span>
-        </div>
-      </section>
-
-      <!-- SWAP Section -->
-      <div id="swap" class="swap-container" data-aos="fade-up" data-aos-delay="50">
-        <h2>Swap </h2>
-        <div class="swap-links">
-          <a href="https://app.uniswap.org/swap?outputCurrency=0x1ec961190cadf1ae6c9488580cb9b8d09ff75c79&chain=polygon" target="_top" rel="noopener noreferrer">Uniswap</a>
-          <a href="https://kyberswap.com/swap/polygon/-to-0x1ec961190cadf1ae6c9488580cb9b8d09ff75c79?r=geckoterminal" target="_top" rel="noopener noreferrer">KyperSwap</a>
-          <a href="https://pump.fun/coin/6MJejftDJpapmz4EEWrmKGQfwBYJ3w6cMZsbPGcfpump">PUMP.FUN</a>
-        </div>
-      </div>
+      <img src="moon1.png" alt="Tokenomics" data-aos="fade-up" data-aos-delay="80" />
     </div>
 
-    <!-- Contact Floating Section -->
-    <div class="contact">
-      <a href="https://t.me/ZRCzerocoin" target="_blank"><img src="ticon.png" alt="Telegram" /></a>
-      <a href="https://x.com/ZeroCoinzrc" target="_blank"><img src="xicon.png" alt="X" /></a>
-      <a href="mailto:Support@zerocoin.work.gd"><img src="micon.png" alt="Email" /></a>
-      <a href="https://zerocoin.netlify.app/zrc" target="_blank"><img src="wicon.png" alt="Website" /></a>
+    <!-- Technical Specifications Section -->
+    <div class="section" data-aos-delay="30">
+      <h2>Technical Specifications</h2>
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
+        Blockchain: <strong style="color: black;">Polygon</strong>
+      </p>
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="75">
+        Decimals: <strong>6</strong> – Creation Date: OCTOBER 27, 2025.
+      </p>
+      <p>
+        With just 2 million tokens ever existing, NOLA brings scarcity, reliability, and long-term commitment to the Polygon chain. Built for those who think beyond the moment.
+      </p>
+      <img src="moon2.png" alt="Technical Specifications" data-aos="fade-up" data-aos-delay="100" />
     </div>
 
-    <!-- AOS JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => AOS.init({ duration:800, once:true }));
-    </script>
+    <!-- Roadmap Section -->
+    <div class="section" data-aos-delay="30">
+      <h2>Roadmap</h2>
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
+        <strong style="color: black;">2025:</strong> Building🏗: Official launch of NOL on Polygon network, Initial liquidity added using single-sided strategy.
+        Website, X (Twitter), Community channel launched, build early momentum. First release of 20% of total supply (400,000 NOL).
+      </p>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('tokenomicsChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: ['Initial Market Release','Annual Release Reserve','Team','Ecosystem / Development Reserve','Strategic Partnerships'],
-            datasets:[{
-              data:[20,60,12.5,5,2.5],
-              backgroundColor:[
-                'rgba(255,99,132,0.7)','rgba(54,162,235,0.7)',
-                'rgba(255,206,86,0.7)','rgba(75,192,192,0.7)','rgba(153,102,255,0.7)'
-              ],
-              borderColor:[
-                'rgba(255,99,132,1)','rgba(54,162,235,1)',
-                'rgba(255,206,86,1)','rgba(75,192,192,1)','rgba(153,102,255,1)'
-              ],
-              borderWidth:1
-            }]
-          },
-          options: {
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{ legend:{ position:'bottom' } }
-          }
-        });
-      });
-    </script>
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="80">
+        <strong style="color: black;">2025 Q4:</strong> Expansion: Activation of reserved liquidity at pre-defined price points, With Progress report on supply distribution and ecosystem health.
+      </p>
 
-    <!-- SUPPLY VISUALIZER JS -->
-    <script>
-      (function(){
-        const totalSupply = 2000000;
-        function updateSupply(released) {
-          const pct = ((released / totalSupply) * 100).toFixed(2) + '%';
-          document.documentElement.style.setProperty('--released-percent', pct);
-          document.getElementById('released-amount').textContent = released.toLocaleString();
-          document.getElementById('remaining-amount').textContent = (totalSupply - released).toLocaleString();
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="110">
+        <strong style="color: black;">2026 and Beyond:</strong> Sustainability: Controlled annual release of 10% of the supply (200,000 NOL/year)
+      </p>
+
+      <a href="whitepaper.html" class="btn">Whitepaper</a>
+      <img src="moon3.png" alt="Roadmap" data-aos="fade-up" data-aos-delay="150" />
+    </div>
+
+    <div class="section" data-aos-delay="30">
+      <h2>NOL Chart</h2>
+      <iframe
+        height="500"
+        width="100%"
+        id="geckoterminal-embed"
+        title="GeckoTerminal Embed"
+        src="https://www.geckoterminal.com/polygon_pos/pools/0x9f0d584329f2222dd71b0da3a4071c718d4f9e1d210f98fdb50c77adcdcda196?embed=1&info=0&swaps=0&grayscale=0&light_chart=0&chart_type=price"
+        frameborder="0"
+        allow="clipboard-write"
+        allowfullscreen>
+      </iframe>
+    </div>
+
+    <!-- HORIZONTAL SUPPLY VISUALIZER SECTION -->
+    <section id="supply-visualizer" data-aos-delay="30">
+      <h2> Released NOL </h2>
+      <div class="supply-track">
+        <div class="unreleased"></div>
+        <div class="released-fill"></div>
+      </div>
+      <div class="supply-stats">
+        <span>Released: <strong id="released-amount">0</strong> NOL</span>
+        <span>Remaining: <strong id="remaining-amount">0</strong> NOL</span>
+      </div>
+    </section>
+
+    <!-- SWAP Section -->
+    <div id="swap" class="swap-container" data-aos="fade-up" data-aos-delay="50">
+      <h2>Swap</h2>
+      <div class="swap-links">
+        <a href="https://app.uniswap.org/swap?outputCurrency=0x1ec961190cadf1ae6c9488580cb9b8d09ff75c79&chain=polygon" target="_top" rel="noopener noreferrer">Uniswap</a>
+        <a href="https://kyberswap.com/swap/polygon/-to-0x1ec961190cadf1ae6c9488580cb9b8d09ff75c79?r=geckoterminal" target="_top" rel="noopener noreferrer">KyperSwap</a>
+        <a href="https://pump.fun/coin/6MJejftDJpapmz4EEWrmKGQfwBYJ3w6cMZsbPGcfpump">PUMP.FUN</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact Floating Section -->
+  <div class="contact">
+    <a href="https://t.me/ZRCzerocoin" target="_blank"><img src="ticon.png" alt="Telegram" /></a>
+    <a href="https://x.com/ZeroCoinzrc" target="_blank"><img src="xicon.png" alt="X" /></a>
+    <a href="mailto:Support@zerocoin.work.gd"><img src="micon.png" alt="Email" /></a>
+    <a href="https://zerocoin.netlify.app/zrc" target="_blank"><img src="wicon.png" alt="Website" /></a>
+  </div>
+
+  <!-- AOS JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => AOS.init({ duration:800, once:true }));
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const ctx = document.getElementById('tokenomicsChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['Initial Market Release','Annual Release Reserve','Team','Ecosystem / Development Reserve','Strategic Partnerships'],
+          datasets:[{
+            data:[20,60,12.5,5,2.5],
+            backgroundColor:[
+              'rgba(255,99,132,0.7)','rgba(54,162,235,0.7)',
+              'rgba(255,206,86,0.7)','rgba(75,192,192,0.7)','rgba(153,102,255,0.7)'
+            ],
+            borderColor:[
+              'rgba(255,99,132,1)','rgba(54,162,235,1)',
+              'rgba(255,206,86,1)','rgba(75,192,192,1)','rgba(153,102,255,1)'
+            ],
+            borderWidth:1
+          }]
+        },
+        options: {
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ position:'bottom' } }
         }
-        // initialize with 702 000 released
-        updateSupply(400000);
-      })();
-    </script>
+      });
+    });
+  </script>
 
-    <!-- Falling Coins Script -->
-    <script>
-      function createCoin() {
-        const coin = document.createElement('div');
-        coin.className = 'coin';
-        coin.innerText = '~';
-        coin.innerText = '~';
-        coin.style.left = Math.random() * window.innerWidth + 'px';
-        document.querySelector('.falling-coins').appendChild(coin);
-        setTimeout(() => coin.remove(), 15000);
+  <!-- SUPPLY VISUALIZER JS -->
+  <script>
+    (function(){
+      const totalSupply = 2000000;
+      function updateSupply(released) {
+        const pct = ((released / totalSupply) * 100).toFixed(2) + '%';
+        document.documentElement.style.setProperty('--released-percent', pct);
+        document.getElementById('released-amount').textContent = released.toLocaleString();
+        document.getElementById('remaining-amount').textContent = (totalSupply - released).toLocaleString();
       }
-      setInterval(createCoin, 2000);
-    </script>
-    
-<!-- And put this at the end of your body -->
-<script>
+      // initialize with 400000 released
+      updateSupply(400000);
+    })();
+  </script>
+
+  <!-- Falling Coins Script -->
+  <script>
+    function createCoin() {
+      const coin = document.createElement('div');
+      coin.className = 'coin';
+      coin.innerText = '~';
+      coin.style.left = Math.random() * window.innerWidth + 'px';
+      document.querySelector('.falling-coins').appendChild(coin);
+      setTimeout(() => coin.remove(), 15000);
+    }
+    setInterval(createCoin, 2000);
+  </script>
+
+  <script>
     async function connectAndAddZRC() {
       const provider = window.ethereum;
 
@@ -493,7 +459,7 @@ Website, X (Twitter), Community channel launched, build early momentum. First re
               address: '0x1Ec961190caDf1ae6c9488580cb9b8d09Ff75C79',
               symbol: 'ZRC',
               decimals: 8,
-              image: 'https://zerocoin.netlify.app/list-logo.png',
+              image: '/list-logo.png',
             },
           },
         });
@@ -513,15 +479,15 @@ Website, X (Twitter), Community channel launched, build early momentum. First re
     document.getElementById('add-zrc')
       .addEventListener('click', connectAndAddZRC);
   </script>
-    
-    <script>
-  function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('Address copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy: ', err);
-    });
-  }
-</script>
+
+  <script>
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Address copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  </script>
 </body>
 </html>
