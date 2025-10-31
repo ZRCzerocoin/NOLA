@@ -127,6 +127,22 @@ color: #0d0013; /* Almost black with a purple tint */ /* Dark purple (Indigo) */
         40% { transform: translateY(-15px); }
         60% { transform: translateY(-8px); }
       }
+
+      .btne {
+        display:inline-block; padding:13px 23px;
+        font-size:14px;
+        background-color:#ffcc00; color:#121212;
+        text-decoration:none; border-radius:8px;
+        margin:15px auto;
+        transition:transform 0.3s ease;
+        animation:bounce 3.3s infinite;
+      }
+      .btne:hover { transform: scale(1.05); }
+      @keyframes bounce {
+        0%,20%,50%,80%,100% { transform: translateY(0); }
+        40% { transform: translateY(-15px); }
+        60% { transform: translateY(-8px); }
+      }
       /* Section Layout */
 .section {
     background: rgba(255, 255, 255, 0.8); /* 80% opacity */
@@ -140,7 +156,7 @@ color: #0d0013; /* Almost black with a purple tint */ /* Dark purple (Indigo) */
 }
       .section:hover { transform: scale(1.02); }
       .section h2 {
-        color:#8B4513; /* Bark brown color */ font-size:24px; margin-bottom:10px;
+        color:#8B4513; /* Bark brown color */ font-size:22px; margin-bottom:10px;
       }
       .section img {
         width:100%; border-radius:15px;
@@ -267,7 +283,7 @@ color: #0d0013; /* Almost black with a purple tint */ /* Dark purple (Indigo) */
 </p>
             </div>
 <a href="whitepaper.html" class="btn">Whitepaper</a>
-<a href="#swap" class="btn">Chart & Distribution</a>
+<a href="#swap" class="btne">Chart & Distribution</a>
 <br/>
 <!-- Connect & add ZRC button -- <!-- Tokenomics Section with Pie Chart -->
       <div class="section" id="tokenomicsSection" data-aos-delay="30">
