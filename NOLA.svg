@@ -1,33 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Traced 1:1-aim SVG (32x32) — transparent background — ready to host for PolygonScan -->
-<svg xmlns="http://www.w3.org/2000/svg"
-     width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="ZeroCoin logo">
-  <!-- Transparent artboard -->
-  <rect width="32" height="32" fill="none" />
-
-  <!-- Outer ring: centered circle with stroke matching original thickness -->
-  <circle cx="16" cy="16" r="12.6" fill="none" stroke="#123e63" stroke-width="2.8"
-          stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- Exact-trace-style inner wavy filled shape.
-       Coordinates tuned for a close 1:1 visual match at 32x32. -->
-  <path d="
-    M6.15 17.95
-    C7.00 17.20 7.95 16.55 9.05 16.00
-    C10.75 15.20 12.05 15.20 13.75 16.20
-    C15.45 17.20 16.20 18.85 17.95 19.45
-    C19.40 19.98 21.05 19.60 22.35 18.45
-    C23.60 17.35 25.05 15.70 25.80 15.40
-    C25.90 15.35 26.05 15.32 26.18 15.33
-    C26.85 15.36 27.35 15.82 27.10 16.45
-    C26.70 17.50 25.95 18.80 25.05 19.55
-    C24.00 20.45 22.55 21.10 21.05 21.10
-    C19.05 21.10 17.95 20.10 16.00 18.75
-    C14.05 17.40 12.15 16.80 10.35 17.05
-    C8.30 17.35 7.00 18.50 6.15 17.95
-    Z"
-    fill="#123e63" fill-rule="evenodd" stroke="none" />
-
-  <!-- Slight alignment hint to ensure crisp rendering in small sizes -->
-  <g shape-rendering="geometricPrecision" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <circle cx="16" cy="16" r="14.5" fill="none" stroke="#0e355a" stroke-width="1.8"/>
+  <path d="M6.2 17.2c2.2-5.4 7.8-5.2 11 0.3 2.3 3.3 5.8 3.2 8.5-1.4" fill="none" stroke="#0e355a" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
