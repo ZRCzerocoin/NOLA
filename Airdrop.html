@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOLA ~ Airdrop</title>
+
+  <!-- AOS Animations -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+
+  <!-- hCaptcha -->
+  <!-- IMPORTANT: Replace YOUR-HCAPTCHA-SITE-KEY with your real key from https://hcaptcha.com/ -->
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: url('background1.png') no-repeat center center fixed;
+      background-size: cover;
+      background-attachment: fixed;
+      overflow-x: hidden;
+    }
+
+    /* Falling Coins */
+    .falling-coins {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .coin {
+      position: absolute;
+      font-size: 18px;
+      opacity: 0.5;
+      animation: fall 12s linear infinite;
+      color: rgba(255,255,255,0.7);
+      text-shadow: 0 0 6px #d2b8ff;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-50px) scale(1); opacity: 1; }
+      100% { transform: translateY(110vh) scale(0.6); opacity: 0; }
+    }
+
+    /* Container */
+    .airdrop-box {
+      background: rgba(255,255,255,0.85);
+      max-width: 600px;
+      margin: 80px auto;
+      padding: 30px;
+      border-radius: 18px;
+      border: 2px solid #b36bff;
+      box-shadow: 0 4px 18px rgba(179,107,255,0.35);
+    }
+
+    img.logo {
+      width: 150px;
+      border-radius: 50%;
+      margin-bottom: 18px;
+    }
+
+    h1 { color: #8B8000; font-size: 24px; }
+    p { color: #000; font-size: 16px; line-height:1.6; }
+
+    /* Form */
+    form input, form select {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #bbb;
+      font-size: 15px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      margin-top: 15px;
+      background: #b36bff;
+      color: #111;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .btn:hover { transform: scale(1.04); }
+
+    /* Contact Floating */
+    .contact {
+      position: fixed;
+      left: 15px;
+      bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    .contact img {
+      width: 35px; height: 35px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #fff;
+      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="falling-coins"></div>
+
+<div class="airdrop-box" data-aos="fade-up">
+  <img src="Logo.gif" class="logo" alt="NOLA Logo" />
+  <h1>NOLA Airdrop Registration</h1>
+  <p>A small portion of the limited ecosystem development reserve is distributed carefully to support long-term ecosystem resilience and community participation. Allocation is transparent, governed, and does not introduce inflation.</p>
+
+  <form action="https://formspree.io/f/xovyqnqy" method="POST">
+    <input type="text" name="wallet" placeholder="Your Polygon Wallet Address (Required)" required />
+    <input type="text" name="name" placeholder="Name (Optional)" />
+
+    <select name="source" required>
+      <option value="" disabled selected>How did you hear about NOLA?</option>
+      <option value="Website Listing">Listing Website</option>
+      <option value="Twitter / X">Twitter / X</option>
+      <option value="Telegram">Telegram</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <!-- hCaptcha -->
+    <div class="h-captcha" data-sitekey="YOUR-HCAPTCHA-SITE-KEY"></div>
+
+    <button class="btn" type="submit">Submit</button>
+  </form>
+</div>
+
+<!-- Contact Floating -->
+<div class="contact">
+  <a href="https://t.me/+3__6IrS4yAA3MWVk" target="_blank"><img src="ticon.png" /></a>
+  <a href="https://x.com/NOLA_CHAIN" target="_blank"><img src="xicon.png" /></a>
+  <a href="mailto:Support@nola.work.gd"><img src="micon.png" /></a>
+  <a href="https://zerocoin.netlify.app/zrc" target="_blank"><img src="wicon.png" /></a>
+</div>
+
+<!-- Coins Script -->
+<script>
+function createCoin(){
+  const c=document.createElement('div');
+  c.className='coin';
+  c.innerText='~';
+  c.style.left=Math.random()*window.innerWidth+'px';
+  c.style.fontSize=(14+Math.random()*10)+'px';
+  document.querySelector('.falling-coins').appendChild(c);
+  setTimeout(()=>c.remove(),12000);
+}
+setInterval(createCoin, window.innerWidth < 600 ? 2200 : 1200);
+</script>
+
+<!-- AOS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script>AOS.init({ duration:800, once:true });</script>
+
+</body>
+</html>
