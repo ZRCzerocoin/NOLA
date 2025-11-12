@@ -1,168 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NOLA ~ Airdrop</title>
 
   <!-- AOS Animations -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css"/>
 
-  <!-- hCaptcha -->
-  <!-- IMPORTANT: Replace YOUR-HCAPTCHA-SITE-KEY with your real key from https://hcaptcha.com/ -->
+  <!-- hCaptcha (keep your real site key) -->
   <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 
   <style>
+    :root{
+      --card-bg: rgba(255,255,255,0.92);
+      --accent: #b36bff;
+      --gold: #ffcc00;
+      --text: #111;
+      --muted: #666;
+      --radius: 14px;
+    }
     html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: url('background1.png') no-repeat center center fixed;
-      background-size: cover;
-      background-attachment: fixed;
-      overflow-x: hidden;
+    body{
+      margin:0;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+      background: url('background1.png') center/cover fixed no-repeat;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      color: var(--text);
+      display:flex;
+      min-height:100vh;
+      align-items:center;
+      justify-content:center;
+      padding:28px;
+      box-sizing:border-box;
     }
 
-    /* Falling Coins */
-    .falling-coins {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      z-index: -1;
-      pointer-events: none;
-    }
-    .coin {
-      position: absolute;
-      font-size: 18px;
-      opacity: 0.5;
-      animation: fall 12s linear infinite;
-      color: rgba(255,255,255,0.7);
-      text-shadow: 0 0 6px #d2b8ff;
-    }
-    @keyframes fall {
-      0%   { transform: translateY(-50px) scale(1); opacity: 1; }
-      100% { transform: translateY(110vh) scale(0.6); opacity: 0; }
+    /* falling coins behind (subtle) */
+    .falling-coins{ position:fixed; inset:0; pointer-events:none; z-index:0; opacity:0.55; }
+    .coin{ position:absolute; font-size:18px; opacity:0.6; animation:fall 12s linear infinite; color:rgba(255,255,255,0.8); text-shadow:0 0 6px #d2b8ff; }
+    @keyframes fall { 0% { transform:translateY(-60px) } 100% { transform:translateY(110vh); opacity:0 } }
+
+    /* card */
+    .airdrop-box{
+      position:relative;
+      z-index:2;
+      width:100%;
+      max-width:720px;
+      background:var(--card-bg);
+      border-radius:var(--radius);
+      padding:34px;
+      box-shadow: 0 8px 38px rgba(20,12,40,0.12);
+      border: 1px solid rgba(179,107,255,0.12);
     }
 
-    /* Container */
-    .airdrop-box {
-      background: rgba(255,255,255,0.85);
-      max-width: 600px;
-      margin: 80px auto;
-      padding: 30px;
-      border-radius: 18px;
-      border: 2px solid #b36bff;
-      box-shadow: 0 4px 18px rgba(179,107,255,0.35);
+    .header{
+      display:flex;
+      gap:18px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    img.logo{ width:92px; height:92px; object-fit:cover; border-radius:50%; }
+    h1{ margin:0; font-size:20px; color:#2b2b2b; letter-spacing:0.2px; }
+    p.lead{ margin:8px 0 18px; color:var(--muted); line-height:1.5; }
+
+    /* form */
+    form{ text-align:left; }
+    label{ display:block; font-size:13px; margin:6px 0 6px; color:#222; font-weight:600; }
+    .hint{ font-size:13px; color:var(--muted); margin-bottom:8px; }
+    input[type="text"], select {
+      width:100%;
+      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid #ddd;
+      font-size:15px;
+      box-sizing:border-box;
+    }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .btn{
+      display:inline-block;
+      width:100%;
+      padding:13px;
+      border-radius:10px;
+      border:0;
+      font-weight:700;
+      background:linear-gradient(0deg,var(--gold), #ffd84d);
+      color:var(--text);
+      cursor:pointer;
+      margin-top:12px;
+      transition: transform .14s ease, box-shadow .14s ease;
+    }
+    .btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+    .btn:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,0.08); }
+
+    .policy{
+      margin-top:14px;
+      background:linear-gradient(180deg, rgba(179,107,255,0.04), rgba(179,107,255,0.02));
+      padding:12px;
+      border-radius:8px;
+      font-size:13px;
+      color:#333;
+      line-height:1.45;
+      border:1px solid rgba(179,107,255,0.06);
     }
 
-    img.logo {
-      width: 150px;
-      border-radius: 50%;
-      margin-bottom: 18px;
+    .error{
+      color:#a10;
+      font-size:13px;
+      margin-top:6px;
+      display:none;
     }
 
-    h1 { color: #8B8000; font-size: 24px; }
-    p { color: #000; font-size: 16px; line-height:1.6; }
-
-    /* Form */
-    form input, form select {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
-      border: 1px solid #bbb;
-      font-size: 15px;
+    /* contact floating */
+    .contact{
+      position:fixed;
+      left:12px;
+      bottom:20px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:999;
     }
+    .contact img{ width:36px; height:36px; border-radius:50%; box-shadow:0 3px 10px rgba(0,0,0,0.12); background:#fff; }
 
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 14px;
-      margin-top: 15px;
-      background: #ffcc00;
-      color: #111;
-      border-radius: 10px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
+    @media (max-width:640px){
+      .row{ grid-template-columns:1fr; }
+      body{ padding:18px; }
     }
-    .btn:hover { transform: scale(1.04); }
-
-    /* Contact Floating */
-    .contact {
-      position: fixed;
-      left: 15px;
-      bottom: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      z-index: 999;
-    }
-    .contact img {
-      width: 35px; height: 35px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #fff;
-      box-shadow: 0 0 4px rgba(0,0,0,0.3);
-    }
-
   </style>
 </head>
 <body>
+  <div class="falling-coins" aria-hidden="true"></div>
 
-<div class="falling-coins"></div>
+  <main class="airdrop-box" data-aos="fade-up">
+    <div class="header">
+      <img src="Logo.gif" class="logo" alt="NOLA logo" />
+      <div>
+        <h1>NOLA Airdrop — Registration</h1>
+        <p class="lead">Register your Polygon wallet to be considered for the NOLA airdrop. Entries are reviewed; please provide a valid active wallet address.</p>
+      </div>
+    </div>
 
-<div class="airdrop-box" data-aos="fade-up">
-  <img src="Logo.gif" class="logo" alt="NOLA Logo" />
-  <h1>NOLA Airdrop Registration</h1>
-  <p>A small portion of the limited ecosystem development reserve is distributed carefully to support long-term ecosystem resilience and community participation. Allocation is transparent, governed, and does not introduce inflation.</p>
+    <!-- Professional policy notice -->
+    <div class="policy" aria-live="polite">
+      <strong>Submission policy — please read:</strong>
+      <ul style="margin:8px 0 0 18px; padding:0;">
+        <li>Only valid Polygon/Ethereum wallet addresses are accepted.</li>
+        <li>Newly created wallets, disposable wallets, or wallets that appear to be created solely for mass-entry or abuse may be rejected.</li>
+        <li>All submissions are reviewed by our team. If a wallet is rejected we will notify the contact email where possible.</li>
+      </ul>
+      <div style="margin-top:8px; font-size:13px; color:var(--muted)">This is for fairness — manual review protects the community and the limited supply.</div>
+    </div>
 
-  <form action="https://formspree.io/f/xnnlqovd" method="POST">
-    <input type="text" name="wallet" placeholder="Your Polygon Wallet Address (Required)" required />
-    <input type="text" name="name" placeholder="Name (Optional)" />
+    <!-- The form. Action sends submissions to your support email via FormSubmit -->
+    <form id="airdropForm" action="https://formsubmit.co/support@nola.work.gd" method="POST" novalidate>
+      <!-- Honeypot field to trap bots (hidden from real users) -->
+      <div style="position:absolute; left:-5000px; top:auto; width:1px; height:1px; overflow:hidden;">
+        <label>Leave this field empty</label>
+        <input type="text" name="company" tabindex="-1" autocomplete="off" />
+      </div>
 
-    <select name="source" required>
-      <option value="" disabled selected>How did you hear about NOLA?</option>
-      <option value="Website Listing">Listing Website</option>
-      <option value="Twitter / X">Twitter / X</option>
-      <option value="Telegram">Telegram</option>
-      <option value="Other">Other</option>
-    </select>
+      <!-- Optional: tell FormSubmit where to redirect (change if you want) -->
+      <input type="hidden" name="_next" value="https://nol.pages.dev/thank-you.html" />
+      <!-- prevent FormSubmit's default anti-spam if you rely on hCaptcha (optional) -->
+      <input type="hidden" name="_captcha" value="false">
 
-    <!-- hCaptcha -->
-    <div class="h-captcha" data-sitekey="d77460ec-fe8e-4dec-8ad6-ebba44da24bc"></div>
+      <label for="wallet">Polygon Wallet Address <span style="color:#a10;">*</span></label>
+      <input id="wallet" name="wallet" type="text" placeholder="0x..." required
+             aria-describedby="walletHint" autocomplete="off" />
 
-    <button class="btn" type="submit">Submit</button>
-  </form>
-</div>
+      <div id="walletError" class="error" role="alert">Please enter a valid Polygon wallet address (0x followed by 40 hex characters).</div>
 
-<!-- Contact Floating -->
-<div class="contact">
-  <a href="https://t.me/+3__6IrS4yAA3MWVk" target="_blank"><img src="ticon.png" /></a>
-  <a href="https://x.com/NOLA_CHAIN" target="_blank"><img src="xicon.png" /></a>
-  <a href="mailto:Support@nola.work.gd"><img src="micon.png" /></a>
-  <a href="nol.pages.dev" target="_blank"><img src="wicon.png" /></a>
-</div>
+      <label for="name">Name (Optional)</label>
+      <input id="name" name="name" type="text" placeholder="Your name (optional)" autocomplete="name" />
 
-<!-- Coins Script -->
-<script>
-function createCoin(){
-  const c=document.createElement('div');
-  c.className='coin';
-  c.innerText='~';
-  c.style.left=Math.random()*window.innerWidth+'px';
-  c.style.fontSize=(14+Math.random()*10)+'px';
-  document.querySelector('.falling-coins').appendChild(c);
-  setTimeout(()=>c.remove(),12000);
-}
-setInterval(createCoin, window.innerWidth < 600 ? 2200 : 1200);
-</script>
+      <label for="source">How did you hear about NOLA? <span style="color:#a10;">*</span></label>
+      <select id="source" name="source" required>
+        <option value="" disabled selected>Choose an option</option>
+        <option value="Website Listing">Listing Website</option>
+        <option value="Twitter / X">Twitter / X</option>
+        <option value="Telegram">Telegram</option>
+        <option value="Other">Other</option>
+      </select>
 
-<!-- AOS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-<script>AOS.init({ duration:800, once:true });</script>
+      <!-- hCaptcha placeholder (your sitekey is present) -->
+      <div style="margin-top:14px;">
+        <!-- Add a small helper so users know it's required -->
+        <div class="hint">Complete the security check below to verify you're human.</div>
+        <div class="h-captcha" 
+             data-sitekey="d77460ec-fe8e-4dec-8ad6-ebba44da24bc"
+             data-callback="onHcaptchaSuccess"
+             data-expired-callback="onHcaptchaExpired"></div>
+      </div>
 
+      <button id="submitBtn" class="btn" type="submit" disabled>Submit</button>
+
+      <p id="formMsg" style="margin-top:10px; font-size:13px; color:var(--muted);">Submissions may be reviewed before any airdrop allocation.</p>
+    </form>
+  </main>
+
+  <!-- Contact floating -->
+  <div class="contact" aria-hidden="true">
+    <a href="https://t.me/+3__6IrS4yAA3MWVk" target="_blank" rel="noopener"><img src="ticon.png" alt="Telegram" /></a>
+    <a href="https://x.com/NOLA_CHAIN" target="_blank" rel="noopener"><img src="xicon.png" alt="X / Twitter" /></a>
+    <a href="mailto:Support@nola.work.gd"><img src="micon.png" alt="Email" /></a>
+    <a href="https://nol.pages.dev" target="_blank" rel="noopener"><img src="wicon.png" alt="Website" /></a>
+  </div>
+
+  <!-- falling coins generator script (visual only) -->
+  <script>
+    function createCoin(){
+      const c=document.createElement('div');
+      c.className='coin';
+      c.innerText='~';
+      c.style.left=Math.random()*window.innerWidth+'px';
+      c.style.top=-(30+Math.random()*80)+'px';
+      c.style.fontSize=(14+Math.random()*14)+'px';
+      document.querySelector('.falling-coins').appendChild(c);
+      setTimeout(()=>c.remove(),12000);
+    }
+    setInterval(createCoin, window.innerWidth < 600 ? 2600 : 1200);
+  </script>
+
+  <!-- AOS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script> AOS.init({ duration:700, once:true }); </script>
+
+  <!-- Validation and form behavior -->
+  <script>
+    (function(){
+      const form = document.getElementById('airdropForm');
+      const wallet = document.getElementById('wallet');
+      const submitBtn = document.getElementById('submitBtn');
+      const walletError = document.getElementById('walletError');
+
+      // Strict but common Polygon/Ethereum address regex: 0x + 40 hex chars
+      const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+
+      // hCaptcha callbacks (called by hCaptcha)
+      window.onHcaptchaSuccess = function(token){
+        // token available if needed for server-side verification (not used by FormSubmit)
+        submitBtn.disabled = false;
+        submitBtn.setAttribute('aria-disabled','false');
+      };
+      window.onHcaptchaExpired = function(){
+        submitBtn.disabled = true;
+        submitBtn.setAttribute('aria-disabled','true');
+      };
+
+      // Show inline wallet validation
+      wallet.addEventListener('input', () => {
+        const v = wallet.value.trim();
+        if(!v){
+          walletError.style.display = 'none';
+          return;
+        }
+        if(!addressRegex.test(v)){
+          walletError.style.display = 'block';
+        } else {
+          walletError.style.display = 'none';
+        }
+      });
+
+      // Final check before submission
+      form.addEventListener('submit', function(e){
+        const v = wallet.value.trim();
+
+        // Basic format validation
+        if(!addressRegex.test(v)){
+          e.preventDefault();
+          walletError.style.display = 'block';
+          wallet.focus();
+          return;
+        }
+
+        // Honeypot check (hidden field 'company') - if filled, consider bot
+        const honeypot = form.querySelector('input[name="company"]');
+        if(honeypot && honeypot.value){
+          e.preventDefault();
+          // silently stop submission (bots get trapped)
+          return;
+        }
+
+        // Professional guard clause / client-side hint:
+        // We cannot reliably detect "new" wallets client-side. For fairness, we flag entries for manual review.
+        // The server / review process will check wallet age / activity and may reject wallets created solely for mass entries.
+        // Show a short confirmation message to the user that the submission will be reviewed.
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+        // Let the normal form submission proceed (FormSubmit will handle posting to email).
+      });
+
+      // Accessibility: if user comes back to the page, ensure button correctly reflects captcha state
+      // If the captcha script hasn't called onHcaptchaSuccess, keep button disabled.
+      submitBtn.disabled = true;
+      submitBtn.setAttribute('aria-disabled','true');
+    })();
+  </script>
 </body>
 </html>
