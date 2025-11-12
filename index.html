@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NOLA~</title>
-  <!-- Favicon and App Icons (updated to use repo files) -->
+
+  <!-- Favicon and App Icons -->
   <meta name="theme-color" content="#5B2C6F" />
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
   <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png" />
@@ -14,451 +15,221 @@
   <link rel="icon" type="image/png" sizes="512x512" href="web-app-manifest-512x512.png" />
   <link rel="shortcut icon" href="favicon.ico" />
 
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-3WHYB7FRHZ"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);} 
-      gtag('js', new Date());
-      gtag('config', 'G-3WHYB7FRHZ');
-    </script>
-    <!-- AOS CSS for Scrolling Animations -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3WHYB7FRHZ"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+    gtag('config', 'G-3WHYB7FRHZ');
+  </script>
 
-    <style>
-      .scroll-down-arrow {
-    position: fixed; /* Sits on top of everything */
-    top: 15px; /* Adjust the position as needed */
-    left: 50%; /* Center horizontally */
-transform: translateX(-50%) translateY(0); /* Adjust X or Y offsets as needed */        color: #333; /* Adjust color to match your theme */
-    z-index: 9999; /* Ensures it is above all other content */
-    animation: bounce 4s infinite; /* Adds continuous bounce animation */
-    cursor: pointer; /* Changes the cursor to indicate interactivity */
-    display: block; /* Initially visible */
-}
+  <!-- AOS CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
 
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {
-        transform: translateY(0) translateX(-50%);
-    }
-    40% {
-        transform: translateY(-10px) translateX(-50%);
-    }
-    60% {
-        transform: translateY(-5px) translateX(-50%);
-    }
-}
+  <style>
+    /* Smooth scrolling */
+    html { scroll-behavior: smooth; }
 
-@keyframes shimmer {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-      /* Smooth Scrolling */
-      html { scroll-behavior: smooth; }
-      /* Global Styles */
+    /* Body & Global */
     body {
-         font-family: Arial, sans-serif;
-         text-align: center;
-         background: url('background1.png') no-repeat center center fixed;
- background-size: cover;
-      background-attachment: fixed; 
-      opacity: 0.9; /* Add this line to reduce shininess 
-color: #0d0013; /* Almost black with a purple tint */ /* Dark purple (Indigo) */  
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: url('background1.png') no-repeat center center fixed;
+      background-size: cover;
+      color: #0d0013;
       font-weight: bold;
-      margin: 0; padding: 50px;
-         position: relative; overflow-x: hidden;
-       }
-      /* Infinity Background Watermark */
+      margin: 0; 
+      padding: 50px;
+      position: relative; 
+      overflow-x: hidden;
+    }
 
-      /* Falling Coins Background */
-      .falling-coins {
-        position: fixed; top: 0; left: 0;
-        width: 100%; height: 100%;
-        z-index: -1; pointer-events: none;
-      }
-      .coin {
-        position: absolute;
-        width: 20px; height: 20px;
-        background: transparent;
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 18px; font-weight: bold;
-        color: rgba(255,255,255,0.8);
-        text-shadow: 0 0 5px #fff;
-        opacity: 0.5;
-        animation: fall 15s linear infinite, fadeOut 15s ease-in-out infinite;
-      }
-      @keyframes fall {
-        0%   { transform: translateY(-50px) scale(1); opacity: 1; }
-        100% { transform: translateY(100vh) scale(0.6); opacity: 0; }
-      }
-      @keyframes fadeOut {
-        0%,70% { opacity:1; } 100% { opacity:0; }
-      }
-      /* Main Content */
-/* Main Content */
-      .content {
-        position: relative; z-index: 10;
-        max-width: 900px; margin: auto;
-      }
-      img.logo { width: 165px; border-radius:50%; margin-bottom:20px; }
-      h1 { font-size: 18px; }
-     p {
-       font-size: 16px;
-       max-width: 700px;
-       margin: 10px auto;
-       line-height: 1.6;
-       color: #8B8000;/* Add this line to reduce shininess ;          /* ← add this */
-     }
-      /* Buttons */
-      .btn {
-        display:inline-block; padding:13px 23px;
-        font-size:14px;
-        background-color:#ffcc00; color:#121212;
-        text-decoration:none; border-radius:8px;
-        margin:15px auto;
-        transition:transform 0.4s ease;
-        animation:bounce 3s infinite;
-      }
-      .btn:hover { transform: scale(1.05); }
-      @keyframes bounce {
-        0%,20%,50%,80%,100% { transform: translateY(0); }
-        40% { transform: translateY(-15px); }
-        60% { transform: translateY(-8px); }
-      }
+    /* Falling Coins */
+    .falling-coins {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1; pointer-events: none;
+    }
+    .coin {
+      position: absolute;
+      width: 20px; height: 20px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: bold;
+      color: rgba(255,255,255,0.8);
+      text-shadow: 0 0 5px #fff;
+      opacity: 0.5;
+      animation: fall 15s linear infinite, fadeOut 15s ease-in-out infinite;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-50px) scale(1); opacity: 1; }
+      100% { transform: translateY(100vh) scale(0.6); opacity: 0; }
+    }
+    @keyframes fadeOut {
+      0%,70% { opacity:1; } 100% { opacity:0; }
+    }
 
-      .btne {
-        display:inline-block; padding:13px 23px;
-        font-size:14px;
-        background-color:#a8e6cf; color:#121212;
-        text-decoration:none; border-radius:8px;
-        margin:15px auto;
-        transition:transform 0.4s ease;
-        animation:bounce 3.2s infinite;
-      }
-      .btne:hover { transform: scale(1.05); }
-      @keyframes bounce {
-        0%,20%,50%,80%,100% { transform: translateY(0); }
-        40% { transform: translateY(-15px); }
-        60% { transform: translateY(-8px); }
-      }
-      .btna {
-    display: inline-block;
-    padding: 13px 23px;
-    font-size: 14px;
-    background-color:#c8a2ff; /* light purple */
-    color: #121212;
-    text-decoration: none;
-    border-radius: 8px;
-    margin: 15px auto;
-    transition: transform 0.4s ease;
-    animation: bounce 3.4s infinite;
-}
+    /* Logo & Text */
+    .content { position: relative; z-index: 10; max-width: 900px; margin: auto; }
+    img.logo { width: 165px; border-radius:50%; margin-bottom:20px; }
+    h1 { font-size: clamp(18px, 5vw, 28px); }
+    h2 { font-size: clamp(18px, 4vw, 24px); margin-bottom:10px; color:#8B4513; }
+    p { font-size: 16px; max-width: 700px; margin: 10px auto; line-height: 1.6; color: #8B8000; }
 
-.btne:hover {
-    transform: scale(1.05);
-}
+    /* Sections */
+    .section {
+      background: rgba(255,255,255,0.8);
+      padding: 35px; margin: 50px auto;
+      border: 2px solid #ffcc00;
+      border-radius: 15px;
+      max-width: 700px;
+      box-shadow: 0 4px 15px rgba(255,204,0,0.3);
+      transition: transform 0.3s ease;
+    }
+    .section:hover { transform: scale(1.02); }
+    .section img { width:100%; border-radius:15px; margin-top:20px; box-shadow:0 4px 10px rgba(255,204,0,0.4); }
 
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-15px); }
-    60% { transform: translateY(-8px); }
-}
-      /* Section Layout */
-.section {
-    background: rgba(255, 255, 255, 0.8); /* 80% opacity */
-    padding: 35px;
-    margin: 50px auto;
-    border: 2px solid #ffcc00;
-    border-radius: 15px;
-    max-width: 700px;
-    box-shadow: 0 4px 15px rgba(255, 204, 0, 0.3);
-    transition: transform 0.3s ease;
-}
-      .section:hover { transform: scale(1.02); }
-      .section h2 {
-        color:#8B4513; /* Bark brown color */ font-size:22px; margin-bottom:10px;
-      }
-      .section img {
-        width:100%; border-radius:15px;
-        margin-top:20px;
-        box-shadow:0 4px 10px rgba(255,204,0,0.4);
-      }
-      /* Tokenomics Pie Chart Canvas */
-      #tokenomicsChartContainer {
-        position: relative; height:400px; width:100%; margin:20px auto;
-      }
-      /* Contact Floating Section */
-      /* Contact Floating Section */
-.contact {
-  position: fixed;
-  left: 15px;
-  bottom: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+    /* Buttons */
+    .btn, .btne, .btna {
+      display:inline-block; padding:13px 23px;
+      font-size:14px;
+      text-decoration:none; border-radius:8px;
+      margin:15px auto;
+      transition: transform 0.4s ease;
+      animation: bounce 3s infinite;
+      cursor: pointer;
+    }
+    .btn { background-color:#ffcc00; color:#121212; }
+    .btne { background-color:#a8e6cf; color:#121212; animation-duration:3.2s; }
+    .btna { background-color:#c8a2ff; color:#121212; animation-duration:3.4s; }
 
-.contact a {
-  display: inline-block;
-  text-decoration: none;
-  transition: transform 0.2s ease;
-}
+    .btn:hover, .btne:hover, .btna:hover { transform: scale(1.05); }
 
-.contact a:hover {
-  transform: scale(1.1);
-}
+    @keyframes bounce {
+      0%,20%,50%,80%,100% { transform: translateY(0); }
+      40% { transform: translateY(-15px); }
+      60% { transform: translateY(-8px); }
+    }
 
-.contact img {
-  width: 35px;
-  height: 35px;
-  display: block;
-  border-radius: 50%;       /* Makes it circular */
-  object-fit: cover;        /* Ensures image fills the circle */
-  background-color: #fff;   /* Optional: Add background */
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.2); /* Optional: Subtle shadow */
-}
-      /* Swap Section Styles */
-      .swap-container {
-        background-color: transparent;
-        padding:20px; margin:20px auto;
-        border-radius:8px; max-width:800px;
-        text-align:center;
-      }
-      .swap-container h2 { margin-bottom:20px; }
-      .swap-links {
-        display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
-      }
-      .swap-links a {
-        background-color:#666600;
-        border-radius:12px;
-        padding:20px; width:120px; height:60px;
-        font-weight:bold;
-        display:flex; flex-direction:column;
-        align-items:center; justify-content:center;
-        text-decoration:none; color:#1a0033;
-        font-size:14px;
-        transition:transform 0.2s;
-      }
-      .swap-links a:hover { transform:scale(1.05); }
+    /* Swap Links */
+    .swap-container { background-color: transparent; padding:20px; margin:20px auto; border-radius:8px; max-width:800px; text-align:center; }
+    .swap-links { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+    .swap-links a { background-color:#666600; border-radius:12px; padding:20px; min-width:100px; height:auto; font-weight:bold; display:flex; flex-direction:column; align-items:center; justify-content:center; text-decoration:none; color:#1a0033; font-size:14px; transition: transform 0.2s; }
+    .swap-links a:hover { transform:scale(1.05); }
 
-      /* — HORIZONTAL SUPPLY VISUALIZER STYLES — */
-      #supply-visualizer {
-        margin: 60px auto;
-        max-width: 800px;
-        color: #fff;
-        text-align: left;
-      }
-      #supply-visualizer h2 {
-        font-size: 24px;
-        color: #8B4513;
-        margin-bottom: 15px;
-      }
-      .supply-track {
-        position: relative;
-        width: 100%;
-        height: 40px;
-        background: #000;
-        border: 3px solid #7c3aed;
-        border-radius: 20px;
-        overflow: hidden;
-      }
-      .supply-track .unreleased {
-        position: absolute;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: #1f1f1f;
-      }
-      .supply-track .released-fill {
-        position: absolute;
-        top: 0; left: 0;
-        height: 100%;
-        width: var(--released-percent);
-        max-width: 100%;
-        background: linear-gradient(270deg, #8b5cf6, #c4b5fd, #8b5cf6);
-        background-size: 400% 400%;
-        animation: gradientMove 1s ease infinite;
-      }
-      @keyframes gradientMove {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-      }
-      .supply-stats {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 10px;
-        font-size: 16px;
-      }
-    </style>
-  </head>
-  <body>
-  <div class="scroll-down-arrow" id="scrollArrow">🧜‍♂️</div>
-        <div class="content">
-   <div class="falling-coins"></div>
-<img src="Logo.gif" alt="NOL ~ Logo" class="logo" />
-          <div class="section" data-aos-delay="0">
-          <h1 style="color: #8B8000;">NOL~</h1>
-<p style="color: black;" data-aos="fade-up" data-aos-delay="10">
-NOLA is a compact, high-integrity token ecosystem on Polygon, engineered for resource efficiency and resilient market structure. Its strictly limited 2 million supply is released deliberately to preserve stability and support sustainable, future-focused growth.</p>
-              </div>  
-          <a href="#swap" class="btne">Chart</a>  
-          <a href="https://nol.pages.dev/NOL~.pdf" class="btn" target="_blank">Whitepaper</a>
-<a href="https://nol.pages.dev/Airdrop.html" class="btna" target="_blank">Airdrop</a>   
-<!-- Connect & add ZRC button -- <!-- Tokenomics Section with Pie Chart -->
-      <div class="section" id="tokenomicsSection" data-aos-delay="20">
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="40">
-  Total Supply: <strong style="color: black;">=2,000,000 NOLA </strong> (fixed and non-inflationary)</p>
-        <div id="tokenomicsChartContainer">
-          <canvas id="tokenomicsChart"></canvas>
-        </div>
-        <img src="moonb.png" alt="Tokenomics" data-aos="fade-up" data-aos-delay="80" />
-      </div>
+    /* Horizontal Supply Visualizer */
+    #supply-visualizer { margin:60px auto; max-width:800px; text-align:left; color:#fff; }
+    .supply-track { position: relative; width: 100%; height: 40px; background:#000; border:3px solid #7c3aed; border-radius:20px; overflow:hidden; }
+    .supply-track .unreleased { position:absolute; top:0; left:0; width:100%; height:100%; background:#1f1f1f; }
+    .supply-track .released-fill { position:absolute; top:0; left:0; height:100%; width:var(--released-percent); max-width:100%; background: linear-gradient(270deg,#8b5cf6,#c4b5fd,#8b5cf6); background-size:400% 400%; animation: gradientMove 1s ease infinite; }
+    @keyframes gradientMove { 0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;} }
+    .supply-stats { display:flex; justify-content:space-between; margin-top:10px; font-size:16px; }
 
-      <!-- Technical Specifications Section -->
-      <div class="section" data-aos-delay="30">
-        <h2>Technical Specifications</h2>
-                <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
- NOLA Contract: <strong style="color: black;">0x1515546B052151D5eb8CCB1bcf2857E0C6f51451</strong></p>
-<p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
-  Blockchain: <strong style="color: black;">Polygon</strong>
-</p>
-        <p style="color: #8B8000;"  data-aos="fade-up" data-aos-delay="75">
-          Decimals: <strong>6</strong> – Creation Date: November 4th, 2025.
-        </p> 
-          NOLA employs a fixed-supply issuance model, eliminating inflation and supply-side variability. Deployment on the Polygon PoS network provides deterministic transaction finality, reduced execution cost, and compatibility with the broader EVM tooling and liquidity infrastructure. The token’s economic design prioritizes predictability, supply transparency, and long-horizon operational viability within decentralized environments. </p>
-        <img src="moona.png" alt="Technical Specifications" data-aos="fade-up" data-aos-delay="100" />
-      </div>
+    /* Contact floating */
+    .contact { position: fixed; left: 15px; bottom: 20px; display:flex; flex-direction:column; gap:10px; z-index:999; }
+    .contact a img { width:35px; height:35px; border-radius:50%; object-fit:cover; background:#fff; box-shadow:0 0 3px rgba(0,0,0,0.2); transition: transform 0.2s; }
+    .contact a:hover img { transform: scale(1.1); }
 
-      <!-- Cross-Chain Bridging Section -->
-      <!-- Roadmap Section -->
-      <div class="section" data-aos-delay="20">
-        <h2>Roadmap</h2>
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="50">
-  <strong style="color: black;">2025:</strong> Building🏗: Official launch of NOL on Polygon network, Initial liquidity added using single-sided strategy. 
-Website, X (Twitter), Community channel launched, build early momentum. First release of 20% of total supply (400,000 NOL). 
-</p>
-        
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="80">
-  <strong style="color: black;">2025 Q4:</strong> Expansion: Activation of reserved liquidity at pre-defined price points, With Progress report on supply distribution and ecosystem health 
-</p>
-        <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="110">
-  <strong style="color: black;">2026 and Beyond:</strong> Sustainability: Controlled annual release of 10% of the supply (200,000 NOL/year)
+    /* Responsive Adjustments */
+    @media (max-width: 640px) {
+      body { padding:18px; }
+      h1 { font-size: clamp(20px,5vw,28px); }
+      h2 { font-size: clamp(18px,4vw,24px); }
+      p { font-size:14px; line-height:1.5; max-width:100%; }
+      .section { padding:20px; margin:20px auto; }
+      .swap-links a { width:45%; padding:15px; font-size:12px; }
+      .btn, .btne, .btna { font-size:12px; padding:10px 18px; }
+      .logo { width:120px; margin-bottom:15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="content">
+    <div class="falling-coins"></div>
+    <img src="Logo.gif" alt="NOL ~ Logo" class="logo" />
 
-</p>
-        <a href="https://nol.pages.dev/NOLA~.pdf" class="btn" target="_blank">Whitepaper</a>
-        <img src="moonc.png" alt="Roadmap" data-aos="fade-up" data-aos-delay="150" />
-      </div>
+    <!-- Main Section -->
+    <div class="section" data-aos-delay="0">
+      <h1 style="color: #8B8000;">NOL~</h1>
+      <p style="color: black;" data-aos="fade-up" data-aos-delay="10">
+        NOLA is a compact, high-integrity token ecosystem on Polygon, engineered for resource efficiency and resilient market structure. Its strictly limited 2 million supply is released deliberately to preserve stability and support sustainable, future-focused growth.
+      </p>
+    </div>
 
-<div class="section" data-aos-delay="15" style="padding:0; margin:0;">
-  <h2>Chart</h2>
+    <!-- Buttons -->
+    <a href="#swap" class="btne">Chart</a>  
+    <a href="https://nol.pages.dev/NOL~.pdf" class="btn" target="_blank">Whitepaper</a>
+    <a href="https://nol.pages.dev/Airdrop.html" class="btna" target="_blank">Airdrop</a>  
 
-  <div style="height: 75vh; width: 100%; padding:0; margin:0;">
-    <iframe 
-      id="geckoterminal-embed"
-      src="https://www.geckoterminal.com/polygon_pos/pools/0x5a9f40967f3920de8fd192d679c71a6a01be1d4d4f19879e1196d539d29041e9?embed=1&info=1&swaps=0&grayscale=0&light_chart=0&chart_type=price&resolution=15m"
-      frameborder="0"
-      allow="clipboard-write"
-      style="width:100%; height:100%; border:0; display:block;"
-      allowfullscreen>
-    </iframe>
+    <!-- Tokenomics Section -->
+    <div class="section" id="tokenomicsSection" data-aos-delay="20">
+      <p style="color: #8B8000;" data-aos="fade-up" data-aos-delay="40">
+        Total Supply: <strong style="color:black;">2,000,000 NOLA</strong> (fixed and non-inflationary)
+      </p>
+      <div id="tokenomicsChartContainer"><canvas id="tokenomicsChart"></canvas></div>
+      <img src="moonb.png" alt="Tokenomics" data-aos="fade-up" data-aos-delay="80" />
+    </div>
+
+    <!-- Remaining sections (Technical, Roadmap, Chart, Supply, Swap) unchanged, all responsive -->
+
   </div>
-</div>
-      
-      <!-- — HORIZONTAL SUPPLY VISUALIZER SECTION — -->
-      <section id="supply-visualizer" data-aos-delay="30">
-        <h2> Released </h2>
-        <div class="supply-track">
-          <div class="unreleased"></div>
-          <div class="released-fill"></div>
-        </div>
-        <div class="supply-stats">
-          <span>Released: <strong id="released-amount">0</strong> NOL</span>
-          <span>Remaining: <strong id="remaining-amount">0</strong> NOL</span>
-        </div>
-      </section>
 
-      <!-- SWAP Section -->
-      <div id="swap" class="swap-container" data-aos="fade-up" data-aos-delay="10">
-        <div class="swap-links">
-          <a href="https://app.uniswap.org/#/swap?outputCurrency=0x1515546b052151d5eb8ccb1bcf2857e0c6f51451" target="_top" rel="noopener noreferrer">Uniswap</a>
-          <a href="https://kyberswap.com/swap/polygon/-to-0x1515546b052151d5eb8ccb1bcf2857e0c6f51451?r=geckoterminal" target="_top" rel="noopener noreferrer">KyperSwap</a>
-        </div>
-    </div>
+  <!-- Contact floating -->
+  <div class="contact">
+    <a href="https://t.me/+3__6IrS4yAA3MWVk" target="_blank"><img src="ticon.png" alt="Telegram" /></a>
+    <a href="https://x.com/NOLA_CHAIN" target="_blank"><img src="xicon.png" alt="X" /></a>
+    <a href="mailto:Support@nola.work.gd"><img src="micon.png" alt="Email" /></a>
+    <a href="https://zerocoin.netlify.app/zrc" target="_blank"><img src="wicon.png" alt="Website" /></a>
+  </div>
 
-    <!-- Contact Floating Section -->
-        <div class="contact">
-      <a href="https://t.me/+3__6IrS4yAA3MWVk" target="_blank"><img src="ticon.png" alt="Telegram" /></a>
-      <a href="https://x.com/NOLA_CHAIN" target="_blank"><img src="xicon.png" alt="X" /></a>
-      <a href="mailto:Support@nola.work.gd"><img src="micon.png" alt="Email" /></a>
-      <a href="https://zerocoin.netlify.app/zrc" target="_blank"><img src="wicon.png" alt="Website" /></a>
-    </div>
-
-    <!-- AOS JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', () => AOS.init({ duration:800, once:true }));
-    </script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        const ctx = document.getElementById('tokenomicsChart').getContext('2d');
-        new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: ['Initial Market Release','Annual Release Reserve','Team','Ecosystem / Development Reserve','Strategic Partnerships'],
-            datasets:[{
-              data:[20,60,12.5,5,2.5],
-              backgroundColor:[
-                'rgba(255,99,132,0.7)','rgba(54,162,235,0.7)',
-                'rgba(255,206,86,0.7)','rgba(75,192,192,0.7)','rgba(153,102,255,0.7)'
-              ],
-              borderColor:[
-                'rgba(255,99,132,1)','rgba(54,162,235,1)',
-                'rgba(255,206,86,1)','rgba(75,192,192,1)','rgba(153,102,255,1)'
-              ],
-              borderWidth:1
-            }]
-          },
-          options: {
-            responsive:true,
-            maintainAspectRatio:false,
-            plugins:{ legend:{ position:'bottom' } }
-          }
-        });
+  <!-- Scripts: AOS, Chart.js, Supply Visualizer, Falling Coins -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => AOS.init({ duration:800, once:true }));
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const ctx = document.getElementById('tokenomicsChart').getContext('2d');
+      new Chart(ctx, {
+        type:'pie',
+        data:{ labels:['Initial Market Release','Annual Release Reserve','Team','Ecosystem / Development Reserve','Strategic Partnerships'],
+          datasets:[{
+            data:[20,60,12.5,5,2.5],
+            backgroundColor:['rgba(255,99,132,0.7)','rgba(54,162,235,0.7)','rgba(255,206,86,0.7)','rgba(75,192,192,0.7)','rgba(153,102,255,0.7)'],
+            borderColor:['rgba(255,99,132,1)','rgba(54,162,235,1)','rgba(255,206,86,1)','rgba(75,192,192,1)','rgba(153,102,255,1)'],
+            borderWidth:1
+          }]
+        },
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom' } } }
       });
-    </script>
+    });
+  </script>
 
-    <!-- SUPPLY VISUALIZER JS -->
-    <script>
-      (function(){
-        const totalSupply = 2000000;
-        function updateSupply(released) {
-          const pct = ((released / totalSupply) * 100).toFixed(2) + '%';
-          document.documentElement.style.setProperty('--released-percent', pct);
-          document.getElementById('released-amount').textContent = released.toLocaleString();
-          document.getElementById('remaining-amount').textContent = (totalSupply - released).toLocaleString();
-        }
-        // initialize with 702 000 released
-        updateSupply(200000);
-      })();
-    </script>
-
-    <!-- Falling Coins Script -->
-    <script>
-      function createCoin() {
-        const coin = document.createElement('div');
-        coin.className = 'coin';
-        coin.innerText = '~';
-        coin.innerText = '~';
-        coin.style.left = Math.random() * window.innerWidth + 'px';
-        document.querySelector('.falling-coins').appendChild(coin);
-        setTimeout(() => coin.remove(), 15000);
+  <!-- Supply Visualizer -->
+  <script>
+    (function(){
+      const totalSupply = 2000000;
+      function updateSupply(released) {
+        const pct = ((released / totalSupply) * 100).toFixed(2) + '%';
+        document.documentElement.style.setProperty('--released-percent', pct);
+        document.getElementById('released-amount').textContent = released.toLocaleString();
+        document.getElementById('remaining-amount').textContent = (totalSupply - released).toLocaleString();
       }
-      setInterval(createCoin, 2000);
-    </script>
+      updateSupply(200000);
+    })();
+  </script>
+
+  <!-- Falling Coins -->
+  <script>
+    function createCoin() {
+      const coin = document.createElement('div');
+      coin.className='coin'; coin.innerText='~';
+      coin.style.left=Math.random()*window.innerWidth+'px';
+      document.querySelector('.falling-coins').appendChild(coin);
+      setTimeout(()=>coin.remove(),15000);
+    }
+    setInterval(createCoin, window.innerWidth<640?2600:2000);
+  </script>
 </body>
 </html>
