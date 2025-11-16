@@ -127,6 +127,246 @@
       .row{ grid-template-columns:1fr; }
       body{ padding:18px; }
     }
+
+    /* COOKIE BANNER */
+    #cookie-banner{
+      position:fixed;
+      bottom:0;
+      left:0;
+      width:100%;
+      background:rgba(20,20,20,0.92);
+      color:#fff;
+      padding:16px;
+      text-align:center;
+      font-size:14px;
+      z-index:99999;
+      display:none;
+      animation:fadeIn 0.5s ease;
+    }
+    #cookie-banner button{
+      margin-left:12px;
+      padding:8px 16px;
+      border-radius:8px;
+      border:0;
+      font-weight:600;
+      cursor:pointer;
+    }
+    #accept-cookies{ background:#4caf50; color:#fff; }
+    #decline-cookies{ background:#d63031; color:#fff; }
+
+    @keyframes fadeIn{
+      from{opacity:0; transform:translateY(20px);}
+      to{opacity:1; transform:translateY(0);}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="falling-coins" aria-hidden="true"></div>
+
+  <main class="airdrop-box" data-aos="fade-up">
+    <div class="header">
+      <img src="Logo.gif" class="logo" alt="NOLA logo" />
+      <div>
+        <h1>NOLA Airdrop — Registration</h1>
+        <p class="lead">Register your Polygon wallet to be considered for the NOLA airdrop. Entries are reviewed; please provide a valid active wallet address.</p>
+      </div>
+    </div>
+
+    <div class="policy" aria-live="polite">
+      <strong>Submission policy — please read:</strong>
+      <ul style="margin:8px 0 0 18px; padding:0;">
+        <li>Only valid Polygon/Ethereum wallet addresses are accepted.</li>
+        <li>Newly created wallets or suspicious mass-created wallets may be rejected.</li>
+        <li>All submissions are reviewed by our team.</li>
+      </ul>
+    </div>
+
+    <form id="airdropForm" action="https://formcarry.com/s/04knkWwrQKk" method="POST" novalidate>
+      <div style="position:absolute; left:-5000px; top:auto; width:1px; height:1px; overflow:hidden;">
+        <label>Leave this field empty</label>
+        <input type="text" name="company" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <input type="hidden" name="_next" value="https://nol.pages.dev/index.html" />
+      <input type="hidden" name="_captcha" value="false">
+
+      <label for="wallet">Polygon Wallet Address <span style="color:#a10;">*</span></label>
+      <input id="wallet" name="wallet" type="text" placeholder="0x..." required
+             aria-describedby="walletHint" autocomplete="off" />
+
+      <div id="walletError" class="error" role="alert">Please enter a valid Polygon wallet address.</div>
+
+      <label for="name">Name (Optional)</label>
+      <input id="name" name="name" type="text" placeholder="Your name (optional)" autocomplete="name" />
+
+      <label for="source">How did you hear about NOLA? <span style="color:#a10;">*</span></label>
+      <select id="source" name="source" required>
+        <option value="" disabled selected>Choose an option</option>
+        <option value="Website Listing">Listing Website</option>
+        <option value="Twitter / X">Twitter / X</option>
+        <option value="Telegram">Telegram</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <div style="margin-top:14px;">
+        <div class="hint">Complete the security check below.</div>
+        <div class="h-captcha" 
+             data-sitekey="d77460ec-fe8e-4dec-8ad6-ebba44da24bc"
+             data-callback="onHcaptchaSuccess"
+             data-expired-callback="onHcaptchaExpired"></div>
+      </div>
+
+      <button id="submitBtn" class="btn" type="submit" disabled>Submit</button>
+
+    </form>
+  </main>
+
+  <div class="contact" aria-hidden="true">
+    <a href="https://t.me/NOLA_community" target="_blank"><img src="ticon.png" /></a>
+    <a href="https://x.com/NOLA_CHAIN" target="_blank"><img src="xicon.png" /></a>
+    <a href="mailto:Support@nola.work.gd"><img src="micon.png" /></a>
+    <a href="index.html" target="_blank"><img src="wicon.png" /></a>
+  </div>
+
+  <!-- COOKIE BANNER -->
+  <div id="cookie-banner">
+    This website uses cookies to improve your experience.
+    <button id="accept-cookies">Accept</button>
+    <button id="decline-cookies">Decline</button>
+  </div>
+
+  <!-- falling coins -->
+  <script>
+    function createCoin(){
+      const c=document.createElement('div');
+      c.className='coin';
+      c.innerText='~';
+      c.style.left=Math.random()*window.innerWidth+'px';
+      c.style.top=-(30+Math.random()*80)+'px';
+      c.style.fontSize=(14+Math.random()*14)+'px';
+      document.querySelector('.falling-coins').appendChild(c);
+      setTimeout(()=>c.remove(),12000);
+    }
+    setInterval(createCoin, window.innerWidth < 600 ? 2600 : 1200);
+  </script>
+
+  <!-- AOS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script> AOS.init({ duration:700, once:true }); </script>
+
+  <!-- form + hCaptcha -->
+  <script>
+    (function(){
+      const form = document.getElementById('airdropForm');
+      const wallet = document.getElementById('wallet');
+      const submitBtn = document.getElementById('submitBtn');
+      const walletError = document.getElementById('walletError');
+
+      const addressRegex = /^0x[a-fA-F0-9]{40}$/;
+
+      window.onHcaptchaSuccess = function(){
+        submitBtn.disabled = false;
+      };
+      window.onHcaptchaExpired = function(){
+        submitBtn.disabled = true;
+      };
+
+      wallet.addEventListener('input', () => {
+        if(wallet.value && !addressRegex.test(wallet.value.trim())){
+          walletError.style.display = 'block';
+        } else {
+          walletError.style.display = 'none';
+        }
+      });
+
+      form.addEventListener('submit', function(e){
+        if(!addressRegex.test(wallet.value.trim())){
+          e.preventDefault();
+          walletError.style.display = 'block';
+          return;
+        }
+      });
+
+      submitBtn.disabled = true;
+    })();
+  </script>
+
+  <!-- COOKIE LOGIC -->
+  <script>
+    if(!localStorage.getItem("cookie-consent")){
+      document.getElementById("cookie-banner").style.display = "block";
+    }
+
+    document.getElementById("accept-cookies").onclick = function(){
+      localStorage.setItem("cookie-consent","accepted");
+      document.getElementById("cookie-banner").style.display = "none";
+    };
+
+    document.getElementById("decline-cookies").onclick = function(){
+      localStorage.setItem("cookie-consent","declined");
+      document.getElementById("cookie-banner").style.display = "none";
+    };
+  </script>
+
+</body>
+</html>      padding:12px 14px;
+      border-radius:10px;
+      border:1px solid #ddd;
+      font-size:15px;
+      box-sizing:border-box;
+    }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .btn{
+      display:inline-block;
+      width:100%;
+      padding:13px;
+      border-radius:10px;
+      border:0;
+      font-weight:700;
+      background:linear-gradient(0deg,var(--gold), #ffd84d);
+      color:var(--text);
+      cursor:pointer;
+      margin-top:12px;
+      transition: transform .14s ease, box-shadow .14s ease;
+    }
+    .btn:disabled{ opacity:0.6; cursor:not-allowed; transform:none; }
+    .btn:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,0.08); }
+
+    .policy{
+      margin-top:14px;
+      background:linear-gradient(180deg, rgba(179,107,255,0.04), rgba(179,107,255,0.02));
+      padding:12px;
+      border-radius:8px;
+      font-size:13px;
+      color:#333;
+      line-height:1.45;
+      border:1px solid rgba(179,107,255,0.06);
+    }
+
+    .error{
+      color:#a10;
+      font-size:13px;
+      margin-top:6px;
+      display:none;
+    }
+
+    /* contact floating */
+    .contact{
+      position:fixed;
+      left:12px;
+      bottom:20px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:999;
+    }
+    .contact img{ width:36px; height:36px; border-radius:50%; box-shadow:0 3px 10px rgba(0,0,0,0.12); background:#fff; }
+
+    @media (max-width:640px){
+      .row{ grid-template-columns:1fr; }
+      body{ padding:18px; }
+    }
   </style>
 </head>
 <body>
