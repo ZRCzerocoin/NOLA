@@ -8,8 +8,7 @@
 <!-- Ethers.js -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 
-<!-- Web3Modal v2 -->
-<script src="https://cdn.jsdelivr.net/npm/@web3modal/js@2.3.0/dist/index.js"></script>
+<!-- WalletConnect v2 -->
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3modal-provider@2.0.13/dist/index.umd.min.js"></script>
 
 <style>
@@ -137,34 +136,43 @@ footer a:hover{text-decoration:underline;}
 </footer>
 
 <script>
-// ---------------------- Web3Modal v2 ----------------------
-const { Web3Modal } = window.Web3Modal;
-const providerOptions = {
-  walletconnect: {
-    package: window.WalletConnectProvider.default,
-    options: {
-      projectId: "6557a92e3698182727669d41cbeb95a1",
-      chains: [137],
-      showQrModal: true
-    }
-  }
-};
-
-const web3Modal = new Web3Modal({
-  cacheProvider: false,
-  providerOptions,
-  themeMode: "dark"
-});
-
+// ---------------------- Wallet Connection ----------------------
 let provider, signer, userAddress;
 
-document.getElementById('connectWalletBtn').addEventListener('click', async () => {
-  provider = await web3Modal.connect();
-  const ethersProvider = new ethers.BrowserProvider(provider);
-  signer = await ethersProvider.getSigner();
-  userAddress = await signer.getAddress();
-  alert(`Wallet connected: ${userAddress}`);
-});
+async function connectWallet() {
+  // MetaMask (desktop/mobile)
+  if (window.ethereum) {
+    try {
+      provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      signer = await provider.getSigner();
+      userAddress = accounts[0];
+      alert(`MetaMask connected: ${userAddress}`);
+      return;
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // WalletConnect v2
+  const WalletConnectProvider = window.WalletConnectProvider.default;
+  const wcProvider = new WalletConnectProvider({
+    projectId: "6557a92e3698182727669d41cbeb95a1",
+    chains: [137]
+  });
+  try {
+    await wcProvider.enable();
+    provider = new ethers.BrowserProvider(wcProvider);
+    signer = await provider.getSigner();
+    userAddress = await signer.getAddress();
+    alert(`WalletConnect connected: ${userAddress}`);
+  } catch (err) {
+    console.error(err);
+    alert("Connection failed!");
+  }
+}
+
+document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
 
 // ---------------------- Token List ----------------------
 let tokens = [];
@@ -187,7 +195,7 @@ async function loadTokens(){
 }
 loadTokens();
 
-// ---------------------- Search Demo ----------------------
+// ---------------------- Token Search ----------------------
 document.getElementById('searchBtn').addEventListener('click',()=>{
   const val = document.getElementById('tokenSearch').value.toUpperCase();
   const found = tokens.find(t=>t.symbol.toUpperCase()===val || t.name.toUpperCase()===val);
@@ -199,7 +207,7 @@ document.getElementById('searchBtn').addEventListener('click',()=>{
   }
 });
 
-// ---------------------- Swap ----------------------
+// ---------------------- Swap (Demo) ----------------------
 document.getElementById('swapBtn').addEventListener('click',async()=>{
   if(!userAddress){alert("Connect wallet first!"); return;}
   const from = document.getElementById('fromToken').value;
