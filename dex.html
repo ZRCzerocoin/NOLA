@@ -1,518 +1,564 @@
-<!--
-  index.html -- NOLA DEX single-file (Ethereum + Polygon) using 1inch
-  - Place this file in /dex and keep logo.gif alongside it (./logo.gif)
-  - Supports MetaMask + WalletConnect
-  - Auto-approve ERC20 token if allowance is missing (calls approve and waits)
-  - NOTE: Test on small amounts on mainnets first (or use testnets with 1inch test endpoints)
--->
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NOLA DEX — Swap (Ethereum & Polygon)</title>
-  <style>
-    :root{--accent:#0ea5a4;--bg:#0f172a;--card:#0b1220;color:#e6eef6}
-    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#071029 0%, #071727 100%);color:var(--card)}
-    .wrap{max-width:980px;margin:28px auto;padding:24px}
-    header{display:flex;gap:16px;align-items:center}
-    header img{width:74px;height:74px;object-fit:contain;border-radius:10px}
-    header h1{font-size:22px;margin:0}
-    .card{background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;margin-top:18px;box-shadow:0 6px 24px rgba(2,6,23,.6)}
-    label{display:block;font-size:12px;margin-bottom:6px;color:#9fb5c1}
-    select,input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--card);outline:none}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    button{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#022;cursor:pointer;font-weight:600}
-    .muted{font-size:13px;color:#9fb5c1}
-    .hint{font-size:13px;color:#a7c2c1;margin-top:8px}
-    .stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
-    .stat{padding:10px;border-radius:8px;background:rgba(0,0,0,0.2);min-width:150px}
-    footer{margin-top:22px;font-size:13px;color:#8fb0b0}
-    .error{color:#ff9b9b}
-    .flex{display:flex;gap:8px;align-items:center}
-    .btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--card);padding:8px 10px;border-radius:8px;cursor:pointer}
-    @media(max-width:640px){.row{grid-template-columns:1fr}}
-    .small{font-size:13px}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOLA Terminal — Home</title>
+<meta name="description" content="NOLA — Luxury Web3 Terminal (Portfolio, Launch Tools, AI Signals, Web3 Messenger)" />
+<link rel="icon" href="assets/nola-favicon.png" />
 
-  <!-- Ethers v5 -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-  <!-- WalletConnect Provider v1 (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
+<style>
+  /* --------------------
+     Palette (Purplism)
+     -------------------- */
+  :root{
+    --bg-900: #070308;
+    --glass: rgba(255,255,255,0.04);
+    --neon-1: #6A00FF; /* royal purple */
+    --neon-2: #A243FF; /* neon violet */
+    --neon-3: #C77DFF; /* soft highlight */
+    --accent-gold: #E1C07A;
+    --muted: rgba(255,255,255,0.6);
+    --glass-border: rgba(162,67,255,0.15);
+    --glass-border-strong: rgba(162,67,255,0.35);
+    --card-radius: 18px;
+    --shadow-lg: 0 25px 60px rgba(0,0,0,0.6);
+    font-family: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+                 Roboto, "Helvetica Neue", Arial;
+  }
+
+  /* --------------------
+     Basic page styles
+     -------------------- */
+  html,body{height:100%;margin:0;background:var(--bg-900);color:#eee;overflow:hidden}
+  .page {
+    position:relative;
+    width:100%;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    gap:30px;
+    padding:36px 28px 48px;
+    box-sizing:border-box;
+    isolation:isolate;
+  }
+
+  /* Subtle backdrop with gradient / nebula */
+  .bg-gradient {
+    position:fixed;inset:0;z-index:0;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(106,0,255,0.12), transparent 8%),
+                radial-gradient(900px 500px at 90% 85%, rgba(162,67,255,0.09), transparent 6%),
+                linear-gradient(180deg, rgba(6,6,10,0.95), rgba(4,3,5,0.98));
+    pointer-events:none;
+    filter:blur(6px) saturate(1.1);
+  }
+
+  /* Particle canvas covers whole screen (z-index between bg and UI) */
+  canvas#particles {
+    position:fixed; inset:0; z-index:1; pointer-events:none;
+    mix-blend-mode: screen;
+  }
+
+  /* Header */
+  header {
+    position:relative; z-index:5;
+    display:flex; align-items:center; justify-content:center;
+    width:100%; gap:20px; margin-top:8px;
+  }
+  .logo-wrap {
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    transform:translateZ(20px);
+  }
+  .logo {
+    width:92px; height:92px; border-radius:16px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    box-shadow: 0 8px 30px rgba(106,0,255,0.14), inset 0 -6px 18px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.04);
+    position:relative; overflow:hidden;
+  }
+  .logo img{width:70%;height:70%;object-fit:contain;display:block}
+
+  .tagline {
+    font-size:13px;color:var(--muted);letter-spacing:0.6px;
+    text-transform:uppercase;font-weight:600;
+  }
+
+  /* Connect button (top-right) */
+  .top-actions {
+    position: absolute;
+    right:28px;
+    top:30px;
+    z-index:8;
+    display:flex; gap:12px; align-items:center;
+  }
+  button.connect {
+    background: linear-gradient(90deg, rgba(106,0,255,0.18), rgba(162,67,255,0.12));
+    color: #fff;
+    border:1px solid var(--glass-border);
+    padding:10px 16px;
+    border-radius:12px;
+    font-weight:600;
+    cursor:pointer;
+    backdrop-filter: blur(6px) saturate(120%);
+    box-shadow: 0 8px 30px rgba(106,0,255,0.12);
+    transition: transform .14s ease, box-shadow .14s;
+  }
+  button.connect:hover{ transform:translateY(-2px); box-shadow: 0 22px 40px rgba(106,0,255,0.16); }
+
+  /* Wallet address tiny chip */
+  .addr-chip{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.03);
+    padding:10px 12px;border-radius:12px;font-weight:600;font-size:13px;color:#fff;
+    display:inline-flex; gap:8px; align-items:center;
+  }
+
+  /* Layout grid for the four cards */
+  .main-grid {
+    position:relative; z-index:6;
+    display:grid;
+    grid-template-columns: repeat(2, minmax(280px,420px));
+    gap:28px;
+    margin-top:6px;
+    transform-style:preserve-3d;
+    perspective:1200px;
+  }
+  @media(max-width:880px){
+    .main-grid{grid-template-columns:1fr; padding: 0 12px; }
+    .top-actions{right:12px}
+  }
+
+  /* Holographic card base */
+  .card {
+    width:100%; min-height:220px; border-radius:var(--card-radius);
+    position:relative; overflow:visible;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-lg);
+    padding:18px;
+    transform-style:preserve-3d;
+    transition: transform .25s cubic-bezier(.12,.85,.2,1), box-shadow .18s;
+    backdrop-filter: blur(8px) saturate(140%);
+  }
+
+  /* Hologram neon outline - pseudo element layered */
+  .card::before, .card::after {
+    content:"";
+    position:absolute; inset:0; border-radius:inherit; z-index: -1;
+    pointer-events:none;
+  }
+  .card::before{
+    box-shadow: 0 0 40px rgba(106,0,255,0.14), inset 0 0 40px rgba(162,67,255,0.04);
+    filter: blur(20px);
+    opacity:0.85;
+    transform: translateZ(-10px);
+  }
+  .card::after{
+    border: 1px solid transparent;
+    background: linear-gradient(90deg, rgba(106,0,255,0.08), rgba(162,67,255,0.06));
+    mix-blend-mode: screen;
+    transform: translateZ(-20px) scale(1.02);
+    opacity:0.6;
+  }
+
+  /* Specific card accents */
+  .card.portfolio { border-image: linear-gradient(90deg,var(--neon-1),var(--neon-2)) 1; }
+  .card.launch { border-image: linear-gradient(90deg, var(--accent-gold), var(--neon-2)) 1; }
+  .card.signals { border-image: linear-gradient(90deg, #FF4D4D, var(--neon-2)) 1; }
+  .card.chat { border-image: linear-gradient(90deg, var(--neon-2), #7C4DFF) 1; }
+
+  /* Card content */
+  .card h3{ margin:0; font-size:18px; letter-spacing:0.2px; color:#fff; display:flex; align-items:center; gap:10px;}
+  .card .subtitle { color:var(--muted); font-size:13px; margin-top:6px; line-height:1.1; }
+  .card .preview {
+    margin-top:12px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .mini-chart {
+    height:84px; width:62%; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    border: 1px solid rgba(255,255,255,0.03);
+    display:flex; align-items:center; justify-content:center; color:var(--muted);
+    font-weight:700;
+  }
+  .mini-meta { width:34%; display:flex; flex-direction:column; gap:8px; align-items:flex-end; color:var(--muted); font-size:13px; }
+
+  /* Hologram scan line */
+  .scan {
+    position:absolute; left:-20%; top:0; width:140%; height:6px; z-index:7;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+    mix-blend-mode: overlay; transform:skewX(-10deg);
+    animation: scan 4.8s linear infinite;
+    opacity:0.6;
+  }
+  @keyframes scan { 0%{transform:translateY(-30%) skewX(-10deg);} 50%{transform:translateY(120%) skewX(-10deg);} 100%{transform:translateY(300%) skewX(-10deg);} }
+
+  /* Footer */
+  footer {
+    position:relative; z-index:6; margin-top:18px; color:var(--muted); font-size:13px;
+    display:flex; gap:12px; align-items:center;
+  }
+
+  /* small sparkle */
+  .spark {
+    position:absolute; width:8px; height:8px; border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, #fff 0 15%, rgba(255,255,255,0.7) 18%, transparent 60%);
+    opacity:0.95; filter: blur(1px);
+  }
+</style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="bg-gradient" aria-hidden="true"></div>
+  <canvas id="particles" width="1600" height="900" aria-hidden="true"></canvas>
+
+  <div class="page" id="app">
     <header>
-      <img src="./logo.gif" alt="NOLA logo (put logo.gif here)" onerror="this.onerror=null;this.src='https://via.placeholder.com/74x74?text=NOLA'"/>
-      <div>
-        <h1>NOLA DEX — Swap (Ethereum + Polygon)</h1>
-        <div class="muted">Aggregated swap rates powered by <strong>1inch</strong>. Single-file app for GitHub Pages.</div>
+      <div class="logo-wrap" role="banner">
+        <div class="logo" id="logo">
+          <!-- Replace with your logo asset -->
+          <img src="assets/nola-logo.png" alt="NOLA logo" onerror="this.style.display='none'">
+          <!-- Purple aura ring as CSS element -->
+          <svg style="position:absolute; inset:auto; pointer-events:none" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
+            <defs>
+              <radialGradient id="g" cx="50%" cy="50%">
+                <stop offset="0%" stop-color="#A243FF" stop-opacity="0.28"/>
+                <stop offset="50%" stop-color="#6A00FF" stop-opacity="0.12"/>
+                <stop offset="100%" stop-color="transparent" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="60" cy="60" r="50" fill="url(#g)"></circle>
+          </svg>
+        </div>
+        <div class="tagline">NOLA Terminal</div>
+      </div>
+
+      <div class="top-actions">
+        <div id="wallet-info" style="display:none" class="addr-chip" title="Connected address"></div>
+        <button class="connect" id="connectBtn">Connect Wallet</button>
       </div>
     </header>
 
-    <div class="card" id="app">
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <div style="min-width:180px">
-          <label>Chain</label>
-          <select id="chainSelect">
-            <option value="1">Ethereum (Mainnet)</option>
-            <option value="137">Polygon (Mainnet)</option>
-          </select>
-        </div>
-
-        <div style="min-width:200px">
-          <label>Wallet</label>
-          <div class="flex">
-            <button id="mmBtn">Connect MetaMask</button>
-            <button id="wcBtn" class="btn-secondary">Connect WalletConnect</button>
-            <div id="addr" class="muted">Not connected</div>
+    <!-- Main cards -->
+    <main class="main-grid" id="grid">
+      <section class="card portfolio" data-card="portfolio" tabindex="0" aria-labelledby="portfolioTitle">
+        <div class="scan" aria-hidden="true"></div>
+        <h3 id="portfolioTitle">Portfolio Tracker</h3>
+        <div class="subtitle">Track balances across Polygon & Ethereum — premium 3D chart preview.</div>
+        <div class="preview">
+          <div class="mini-chart">Live chart preview</div>
+          <div class="mini-meta">
+            <div>Net worth</div>
+            <div style="font-size:18px;color:#fff">— $0.00</div>
           </div>
         </div>
+      </section>
 
-        <div style="margin-left:auto;min-width:180px">
-          <label>Slippage tolerance</label>
-          <select id="slippage">
-            <option value="0.5">0.5%</option>
-            <option value="1" selected>1%</option>
-            <option value="2">2%</option>
-            <option value="3">3%</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:14px">
-        <div class="row">
-          <div>
-            <label>From token</label>
-            <select id="fromToken"></select>
-            <div class="hint">Enter amount below (decimals supported)</div>
-          </div>
-
-          <div>
-            <label>To token</label>
-            <select id="toToken"></select>
-            <div class="hint">Click <em>Get Quote</em> to check best route</div>
+      <section class="card launch" data-card="launch" tabindex="0" aria-labelledby="launchTitle">
+        <div class="scan" aria-hidden="true"></div>
+        <h3 id="launchTitle">Launch Tools</h3>
+        <div class="subtitle">Token generator • Liquidity locker • Simple vesting UI</div>
+        <div class="preview">
+          <div class="mini-chart">Launch preview</div>
+          <div class="mini-meta">
+            <div>New launches</div>
+            <div style="font-size:18px;color:#fff">— 0</div>
           </div>
         </div>
+      </section>
 
-        <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
-          <div style="flex:1">
-            <label>Amount (From token)</label>
-            <input id="amount" placeholder="e.g. 0.1 or 1" />
+      <section class="card signals" data-card="signals" tabindex="0" aria-labelledby="signalsTitle">
+        <div class="scan" aria-hidden="true"></div>
+        <h3 id="signalsTitle">AI Signals</h3>
+        <div class="subtitle">Whale alerts • Token health scores • Simple AI-driven signals</div>
+        <div class="preview">
+          <div class="mini-chart">Signal radar</div>
+          <div class="mini-meta">
+            <div>Alerts</div>
+            <div style="font-size:18px;color:#fff">— 0</div>
           </div>
-          <div style="width:180px">
-            <label>&nbsp;</label>
-            <button id="quoteBtn">Get Quote</button>
+        </div>
+      </section>
+
+      <section class="card chat" data-card="chat" tabindex="0" aria-labelledby="chatTitle">
+        <div class="scan" aria-hidden="true"></div>
+        <h3 id="chatTitle">Web3 Messenger</h3>
+        <div class="subtitle">Encrypted wallet-to-wallet messaging. Connect and chat with NOLA holders.</div>
+        <div class="preview">
+          <div class="mini-chart">Chats</div>
+          <div class="mini-meta">
+            <div>Members online</div>
+            <div style="font-size:18px;color:#fff">— 0</div>
           </div>
         </div>
+      </section>
+    </main>
 
-        <div class="stats" id="quoteBox" style="display:none">
-          <div class="stat">Estimated receive: <div id="estReceive" style="font-weight:700;margin-top:6px">—</div></div>
-          <div class="stat">Route (hops): <div id="route" style="font-weight:700;margin-top:6px">—</div></div>
-          <div class="stat">Gas (est): <div id="gasEst" style="font-weight:700;margin-top:6px">—</div></div>
-          <div class="stat">1inch Savings: <div id="savings" style="font-weight:700;margin-top:6px">—</div></div>
-        </div>
-
-        <div id="actions" style="margin-top:12px;display:none">
-          <button id="swapBtn">Swap (Sign transaction)</button>
-          <div class="muted" style="margin-top:8px">Transactions must be confirmed in your wallet. Approvals may be required for ERC-20 tokens — the app will request approval automatically if needed.</div>
-        </div>
-
-        <div id="message" style="margin-top:12px"></div>
-      </div>
-
-      <div style="margin-top:12px" class="muted">
-        Notes: This minimal aggregator uses 1inch's public API. For production, use an API key, HTTPS hosting, monitoring and proper rate-limit handling.
-      </div>
-    </div>
-
-    <footer>
-      <div>NOLA DEX — GitHub single-file demo • Chains: Ethereum (1), Polygon (137) • 1inch aggregator</div>
+    <footer style="z-index:6">
+      <div>v0.1 &nbsp; • &nbsp; Docs &middot; Twitter &middot; Website</div>
     </footer>
   </div>
 
-  <script>
-  (function(){
-    // NOLA DEX single-file with WalletConnect + auto-approve flow
-    const chainSelect = document.getElementById('chainSelect');
-    const mmBtn = document.getElementById('mmBtn');
-    const wcBtn = document.getElementById('wcBtn');
-    const addrDiv = document.getElementById('addr');
-    const fromTokenSel = document.getElementById('fromToken');
-    const toTokenSel = document.getElementById('toToken');
-    const amountInput = document.getElementById('amount');
-    const quoteBtn = document.getElementById('quoteBtn');
-    const quoteBox = document.getElementById('quoteBox');
-    const estReceive = document.getElementById('estReceive');
-    const routeEl = document.getElementById('route');
-    const gasEst = document.getElementById('gasEst');
-    const savings = document.getElementById('savings');
-    const actions = document.getElementById('actions');
-    const swapBtn = document.getElementById('swapBtn');
-    const message = document.getElementById('message');
-    const slippage = document.getElementById('slippage');
+<script>
+/* ===========================================================
+   Part 1 — Particles (A: Particle Glow)
+   - Lightweight canvas particle system with purple glow
+   - No external libs
+   =========================================================== */
+(function(){
+  const canvas = document.getElementById('particles');
+  const ctx = canvas.getContext('2d');
+  let W = canvas.width = innerWidth;
+  let H = canvas.height = innerHeight;
+  const particles = [];
+  const COUNT = Math.max(36, Math.floor((W*H)/70000)); // scale with screen
 
-    let provider; // ethers provider
-    let signer;
-    let userAddress = null;
-    let wcProviderInstance = null; // WalletConnect provider instance
-    let chainTokens = {}; // tokens per chain (from 1inch)
+  function rand(min,max){return Math.random()*(max-min)+min}
 
-    const NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'.toLowerCase();
-
-    function showMsg(txt, isError){
-      message.innerHTML = `<div class="${isError ? 'error' : ''}">${txt}</div>`;
+  class P {
+    constructor(){
+      this.reset();
     }
-
-    // Minimal ERC20 ABI for allowance/approve
-    const ERC20_ABI = [
-      "function allowance(address owner, address spender) view returns (uint256)",
-      "function approve(address spender, uint256 amount) returns (bool)",
-      "function decimals() view returns (uint8)",
-      "function symbol() view returns (string)"
-    ];
-
-    // Connect MetaMask
-    async function connectMetaMask(){
-      if(!window.ethereum){
-        showMsg('MetaMask not found. Install MetaMask and reload.', true);
-        return;
-      }
-      try {
-        await window.ethereum.request({ method: 'eth_requestAccounts' });
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        addrDiv.textContent = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
-        mmBtn.textContent = 'MetaMask (Connected)';
-        // if metaMask chain differs, we still let user change chainSelect or ask to switch on swap
-      } catch (e) {
-        showMsg('Wallet connection rejected.', true);
-      }
+    reset(){
+      this.x = rand(0, W);
+      this.y = rand(0, H);
+      this.vx = rand(-0.15, 0.15);
+      this.vy = rand(-0.05, 0.25);
+      this.r = rand(0.6, 2.6);
+      this.life = rand(80, 220);
+      this.alpha = rand(0.06, 0.28);
+      this.h = rand(260, 290); // purple hues
     }
-
-    // Connect WalletConnect
-    async function connectWalletConnect(){
-      try {
-        const WalletConnectProvider = window.WalletConnectProvider.default;
-        // Use public RPC endpoints (for production you should use your own RPC keys / provider)
-        const rpc = {
-          1: "https://rpc.ankr.com/eth", // public RPC fallback
-          137: "https://rpc.ankr.com/polygon"
-        };
-        wcProviderInstance = new WalletConnectProvider({
-          rpc,
-          qrcode: true,
-        });
-
-        await wcProviderInstance.enable();
-        provider = new ethers.providers.Web3Provider(wcProviderInstance);
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        addrDiv.textContent = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
-        wcBtn.textContent = 'WalletConnect (Connected)';
-        // handle disconnect
-        wcProviderInstance.on("disconnect", (code, reason) => {
-          userAddress = null;
-          addrDiv.textContent = 'Not connected';
-          wcBtn.textContent = 'Connect WalletConnect';
-        });
-      } catch (e){
-        console.error(e);
-        showMsg('WalletConnect failed: ' + (e.message || e), true);
-      }
+    step(){
+      this.x += this.vx;
+      this.y += this.vy;
+      this.life--;
+      if(this.life <= 0 || this.x < -20 || this.x > W+20 || this.y > H+40) this.reset();
     }
-
-    async function fetchTokenList(chainId){
-      try {
-        const url = `https://api.1inch.io/v5.0/${chainId}/tokens`;
-        const r = await fetch(url);
-        const data = await r.json();
-        chainTokens[chainId] = data.tokens;
-        return data.tokens;
-      } catch (e){
-        console.error(e);
-        showMsg('Failed to fetch token list from 1inch.', true);
-        return {};
-      }
+    draw(ctx){
+      const g = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.r*12);
+      g.addColorStop(0, `hsla(${this.h},90%,65%,${this.alpha})`);
+      g.addColorStop(0.5, `hsla(${this.h},60%,45%,${this.alpha*0.45})`);
+      g.addColorStop(1, `rgba(106,0,255,0)`);
+      ctx.beginPath();
+      ctx.fillStyle = g;
+      ctx.arc(this.x, this.y, this.r*8, 0, Math.PI*2);
+      ctx.fill();
     }
+  }
 
-    function populateTokenSelects(chainId){
-      const tokensMap = chainTokens[chainId];
-      if(!tokensMap) return;
-      const priority = ['ETH','WETH','USDC','USDT','DAI','MATIC','WMATIC'];
-      const items = Object.values(tokensMap);
-      items.sort((a,b)=>{
-        const ai = priority.indexOf(a.symbol) >=0 ? -1:1;
-        const bi = priority.indexOf(b.symbol) >=0 ? -1:1;
-        if(ai !== bi) return ai - bi;
-        return a.symbol.localeCompare(b.symbol);
-      });
+  function init(){
+    particles.length = 0;
+    for(let i=0;i<COUNT;i++) particles.push(new P());
+  }
 
-      fromTokenSel.innerHTML = '';
-      toTokenSel.innerHTML = '';
-      items.forEach(t=>{
-        const label = `${t.symbol} — ${t.name}`;
-        const opt = document.createElement('option');
-        opt.value = t.address;
-        opt.textContent = label;
-        fromTokenSel.appendChild(opt);
-        const opt2 = opt.cloneNode(true);
-        toTokenSel.appendChild(opt2);
-      });
+  function resize(){
+    W = canvas.width = innerWidth;
+    H = canvas.height = innerHeight;
+    init();
+  }
+  addEventListener('resize', resize);
+  init();
 
-      // choose sane defaults
-      let defFrom = items.find(x=>x.symbol==='ETH' || x.symbol==='WETH') || items[0];
-      let defTo = items.find(x=>x.symbol==='USDC') || items[1] || items[0];
-      fromTokenSel.value = defFrom.address;
-      toTokenSel.value = defTo.address;
+  function loop(){
+    ctx.clearRect(0,0,W,H);
+    // faint global purple haze
+    ctx.fillStyle = 'rgba(7,3,8,0.12)';
+    ctx.fillRect(0,0,W,H);
+    for(const p of particles){ p.step(); p.draw(ctx); }
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+
+/* ===========================================================
+   Part 2 — Parallax & 3D tilt on cards (B: 3D Parallax Cards)
+   - Mousemove parallax + device orientation for mobile
+   =========================================================== */
+(function(){
+  const grid = document.getElementById('grid');
+  const cards = Array.from(document.querySelectorAll('.card'));
+  const strength = 18; // larger -> more tilt
+
+  function applyTilt(e, el){
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width/2;
+    const cy = rect.top + rect.height/2;
+    const dx = (e.clientX - cx) / rect.width;
+    const dy = (e.clientY - cy) / rect.height;
+    const rx = (dy * strength).toFixed(2);
+    const ry = (-dx * strength).toFixed(2);
+    el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(6px)`;
+    el.style.boxShadow = `0 30px 60px rgba(8,3,12,0.6), 0 6px 30px rgba(106,0,255,0.08)`;
+  }
+
+  function resetTilt(el){
+    el.style.transform = 'translateZ(0)';
+    el.style.boxShadow = '';
+  }
+
+  grid.addEventListener('mousemove', (ev)=>{
+    for(const c of cards){
+      applyTilt(ev, c);
     }
+  });
 
-    function humanizeAmount(amount, decimals){
-      try {
-        const bn = ethers.BigNumber.from(amount.toString());
-        const denom = ethers.BigNumber.from(10).pow(decimals);
-        const whole = bn.div(denom).toString();
-        const rem = bn.mod(denom).toString().padStart(decimals,'0').slice(0,6);
-        return `${whole}.${rem}`;
-      } catch (e){
-        return amount;
-      }
-    }
+  grid.addEventListener('mouseleave', ()=>{
+    for(const c of cards) resetTilt(c);
+  });
 
-    async function getQuote(){
-      quoteBox.style.display = 'none';
-      actions.style.display = 'none';
-      showMsg('');
-      const chainId = chainSelect.value;
-      const fromAddr = fromTokenSel.value;
-      const toAddr = toTokenSel.value;
-      const rawAmount = amountInput.value && amountInput.value.trim();
-      if(!rawAmount || isNaN(Number(rawAmount)) || Number(rawAmount) <= 0){
-        showMsg('Enter a valid amount.', true);
-        return;
-      }
-
-      const tokenFrom = chainTokens[chainId][fromAddr];
-      const tokenTo = chainTokens[chainId][toAddr];
-      if(!tokenFrom || !tokenTo){
-        showMsg('Selected tokens not available for this chain.', true);
-        return;
-      }
-
-      let amountInt;
-      try {
-        amountInt = ethers.utils.parseUnits(rawAmount, tokenFrom.decimals).toString();
-      } catch (e) {
-        showMsg('Failed to parse amount with token decimals.', true);
-        return;
-      }
-
-      showMsg('Requesting quote from 1inch...');
-      try {
-        const qUrl = `https://api.1inch.io/v5.0/${chainId}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amountInt}`;
-        const res = await fetch(qUrl);
-        if(!res.ok){
-          const text = await res.text();
-          console.error('quote err', text);
-          showMsg('1inch quote failed. See console for details.', true);
-          return;
-        }
-        const q = await res.json();
-        estReceive.textContent = `${humanizeAmount(q.toTokenAmount, tokenTo.decimals)} ${tokenTo.symbol}`;
-        routeEl.textContent = (q.protocols && q.protocols.length) ? q.protocols.map(r=>r.map(x=>x[0].name || x[0]).join(' > ')).slice(0,3).join(' | ') : '—';
-        gasEst.textContent = (q.estimatedGas ? q.estimatedGas + ' (gas units)' : '—');
-        savings.textContent = '—';
-        quoteBox.style.display = 'flex';
-        actions.style.display = 'block';
-        // Save for swap
-        window._lastQuote = { chainId, fromAddr, toAddr, amountInt, tokenFrom, tokenTo };
-        showMsg('Quote ready. Click Swap to build transaction (approve step will run if needed).');
-      } catch (e){
-        console.error(e);
-        showMsg('Failed to fetch quote from 1inch.', true);
-      }
-    }
-
-    async function doSwap(){
-      message.innerHTML = '';
-      if(!userAddress || !signer){
-        showMsg('Connect your wallet first.', true);
-        return;
-      }
-      const last = window._lastQuote;
-      if(!last){
-        showMsg('Get a quote first.', true);
-        return;
-      }
-      const chainId = last.chainId;
-      const slippagePct = Number(slippage.value);
-      showMsg('Preparing swap via 1inch...');
-      try {
-        const swapUrl = `https://api.1inch.io/v5.0/${chainId}/swap?fromTokenAddress=${last.fromAddr}&toTokenAddress=${last.toAddr}&amount=${last.amountInt}&fromAddress=${userAddress}&slippage=${slippagePct}`;
-        const r = await fetch(swapUrl);
-        if(!r.ok){
-          const text = await r.text();
-          console.error('swap err', text);
-          showMsg('1inch swap failed to prepare transaction. See console for details.', true);
-          return;
-        }
-        const swapRes = await r.json();
-        const tx = swapRes.tx;
-        const allowanceTarget = swapRes.allowanceTarget; // spender for approval
-        if(!tx){
-          showMsg('1inch did not return a transaction object.', true);
-          return;
-        }
-
-        // Make sure user's wallet is on the selected chain (try to switch)
-        const selectedChain = Number(chainId);
-        const currentChain = await provider.getNetwork().then(n=>n.chainId).catch(()=>null);
-        if(currentChain !== selectedChain){
-          try {
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
-              params: [{ chainId: '0x' + selectedChain.toString(16) }]
-            });
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            signer = provider.getSigner();
-          } catch (switchError){
-            if(selectedChain === 137){
-              try {
-                await window.ethereum.request({
-                  method: 'wallet_addEthereumChain',
-                  params: [{
-                    chainId: '0x89',
-                    chainName: 'Polygon Mainnet',
-                    nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
-                    rpcUrls: ['https://rpc-mainnet.maticvigil.com/','https://polygon-rpc.com/'],
-                    blockExplorerUrls: ['https://polygonscan.com/']
-                  }]
-                });
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-              } catch (addErr){
-                showMsg('Please switch your wallet to the correct network and try again.', true);
-                return;
-              }
-            } else {
-              showMsg('Please switch your wallet to the correct network and try again.', true);
-              return;
-            }
-          }
-        }
-
-        // If fromToken is native (ETH / MATIC), no approval needed
-        const isNative = (last.fromAddr.toLowerCase() === NATIVE_ADDRESS);
-        if(!isNative){
-          // check allowance via ERC20 contract
-          showMsg('Checking token allowance...');
-          const tokenContract = new ethers.Contract(last.fromAddr, ERC20_ABI, signer);
-          let allowance = ethers.BigNumber.from('0');
-          try {
-            allowance = await tokenContract.allowance(userAddress, allowanceTarget);
-          } catch (e){
-            console.error('allowance err', e);
-            showMsg('Failed to check allowance. See console.', true);
-            return;
-          }
-          const amountBN = ethers.BigNumber.from(last.amountInt);
-          if(allowance.lt(amountBN)){
-            // Need approval
-            showMsg('Insufficient allowance. Sending approval transaction (you will confirm in wallet)...');
-            try {
-              const txApprove = await tokenContract.approve(allowanceTarget, ethers.constants.MaxUint256);
-              showMsg('Approval submitted. Waiting for confirmation (tx: ' + txApprove.hash + ')');
-              await txApprove.wait();
-              showMsg('Approval confirmed. Proceeding with swap.');
-            } catch (apprErr){
-              console.error('approve err', apprErr);
-              showMsg('Approval failed or rejected by user.', true);
-              return;
-            }
-          } else {
-            showMsg('Sufficient allowance present. Proceeding with swap...');
-          }
-        }
-
-        // Send swap transaction (prepared by 1inch)
-        showMsg('Sending swap transaction to wallet for signing. Confirm in your wallet.');
-        const txRequest = {
-          to: tx.to,
-          data: tx.data,
-          value: tx.value ? ethers.BigNumber.from(tx.value) : undefined,
-          gasLimit: tx.gas ? ethers.BigNumber.from(tx.gas) : undefined,
-          gasPrice: tx.gasPrice ? ethers.BigNumber.from(tx.gasPrice) : undefined
-        };
-
-        const sent = await signer.sendTransaction(txRequest);
-        showMsg('Swap transaction submitted. Hash: ' + sent.hash);
-        sent.wait().then(rcpt=>{
-          showMsg('Swap confirmed in block ' + rcpt.blockNumber);
-        }).catch(e=>{
-          console.warn('wait err', e);
-        });
-
-      } catch (e){
-        console.error(e);
-        showMsg('Swap failed: see console for details.', true);
-      }
-    }
-
-    // UI bindings
-    mmBtn.addEventListener('click', connectMetaMask);
-    wcBtn.addEventListener('click', connectWalletConnect);
-    quoteBtn.addEventListener('click', getQuote);
-    swapBtn.addEventListener('click', doSwap);
-    chainSelect.addEventListener('change', async ()=>{
-      const c = chainSelect.value;
-      await initForChain(c);
+  // mobile device tilt (gyroscope)
+  if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'){
+    // iOS 13+ style permission
+    window.addEventListener('click', function requestGyro(){
+      DeviceOrientationEvent.requestPermission && DeviceOrientationEvent.requestPermission().then(res=>{
+        if(res === 'granted') window.addEventListener('deviceorientation', handleGyro);
+      }).catch(()=>{});
+      window.removeEventListener('click', requestGyro);
     });
+  } else {
+    window.addEventListener('deviceorientation', handleGyro, true);
+  }
 
-    // initialize default chain tokens
-    async function initForChain(chainId){
-      showMsg('Loading tokens for chain ' + chainId + ' ...');
-      if(!chainTokens[chainId]){
-        await fetchTokenList(chainId);
-      }
-      populateTokenSelects(chainId);
-      showMsg('Token list loaded.');
+  function handleGyro(e){
+    const gamma = e.gamma || 0; // left/right [-90,90]
+    const beta = e.beta || 0;   // front/back [-180,180]
+    const rx = (beta/18)*-1; // scale
+    const ry = (gamma/18);
+    for(const el of cards){
+      el.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(6px)`;
     }
+  }
+})();
 
-    (async function(){
-      const defaultChain = chainSelect.value;
-      await initForChain(defaultChain);
-    })();
+/* ===========================================================
+   Part 3 — Hologram scan & micro-interactions (D: Hologram Edges)
+   - Already mostly CSS; enhance tiny sparkles & click feedback
+   =========================================================== */
+(function(){
+  // Tiny occasional sparkles for premium feel
+  const app = document.getElementById('app');
+  function spawnSpark(){
+    const s = document.createElement('div');
+    s.className = 'spark';
+    s.style.left = (Math.random()*80 + 8) + '%';
+    s.style.top = (Math.random()*80 + 8) + '%';
+    s.style.opacity = Math.random()*0.9 + 0.1;
+    const t = 800 + Math.random()*1800;
+    app.appendChild(s);
+    setTimeout(()=> s.style.transform = 'scale(1.8)', 20);
+    setTimeout(()=> s.remove(), t);
+  }
+  setInterval(spawnSpark, 700);
+})();
 
-    // handle account/chain changes (if window.ethereum present)
-    if(window.ethereum){
-      window.ethereum.on && window.ethereum.on('accountsChanged', (accounts)=>{
-        if(accounts.length>0){
-          userAddress = accounts[0];
-          addrDiv.textContent = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
-          mmBtn.textContent = 'MetaMask (Connected)';
-        } else {
-          userAddress = null;
-          addrDiv.textContent = 'Not connected';
-          mmBtn.textContent = 'Connect MetaMask';
-        }
-      });
-      window.ethereum.on && window.ethereum.on('chainChanged', (chainHex)=>{
-        const chainId = parseInt(chainHex,16);
-        if([1,137].includes(chainId)){
-          chainSelect.value = chainId.toString();
-          initForChain(chainId.toString());
-        }
-      });
+/* ===========================================================
+   Part 4 — Wallet connect (MetaMask implemented; WalletConnect stub)
+   - MetaMask: connects and shows short address
+   - WalletConnect: comment shows how to plug in Web3Modal / projectId
+   =========================================================== */
+(function(){
+  const connectBtn = document.getElementById('connectBtn');
+  const walletInfo = document.getElementById('wallet-info');
+
+  async function connectMetaMask(){
+    if(!window.ethereum){
+      alert('MetaMask not detected. Install MetaMask extension or use WalletConnect.');
+      return;
     }
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const addr = accounts[0];
+      walletConnected(addr);
+      // optional: set up chain change and accounts change events
+      window.ethereum.on('accountsChanged', (acc)=> { if(acc && acc[0]) walletConnected(acc[0]); else walletDisconnected(); });
+      window.ethereum.on('chainChanged', ()=> location.reload());
+    } catch(err){
+      console.error('MetaMask connect error', err);
+      alert('MetaMask connection canceled or failed.');
+    }
+  }
 
-    // Clean up on page unload (disconnect WalletConnect)
-    window.addEventListener('beforeunload', async ()=>{
-      if(wcProviderInstance && wcProviderInstance.disconnect){
-        try { await wcProviderInstance.disconnect(); } catch(e){}
-      }
-    });
+  function walletConnected(addr){
+    connectBtn.textContent = 'Connected';
+    walletInfo.style.display = 'inline-flex';
+    walletInfo.textContent = shortAddress(addr);
+    walletInfo.title = addr;
+    connectBtn.disabled = true;
+    connectBtn.style.opacity = 0.9;
+  }
+  function walletDisconnected(){
+    connectBtn.textContent = 'Connect Wallet';
+    connectBtn.disabled = false;
+    walletInfo.style.display = 'none';
+  }
+  function shortAddress(a){
+    return a.slice(0,6) + '…' + a.slice(-4);
+  }
+
+  connectBtn.addEventListener('click', async ()=>{
+    // Show a tiny small choice modal (simple)
+    const choice = confirm('Press OK to connect with MetaMask. Press Cancel to use WalletConnect (needs setup).');
+    if(choice){
+      await connectMetaMask();
+      return;
+    } else {
+      // WalletConnect flow stub: replace with real implementation
+      walletConnectStub();
+    }
+  });
+
+  function walletConnectStub(){
+    // ----
+    // TODO: Replace this stub with WalletConnect v2 or Web3Modal code.
+    // Example approach (recommended):
+    // 1. Install Web3Modal + WalletConnect (npm/yarn) or include scripts.
+    // 2. Create a WalletConnect Provider with your Project ID:
+    //    const wcProvider = new WalletConnectProvider({ projectId: "YOUR_PROJECT_ID", chains: [1,137], showQrModal: true });
+    // 3. await wcProvider.enable();
+    // 4. Get accounts and call walletConnected(account[0]).
+    //
+    // I intentionally do not include a hard dependency here so you can
+    // deploy this static HTML without exposing keys or broken scripts.
+    // ----
+    alert(
+      'WalletConnect is not configured in this demo.\n\n' +
+      'To enable WalletConnect: integrate Web3Modal or WalletConnect SDK and provide your Project ID.\n\n' +
+      'If you want, I can add the Web3Modal integration now (you will need to provide a WalletConnect Project ID).'
+    );
+  }
+
+  // auto-check if already connected (MetaMask)
+  (async function autoCheck(){
+    if(window.ethereum && window.ethereum.selectedAddress){
+      walletConnected(window.ethereum.selectedAddress);
+    } else if(window.ethereum && (await window.ethereum.request({method:'eth_accounts'})).length){
+      const acc = (await window.ethereum.request({method:'eth_accounts'}))[0];
+      walletConnected(acc);
+    }
   })();
-  </script>
+
+})();
+
+/* ===========================================================
+   Extra: Keyboard & accessibility niceties
+   =========================================================== */
+(function(){
+  // Allow keyboard focus tilt (subtle) on card focus
+  const cards = document.querySelectorAll('.card');
+  cards.forEach(c=>{
+    c.addEventListener('focus', ()=> c.style.transform = 'translateZ(6px) scale(1.01)');
+    c.addEventListener('blur', ()=> c.style.transform = '');
+    // click opens a friendly placeholder (later we'll link)
+    c.addEventListener('click', ()=> {
+      const name = c.getAttribute('data-card') || 'module';
+      // small micro-interaction — play with a confirmation
+      const el = document.querySelector('.mini-chart', c);
+      // TODO: replace with actual open module logic
+      alert(`${name.toUpperCase()} module will open here (module building in progress).`);
+    });
+  });
+})();
+</script>
 </body>
 </html>
