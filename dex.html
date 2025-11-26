@@ -1,221 +1,518 @@
-<!DOCTYPE html>
+<!--
+  index.html -- NOLA DEX single-file (Ethereum + Polygon) using 1inch
+  - Place this file in /dex and keep logo.gif alongside it (./logo.gif)
+  - Supports MetaMask + WalletConnect
+  - Auto-approve ERC20 token if allowance is missing (calls approve and waits)
+  - NOTE: Test on small amounts on mainnets first (or use testnets with 1inch test endpoints)
+-->
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOLA Exchange</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NOLA DEX — Swap (Ethereum & Polygon)</title>
+  <style>
+    :root{--accent:#0ea5a4;--bg:#0f172a;--card:#0b1220;color:#e6eef6}
+    html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#071029 0%, #071727 100%);color:var(--card)}
+    .wrap{max-width:980px;margin:28px auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center}
+    header img{width:74px;height:74px;object-fit:contain;border-radius:10px}
+    header h1{font-size:22px;margin:0}
+    .card{background:rgba(255,255,255,0.03);border-radius:12px;padding:18px;margin-top:18px;box-shadow:0 6px 24px rgba(2,6,23,.6)}
+    label{display:block;font-size:12px;margin-bottom:6px;color:#9fb5c1}
+    select,input{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:var(--card);outline:none}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    button{padding:10px 14px;border-radius:10px;border:0;background:var(--accent);color:#022;cursor:pointer;font-weight:600}
+    .muted{font-size:13px;color:#9fb5c1}
+    .hint{font-size:13px;color:#a7c2c1;margin-top:8px}
+    .stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+    .stat{padding:10px;border-radius:8px;background:rgba(0,0,0,0.2);min-width:150px}
+    footer{margin-top:22px;font-size:13px;color:#8fb0b0}
+    .error{color:#ff9b9b}
+    .flex{display:flex;gap:8px;align-items:center}
+    .btn-secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--card);padding:8px 10px;border-radius:8px;cursor:pointer}
+    @media(max-width:640px){.row{grid-template-columns:1fr}}
+    .small{font-size:13px}
+  </style>
 
-<!-- Ethers.js -->
-<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
-
-<!-- WalletConnect v2 -->
-<script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3modal-provider@2.0.13/dist/index.umd.min.js"></script>
-
-<style>
-/* ---------------- RESET ---------------- */
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
-body,html{height:100%;overflow-x:hidden;background:#0a0a0a;color:#fff;perspective:1000px;}
-a{color:#00ffe0;text-decoration:none;}
-a:hover{text-decoration:underline;}
-
-/* ---------------- BACKGROUND ---------------- */
-body{overflow-x:hidden;}
-.bg{position:fixed;width:100%;height:100%;background:linear-gradient(135deg,#0a0a0a,#0f0f1f);overflow:hidden;z-index:-1;}
-.bg span{position:absolute;display:block;width:2px;height:50px;background:#00ffe0;animation:move 20s linear infinite;opacity:0.5;}
-@keyframes move{0%{transform:translateY(-100vh) rotate(0deg);}100%{transform:translateY(100vh) rotate(360deg);}}
-
-/* 3D floating cards */
-.card-container{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;perspective:1000px;}
-.card{background:rgba(255,255,255,0.05);backdrop-filter:blur(15px);border-radius:20px;padding:25px;min-width:250px;max-width:300px;text-align:center;transition:0.3s transform,0.3s box-shadow;transform-style:preserve-3d;box-shadow:0 0 20px rgba(0,255,224,0.2);}
-.card:hover{transform: rotateY(15deg) rotateX(10deg) translateY(-10px);box-shadow:0 0 40px rgba(0,255,224,0.4);}
-.card h2{color:#00ffe0;margin-bottom:10px;}
-.card p{font-size:1.2rem;}
-
-/* ---------------- HEADER ---------------- */
-header{display:flex;align-items:center;padding:20px 40px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
-header img{width:50px;height:50px;margin-right:15px;}
-header h1{font-size:1.8rem;font-weight:700;color:#00ffe0;}
-
-/* ---------------- MAIN ---------------- */
-main{padding:60px 20px;display:flex;flex-direction:column;align-items:center;gap:40px;}
-
-/* Token Search Bar */
-.search-bar{width:100%;max-width:600px;display:flex;gap:10px;}
-.search-bar input{flex:1;padding:15px;border:none;border-radius:10px;font-size:1rem;outline:none;background: rgba(255,255,255,0.05);color:#fff;}
-.search-bar button{padding:15px 25px;border:none;border-radius:10px;background:#00ffe0;color:#000;font-weight:600;cursor:pointer;transition:0.3s;}
-.search-bar button:hover{background:#00bfa5;}
-
-/* Wallet Buttons */
-.wallet-buttons{display:flex;gap:15px;justify-content:center;}
-.wallet-buttons button{padding:12px 20px;border:none;border-radius:12px;font-weight:600;cursor:pointer;transition:0.3s;background:#ff5a5f;color:#fff;}
-.wallet-buttons button:hover{background:#e0484e;}
-
-/* Swap Section */
-.swap-section{display:flex;flex-direction:column;gap:15px;width:100%;max-width:600px;}
-.swap-section select,input{padding:12px;border-radius:10px;border:none;background: rgba(255,255,255,0.05);color:#fff;font-size:1rem;width:100%;}
-.swap-section button{padding:15px;border:none;border-radius:12px;background:#00ffe0;color:#000;font-weight:600;cursor:pointer;transition:0.3s;}
-.swap-section button:hover{background:#00bfa5;}
-
-/* Chart */
-.chart-container{width:90%;max-width:900px;height:450px;border-radius:20px;overflow:hidden;box-shadow:0 0 20px rgba(0,255,224,0.2);}
-
-/* Footer */
-footer{margin-top:60px;padding:30px 20px;background: rgba(0,0,0,0.6);text-align:center;backdrop-filter: blur(10px);color:#aaa;font-size:0.9rem;}
-footer a{color:#00ffe0;margin:0 10px;text-decoration:none;}
-footer a:hover{text-decoration:underline;}
-</style>
+  <!-- Ethers v5 -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <!-- WalletConnect Provider v1 (UMD) -->
+  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.7.8/dist/umd/index.min.js"></script>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <img src="./logo.gif" alt="NOLA logo (put logo.gif here)" onerror="this.onerror=null;this.src='https://via.placeholder.com/74x74?text=NOLA'"/>
+      <div>
+        <h1>NOLA DEX — Swap (Ethereum + Polygon)</h1>
+        <div class="muted">Aggregated swap rates powered by <strong>1inch</strong>. Single-file app for GitHub Pages.</div>
+      </div>
+    </header>
 
-<div class="bg">
-  <span style="left:5%;animation-duration:25s;"></span>
-  <span style="left:15%;animation-duration:20s;"></span>
-  <span style="left:25%;animation-duration:18s;"></span>
-  <span style="left:35%;animation-duration:22s;"></span>
-  <span style="left:45%;animation-duration:19s;"></span>
-  <span style="left:55%;animation-duration:21s;"></span>
-  <span style="left:65%;animation-duration:23s;"></span>
-  <span style="left:75%;animation-duration:17s;"></span>
-  <span style="left:85%;animation-duration:24s;"></span>
-  <span style="left:95%;animation-duration:20s;"></span>
-</div>
+    <div class="card" id="app">
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <div style="min-width:180px">
+          <label>Chain</label>
+          <select id="chainSelect">
+            <option value="1">Ethereum (Mainnet)</option>
+            <option value="137">Polygon (Mainnet)</option>
+          </select>
+        </div>
 
-<header>
-  <img src="nol.png" alt="NOLA Logo">
-  <h1>NOLA Exchange</h1>
-</header>
+        <div style="min-width:200px">
+          <label>Wallet</label>
+          <div class="flex">
+            <button id="mmBtn">Connect MetaMask</button>
+            <button id="wcBtn" class="btn-secondary">Connect WalletConnect</button>
+            <div id="addr" class="muted">Not connected</div>
+          </div>
+        </div>
 
-<main>
-  <div class="wallet-buttons">
-    <button id="connectWalletBtn">Connect Wallet</button>
-  </div>
+        <div style="margin-left:auto;min-width:180px">
+          <label>Slippage tolerance</label>
+          <select id="slippage">
+            <option value="0.5">0.5%</option>
+            <option value="1" selected>1%</option>
+            <option value="2">2%</option>
+            <option value="3">3%</option>
+          </select>
+        </div>
+      </div>
 
-  <div class="search-bar">
-    <input id="tokenSearch" type="text" placeholder="Search token (Polygon)">
-    <button id="searchBtn">Search</button>
-  </div>
+      <div class="card" style="margin-top:14px">
+        <div class="row">
+          <div>
+            <label>From token</label>
+            <select id="fromToken"></select>
+            <div class="hint">Enter amount below (decimals supported)</div>
+          </div>
 
-  <div class="card-container" id="cards">
-    <div class="card">
-      <h2>Best Rate</h2>
-      <p id="bestRate">Select token</p>
+          <div>
+            <label>To token</label>
+            <select id="toToken"></select>
+            <div class="hint">Click <em>Get Quote</em> to check best route</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:12px;align-items:center">
+          <div style="flex:1">
+            <label>Amount (From token)</label>
+            <input id="amount" placeholder="e.g. 0.1 or 1" />
+          </div>
+          <div style="width:180px">
+            <label>&nbsp;</label>
+            <button id="quoteBtn">Get Quote</button>
+          </div>
+        </div>
+
+        <div class="stats" id="quoteBox" style="display:none">
+          <div class="stat">Estimated receive: <div id="estReceive" style="font-weight:700;margin-top:6px">—</div></div>
+          <div class="stat">Route (hops): <div id="route" style="font-weight:700;margin-top:6px">—</div></div>
+          <div class="stat">Gas (est): <div id="gasEst" style="font-weight:700;margin-top:6px">—</div></div>
+          <div class="stat">1inch Savings: <div id="savings" style="font-weight:700;margin-top:6px">—</div></div>
+        </div>
+
+        <div id="actions" style="margin-top:12px;display:none">
+          <button id="swapBtn">Swap (Sign transaction)</button>
+          <div class="muted" style="margin-top:8px">Transactions must be confirmed in your wallet. Approvals may be required for ERC-20 tokens — the app will request approval automatically if needed.</div>
+        </div>
+
+        <div id="message" style="margin-top:12px"></div>
+      </div>
+
+      <div style="margin-top:12px" class="muted">
+        Notes: This minimal aggregator uses 1inch's public API. For production, use an API key, HTTPS hosting, monitoring and proper rate-limit handling.
+      </div>
     </div>
-    <div class="card">
-      <h2>DEX Source</h2>
-      <p id="dexSource">-</p>
-    </div>
-    <div class="card">
-      <h2>Swap</h2>
-      <p>Fast & Low Gas</p>
-    </div>
+
+    <footer>
+      <div>NOLA DEX — GitHub single-file demo • Chains: Ethereum (1), Polygon (137) • 1inch aggregator</div>
+    </footer>
   </div>
 
-  <div class="swap-section">
-    <select id="fromToken">
-      <option value="">Select From Token</option>
-    </select>
-    <select id="toToken">
-      <option value="">Select To Token</option>
-    </select>
-    <input type="number" id="amount" placeholder="Amount">
-    <button id="swapBtn">Swap</button>
-  </div>
+  <script>
+  (function(){
+    // NOLA DEX single-file with WalletConnect + auto-approve flow
+    const chainSelect = document.getElementById('chainSelect');
+    const mmBtn = document.getElementById('mmBtn');
+    const wcBtn = document.getElementById('wcBtn');
+    const addrDiv = document.getElementById('addr');
+    const fromTokenSel = document.getElementById('fromToken');
+    const toTokenSel = document.getElementById('toToken');
+    const amountInput = document.getElementById('amount');
+    const quoteBtn = document.getElementById('quoteBtn');
+    const quoteBox = document.getElementById('quoteBox');
+    const estReceive = document.getElementById('estReceive');
+    const routeEl = document.getElementById('route');
+    const gasEst = document.getElementById('gasEst');
+    const savings = document.getElementById('savings');
+    const actions = document.getElementById('actions');
+    const swapBtn = document.getElementById('swapBtn');
+    const message = document.getElementById('message');
+    const slippage = document.getElementById('slippage');
 
-  <div class="chart-container">
-    <iframe src="https://www.coingecko.com/en/coins/polygon" width="100%" height="100%" frameborder="0" style="border:none;"></iframe>
-  </div>
-</main>
+    let provider; // ethers provider
+    let signer;
+    let userAddress = null;
+    let wcProviderInstance = null; // WalletConnect provider instance
+    let chainTokens = {}; // tokens per chain (from 1inch)
 
-<footer>
-  <p>© 2025 NOLA Exchange. All rights reserved.</p>
-  <p>
-    <a href="#">Twitter</a> | 
-    <a href="#">Telegram</a> | 
-    <a href="#">GitBook</a>
-  </p>
-</footer>
+    const NATIVE_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'.toLowerCase();
 
-<script>
-// ---------------------- Wallet Connection ----------------------
-let provider, signer, userAddress;
-
-async function connectWallet() {
-  // MetaMask (desktop/mobile)
-  if (window.ethereum) {
-    try {
-      provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
-      signer = await provider.getSigner();
-      userAddress = accounts[0];
-      alert(`MetaMask connected: ${userAddress}`);
-      return;
-    } catch (err) {
-      console.error(err);
+    function showMsg(txt, isError){
+      message.innerHTML = `<div class="${isError ? 'error' : ''}">${txt}</div>`;
     }
-  }
 
-  // WalletConnect v2
-  const WalletConnectProvider = window.WalletConnectProvider.default;
-  const wcProvider = new WalletConnectProvider({
-    projectId: "6557a92e3698182727669d41cbeb95a1",
-    chains: [137]
-  });
-  try {
-    await wcProvider.enable();
-    provider = new ethers.BrowserProvider(wcProvider);
-    signer = await provider.getSigner();
-    userAddress = await signer.getAddress();
-    alert(`WalletConnect connected: ${userAddress}`);
-  } catch (err) {
-    console.error(err);
-    alert("Connection failed!");
-  }
-}
+    // Minimal ERC20 ABI for allowance/approve
+    const ERC20_ABI = [
+      "function allowance(address owner, address spender) view returns (uint256)",
+      "function approve(address spender, uint256 amount) returns (bool)",
+      "function decimals() view returns (uint8)",
+      "function symbol() view returns (string)"
+    ];
 
-document.getElementById('connectWalletBtn').addEventListener('click', connectWallet);
+    // Connect MetaMask
+    async function connectMetaMask(){
+      if(!window.ethereum){
+        showMsg('MetaMask not found. Install MetaMask and reload.', true);
+        return;
+      }
+      try {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        addrDiv.textContent = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
+        mmBtn.textContent = 'MetaMask (Connected)';
+        // if metaMask chain differs, we still let user change chainSelect or ask to switch on swap
+      } catch (e) {
+        showMsg('Wallet connection rejected.', true);
+      }
+    }
 
-// ---------------------- Token List ----------------------
-let tokens = [];
-async function loadTokens(){
-  const res = await fetch('https://tokens.coingecko.com/polygon/all.json');
-  const data = await res.json();
-  tokens = data.tokens;
-  const fromSelect = document.getElementById('fromToken');
-  const toSelect = document.getElementById('toToken');
-  tokens.forEach(t=>{
-    const opt1 = document.createElement('option');
-    opt1.value = t.address;
-    opt1.textContent = `${t.symbol} - ${t.name}`;
-    fromSelect.appendChild(opt1);
-    const opt2 = document.createElement('option');
-    opt2.value = t.address;
-    opt2.textContent = `${t.symbol} - ${t.name}`;
-    toSelect.appendChild(opt2);
-  });
-}
-loadTokens();
+    // Connect WalletConnect
+    async function connectWalletConnect(){
+      try {
+        const WalletConnectProvider = window.WalletConnectProvider.default;
+        // Use public RPC endpoints (for production you should use your own RPC keys / provider)
+        const rpc = {
+          1: "https://rpc.ankr.com/eth", // public RPC fallback
+          137: "https://rpc.ankr.com/polygon"
+        };
+        wcProviderInstance = new WalletConnectProvider({
+          rpc,
+          qrcode: true,
+        });
 
-// ---------------------- Token Search ----------------------
-document.getElementById('searchBtn').addEventListener('click',()=>{
-  const val = document.getElementById('tokenSearch').value.toUpperCase();
-  const found = tokens.find(t=>t.symbol.toUpperCase()===val || t.name.toUpperCase()===val);
-  if(found){
-    document.getElementById('bestRate').textContent = `1 ${found.symbol} = ?`;
-    document.getElementById('dexSource').textContent = "Best route via 1inch API";
-  }else{
-    alert("Token not found on Polygon list!");
-  }
-});
+        await wcProviderInstance.enable();
+        provider = new ethers.providers.Web3Provider(wcProviderInstance);
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        addrDiv.textContent = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
+        wcBtn.textContent = 'WalletConnect (Connected)';
+        // handle disconnect
+        wcProviderInstance.on("disconnect", (code, reason) => {
+          userAddress = null;
+          addrDiv.textContent = 'Not connected';
+          wcBtn.textContent = 'Connect WalletConnect';
+        });
+      } catch (e){
+        console.error(e);
+        showMsg('WalletConnect failed: ' + (e.message || e), true);
+      }
+    }
 
-// ---------------------- Swap (Demo) ----------------------
-document.getElementById('swapBtn').addEventListener('click',async()=>{
-  if(!userAddress){alert("Connect wallet first!"); return;}
-  const from = document.getElementById('fromToken').value;
-  const to = document.getElementById('toToken').value;
-  const amount = document.getElementById('amount').value;
-  if(!from||!to||!amount){alert("Fill all swap fields"); return;}
-  alert(`Swap ${amount} from ${from} to ${to} (demo). Transaction will open in wallet in real app.`);
-});
-</script>
+    async function fetchTokenList(chainId){
+      try {
+        const url = `https://api.1inch.io/v5.0/${chainId}/tokens`;
+        const r = await fetch(url);
+        const data = await r.json();
+        chainTokens[chainId] = data.tokens;
+        return data.tokens;
+      } catch (e){
+        console.error(e);
+        showMsg('Failed to fetch token list from 1inch.', true);
+        return {};
+      }
+    }
+
+    function populateTokenSelects(chainId){
+      const tokensMap = chainTokens[chainId];
+      if(!tokensMap) return;
+      const priority = ['ETH','WETH','USDC','USDT','DAI','MATIC','WMATIC'];
+      const items = Object.values(tokensMap);
+      items.sort((a,b)=>{
+        const ai = priority.indexOf(a.symbol) >=0 ? -1:1;
+        const bi = priority.indexOf(b.symbol) >=0 ? -1:1;
+        if(ai !== bi) return ai - bi;
+        return a.symbol.localeCompare(b.symbol);
+      });
+
+      fromTokenSel.innerHTML = '';
+      toTokenSel.innerHTML = '';
+      items.forEach(t=>{
+        const label = `${t.symbol} — ${t.name}`;
+        const opt = document.createElement('option');
+        opt.value = t.address;
+        opt.textContent = label;
+        fromTokenSel.appendChild(opt);
+        const opt2 = opt.cloneNode(true);
+        toTokenSel.appendChild(opt2);
+      });
+
+      // choose sane defaults
+      let defFrom = items.find(x=>x.symbol==='ETH' || x.symbol==='WETH') || items[0];
+      let defTo = items.find(x=>x.symbol==='USDC') || items[1] || items[0];
+      fromTokenSel.value = defFrom.address;
+      toTokenSel.value = defTo.address;
+    }
+
+    function humanizeAmount(amount, decimals){
+      try {
+        const bn = ethers.BigNumber.from(amount.toString());
+        const denom = ethers.BigNumber.from(10).pow(decimals);
+        const whole = bn.div(denom).toString();
+        const rem = bn.mod(denom).toString().padStart(decimals,'0').slice(0,6);
+        return `${whole}.${rem}`;
+      } catch (e){
+        return amount;
+      }
+    }
+
+    async function getQuote(){
+      quoteBox.style.display = 'none';
+      actions.style.display = 'none';
+      showMsg('');
+      const chainId = chainSelect.value;
+      const fromAddr = fromTokenSel.value;
+      const toAddr = toTokenSel.value;
+      const rawAmount = amountInput.value && amountInput.value.trim();
+      if(!rawAmount || isNaN(Number(rawAmount)) || Number(rawAmount) <= 0){
+        showMsg('Enter a valid amount.', true);
+        return;
+      }
+
+      const tokenFrom = chainTokens[chainId][fromAddr];
+      const tokenTo = chainTokens[chainId][toAddr];
+      if(!tokenFrom || !tokenTo){
+        showMsg('Selected tokens not available for this chain.', true);
+        return;
+      }
+
+      let amountInt;
+      try {
+        amountInt = ethers.utils.parseUnits(rawAmount, tokenFrom.decimals).toString();
+      } catch (e) {
+        showMsg('Failed to parse amount with token decimals.', true);
+        return;
+      }
+
+      showMsg('Requesting quote from 1inch...');
+      try {
+        const qUrl = `https://api.1inch.io/v5.0/${chainId}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amountInt}`;
+        const res = await fetch(qUrl);
+        if(!res.ok){
+          const text = await res.text();
+          console.error('quote err', text);
+          showMsg('1inch quote failed. See console for details.', true);
+          return;
+        }
+        const q = await res.json();
+        estReceive.textContent = `${humanizeAmount(q.toTokenAmount, tokenTo.decimals)} ${tokenTo.symbol}`;
+        routeEl.textContent = (q.protocols && q.protocols.length) ? q.protocols.map(r=>r.map(x=>x[0].name || x[0]).join(' > ')).slice(0,3).join(' | ') : '—';
+        gasEst.textContent = (q.estimatedGas ? q.estimatedGas + ' (gas units)' : '—');
+        savings.textContent = '—';
+        quoteBox.style.display = 'flex';
+        actions.style.display = 'block';
+        // Save for swap
+        window._lastQuote = { chainId, fromAddr, toAddr, amountInt, tokenFrom, tokenTo };
+        showMsg('Quote ready. Click Swap to build transaction (approve step will run if needed).');
+      } catch (e){
+        console.error(e);
+        showMsg('Failed to fetch quote from 1inch.', true);
+      }
+    }
+
+    async function doSwap(){
+      message.innerHTML = '';
+      if(!userAddress || !signer){
+        showMsg('Connect your wallet first.', true);
+        return;
+      }
+      const last = window._lastQuote;
+      if(!last){
+        showMsg('Get a quote first.', true);
+        return;
+      }
+      const chainId = last.chainId;
+      const slippagePct = Number(slippage.value);
+      showMsg('Preparing swap via 1inch...');
+      try {
+        const swapUrl = `https://api.1inch.io/v5.0/${chainId}/swap?fromTokenAddress=${last.fromAddr}&toTokenAddress=${last.toAddr}&amount=${last.amountInt}&fromAddress=${userAddress}&slippage=${slippagePct}`;
+        const r = await fetch(swapUrl);
+        if(!r.ok){
+          const text = await r.text();
+          console.error('swap err', text);
+          showMsg('1inch swap failed to prepare transaction. See console for details.', true);
+          return;
+        }
+        const swapRes = await r.json();
+        const tx = swapRes.tx;
+        const allowanceTarget = swapRes.allowanceTarget; // spender for approval
+        if(!tx){
+          showMsg('1inch did not return a transaction object.', true);
+          return;
+        }
+
+        // Make sure user's wallet is on the selected chain (try to switch)
+        const selectedChain = Number(chainId);
+        const currentChain = await provider.getNetwork().then(n=>n.chainId).catch(()=>null);
+        if(currentChain !== selectedChain){
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: '0x' + selectedChain.toString(16) }]
+            });
+            provider = new ethers.providers.Web3Provider(window.ethereum);
+            signer = provider.getSigner();
+          } catch (switchError){
+            if(selectedChain === 137){
+              try {
+                await window.ethereum.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: '0x89',
+                    chainName: 'Polygon Mainnet',
+                    nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+                    rpcUrls: ['https://rpc-mainnet.maticvigil.com/','https://polygon-rpc.com/'],
+                    blockExplorerUrls: ['https://polygonscan.com/']
+                  }]
+                });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+              } catch (addErr){
+                showMsg('Please switch your wallet to the correct network and try again.', true);
+                return;
+              }
+            } else {
+              showMsg('Please switch your wallet to the correct network and try again.', true);
+              return;
+            }
+          }
+        }
+
+        // If fromToken is native (ETH / MATIC), no approval needed
+        const isNative = (last.fromAddr.toLowerCase() === NATIVE_ADDRESS);
+        if(!isNative){
+          // check allowance via ERC20 contract
+          showMsg('Checking token allowance...');
+          const tokenContract = new ethers.Contract(last.fromAddr, ERC20_ABI, signer);
+          let allowance = ethers.BigNumber.from('0');
+          try {
+            allowance = await tokenContract.allowance(userAddress, allowanceTarget);
+          } catch (e){
+            console.error('allowance err', e);
+            showMsg('Failed to check allowance. See console.', true);
+            return;
+          }
+          const amountBN = ethers.BigNumber.from(last.amountInt);
+          if(allowance.lt(amountBN)){
+            // Need approval
+            showMsg('Insufficient allowance. Sending approval transaction (you will confirm in wallet)...');
+            try {
+              const txApprove = await tokenContract.approve(allowanceTarget, ethers.constants.MaxUint256);
+              showMsg('Approval submitted. Waiting for confirmation (tx: ' + txApprove.hash + ')');
+              await txApprove.wait();
+              showMsg('Approval confirmed. Proceeding with swap.');
+            } catch (apprErr){
+              console.error('approve err', apprErr);
+              showMsg('Approval failed or rejected by user.', true);
+              return;
+            }
+          } else {
+            showMsg('Sufficient allowance present. Proceeding with swap...');
+          }
+        }
+
+        // Send swap transaction (prepared by 1inch)
+        showMsg('Sending swap transaction to wallet for signing. Confirm in your wallet.');
+        const txRequest = {
+          to: tx.to,
+          data: tx.data,
+          value: tx.value ? ethers.BigNumber.from(tx.value) : undefined,
+          gasLimit: tx.gas ? ethers.BigNumber.from(tx.gas) : undefined,
+          gasPrice: tx.gasPrice ? ethers.BigNumber.from(tx.gasPrice) : undefined
+        };
+
+        const sent = await signer.sendTransaction(txRequest);
+        showMsg('Swap transaction submitted. Hash: ' + sent.hash);
+        sent.wait().then(rcpt=>{
+          showMsg('Swap confirmed in block ' + rcpt.blockNumber);
+        }).catch(e=>{
+          console.warn('wait err', e);
+        });
+
+      } catch (e){
+        console.error(e);
+        showMsg('Swap failed: see console for details.', true);
+      }
+    }
+
+    // UI bindings
+    mmBtn.addEventListener('click', connectMetaMask);
+    wcBtn.addEventListener('click', connectWalletConnect);
+    quoteBtn.addEventListener('click', getQuote);
+    swapBtn.addEventListener('click', doSwap);
+    chainSelect.addEventListener('change', async ()=>{
+      const c = chainSelect.value;
+      await initForChain(c);
+    });
+
+    // initialize default chain tokens
+    async function initForChain(chainId){
+      showMsg('Loading tokens for chain ' + chainId + ' ...');
+      if(!chainTokens[chainId]){
+        await fetchTokenList(chainId);
+      }
+      populateTokenSelects(chainId);
+      showMsg('Token list loaded.');
+    }
+
+    (async function(){
+      const defaultChain = chainSelect.value;
+      await initForChain(defaultChain);
+    })();
+
+    // handle account/chain changes (if window.ethereum present)
+    if(window.ethereum){
+      window.ethereum.on && window.ethereum.on('accountsChanged', (accounts)=>{
+        if(accounts.length>0){
+          userAddress = accounts[0];
+          addrDiv.textContent = userAddress.slice(0,6) + '…' + userAddress.slice(-4);
+          mmBtn.textContent = 'MetaMask (Connected)';
+        } else {
+          userAddress = null;
+          addrDiv.textContent = 'Not connected';
+          mmBtn.textContent = 'Connect MetaMask';
+        }
+      });
+      window.ethereum.on && window.ethereum.on('chainChanged', (chainHex)=>{
+        const chainId = parseInt(chainHex,16);
+        if([1,137].includes(chainId)){
+          chainSelect.value = chainId.toString();
+          initForChain(chainId.toString());
+        }
+      });
+    }
+
+    // Clean up on page unload (disconnect WalletConnect)
+    window.addEventListener('beforeunload', async ()=>{
+      if(wcProviderInstance && wcProviderInstance.disconnect){
+        try { await wcProviderInstance.disconnect(); } catch(e){}
+      }
+    });
+  })();
+  </script>
 </body>
 </html>
