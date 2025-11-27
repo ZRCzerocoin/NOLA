@@ -42,19 +42,14 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* UNIFIED ROW */
 .input-box{margin-top:14px;padding:12px;background:rgba(255,255,255,0.04);border-radius:14px;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.06)}
 .input-box .left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.token-icon{width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0}
-.token-icon img{width:100%;height:100%;object-fit:cover;display:block}
-.token-symbol{font-weight:800;font-size:16px;color:#fff;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;max-width:160px}
+.token-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.04)}
+.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.token-chip{position:absolute;right:-6px;bottom:-6px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:4px 8px;border-radius:999px;font-weight:800;font-size:11px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px)}
+.input-box.has-token .token-chip{display:inline-flex}
 
-/* SELECTED TOKEN CHIP APPEARANCE */
-.input-box.has-token .token-symbol{
-  display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 8px 26px rgba(180,68,255,0.12),inset 0 -6px 12px rgba(0,0,0,0.08);font-size:14px
-}
-.input-box.has-token .token-symbol::before{
-  content:'';display:inline-block;width:18px;height:18px;margin-right:8px;border-radius:6px;background:#fff;opacity:0.08;vertical-align:middle;background-image:var(--token-icon-bg);background-size:cover;background-position:center
-}
-
-/* INPUT AMOUNT */
+/* INPUT BLOCK (single visible text input per row) */
+.input-field{display:flex;flex-direction:column;min-width:0;width:100%}
+.input-field input[type="text"]{padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:15px}
 .input-amount{margin-left:8px;min-width:120px}
 .input-amount input{width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none}
 
@@ -66,7 +61,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 .suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
 .suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
 .suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
-.suggestion-left img{width:28px;height:28px;border-radius:8px;object-fit:cover}
+.suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
 .suggestion-main{display:flex;flex-direction:column;min-width:0}
 .suggestion-symbol{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .suggestion-name{font-size:12px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -84,11 +79,24 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 .slippage{appearance:none;padding:8px 12px;border-radius:10px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:none;font-weight:700;box-shadow:0 8px 20px rgba(180,68,255,0.08);cursor:pointer}
 #customSlippage{padding:8px 10px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;display:none;width:90px}
 
-/* SWAP BUTTON THEME */
-.btn{padding:14px;border:none;border-radius:20px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;font-size:18px;cursor:pointer;font-weight:800;box-shadow:0 12px 36px rgba(180,68,255,0.18);transition:transform 140ms ease,box-shadow 140ms ease}
-.btn:hover{transform:translateY(-4px);box-shadow:0 22px 46px rgba(180,68,255,0.24)}
-.btn:active{transform:translateY(-1px) scale(.995);box-shadow:0 12px 36px rgba(180,68,255,0.18)}
-.btn:disabled{opacity:.6;cursor:not-allowed;transform:none;box-shadow:0 6px 18px rgba(0,0,0,0.15)}
+/* ELECTRIC PILL SWAP BUTTON (replaces old .btn visually) */
+.electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
+.electric-pill{
+  position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 26px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 12px 36px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:15px;border:none;outline:none;overflow:hidden;
+  transition:transform 140ms ease,box-shadow 140ms ease;
+}
+.electric-pill:active{transform:translateY(-1px) scale(.997)}
+.electric-pill .sweep{position:absolute;left:-30%;top:-10%;width:40%;height:120%;background:linear-gradient(90deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(10px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
+@keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
+.electric-pill .label{position:relative;z-index:2;pointer-events:none}
+.electric-pill .icon{
+  width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,0.08);display:inline-flex;align-items:center;justify-content:center;font-weight:900;z-index:2;
+  box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18);
+}
+
+/* SMALLER variant for the container's swap appearance */
+.swap-row{display:flex;gap:12px}
+.swap-row .electric-btn{flex:1}
 
 /* TOP-RIGHT CONNECT */
 .top-right-connect{position:fixed;right:18px;top:18px;z-index:70;display:flex;gap:10px;align-items:center}
@@ -104,8 +112,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   .section-wrapper{padding:18px;gap:12px;flex-direction:column-reverse}
   .swap-outside{transform:none}
   .container{width:100%;max-width:520px}
-  .input-box .token-symbol{max-width:120px;font-size:14px}
-  .input-box.has-token .token-symbol{padding:6px 8px;font-size:13px}
+  .input-box .token-chip{font-size:10px;padding:3px 6px;right:-4px;bottom:-4px}
   .logo{top:12vh;width:88px}
 }
 </style>
@@ -132,12 +139,12 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
     <!-- FROM -->
     <div class="input-box" id="fromBox" style="position:relative;">
       <div class="left">
-        <div class="token-icon" id="fromIcon"><img id="fromLogo" src="" alt="" style="display:none"></div>
-        <div style="display:flex;flex-direction:column;min-width:0;">
-          <div class="token-symbol" id="fromSymbol">From</div>
-          <div style="margin-top:6px;">
-            <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
-          </div>
+        <div class="token-icon" id="fromIcon">
+          <img id="fromLogo" src="" alt="" style="display:none">
+          <span class="token-chip" id="fromChip" style="display:none">---</span>
+        </div>
+        <div class="input-field">
+          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
         </div>
         <div class="input-amount" style="min-width:120px;">
           <input id="fromAmount" placeholder="Amount" type="number" step="any">
@@ -150,12 +157,12 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
     <!-- TO -->
     <div class="input-box" id="toBox" style="position:relative;margin-top:12px;">
       <div class="left">
-        <div class="token-icon" id="toIcon"><img id="toLogo" src="" alt="" style="display:none"></div>
-        <div style="display:flex;flex-direction:column;min-width:0">
-          <div class="token-symbol" id="toSymbol">To</div>
-          <div style="margin-top:6px;">
-            <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
-          </div>
+        <div class="token-icon" id="toIcon">
+          <img id="toLogo" src="" alt="" style="display:none">
+          <span class="token-chip" id="toChip" style="display:none">---</span>
+        </div>
+        <div class="input-field">
+          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
         </div>
         <div class="input-amount" style="min-width:120px;">
           <input id="toAmount" placeholder="Estimate" readonly>
@@ -174,7 +181,14 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
     </div>
 
     <div class="swap-row" style="margin-top:14px">
-      <button id="swapBtn" class="btn" style="flex:1">Swap</button>
+      <!-- new electric pill swap button (id kept as swapBtn) -->
+      <button id="swapBtn" class="electric-btn" title="Swap">
+        <span class="electric-pill" role="button" aria-pressed="false">
+          <span class="sweep" aria-hidden="true"></span>
+          <span class="icon">⇄</span>
+          <span class="label">Swap</span>
+        </span>
+      </button>
     </div>
   </div>
 </div>
@@ -201,9 +215,9 @@ const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPC = "https://polygon-rpc.com";
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619'; // wrapped ether on Polygon
+const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1"; // example
+const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1";
 
 let tokenList = [];
 let tokenMap = new Map();
@@ -221,7 +235,7 @@ const fromTokenInput = $('fromToken'), toTokenInput = $('toToken');
 const fromAmountEl = $('fromAmount'), toAmountEl = $('toAmount');
 const fromUsd = $('fromUsd'), toUsd = $('toUsd');
 const fromLogo = $('fromLogo'), toLogo = $('toLogo');
-const fromSymbol = $('fromSymbol'), toSymbol = $('toSymbol');
+const fromChip = $('fromChip'), toChip = $('toChip');
 const fromSuggestions = $('fromSuggestions'), toSuggestions = $('toSuggestions');
 const swapOutside = $('swapOutside'), swapBtn = $('swapBtn');
 const fromBox = $('fromBox'), toBox = $('toBox');
@@ -369,34 +383,27 @@ async function getTokenPriceUSD(address, decimals=18){
   const addr = low(address);
   const cached = priceCache.get(addr);
   if (cached && (nowTs() - cached.ts) < PRICE_TTL) {
-    // filter out suspicious cached values (zero or extremely tiny)
     if (cached.price === null || cached.price === 0 || (Math.abs(cached.price) < 1e-18 && cached.price !== null)) {
-      // fall through to refresh
     } else {
       return cached.price;
     }
   }
 
-  // Try sources in preferred order, with safe checks
-  // 1) 1inch quote direct -> USDC
   try {
     const p1 = await fetch1InchQuotePrice(addr, decimals);
     if (p1 && Number.isFinite(p1) && p1 > 0) { priceCache.set(addr, {price:p1, ts:nowTs()}); return p1; }
   } catch(_) {}
 
-  // 2) CoinGecko contract endpoint
   try {
     const cg = await fetchCoingeckoContractPrice(addr);
     if (cg && cg.price && Number.isFinite(cg.price) && cg.price > 0) { priceCache.set(addr, {price:cg.price, ts:nowTs()}); return cg.price; }
   } catch(_) {}
 
-  // 3) CoinGecko simple token price endpoint
   try {
     const v = await fetchCoingeckoSimple(addr);
     if (v && Number.isFinite(v) && v > 0) { priceCache.set(addr, {price:v, ts:nowTs()}); return v; }
   } catch(_) {}
 
-  // 4) Try CoinGecko markets cache by symbol/name
   try {
     const t = tokenMap.get(addr);
     if (t && t.symbol){
@@ -405,29 +412,26 @@ async function getTokenPriceUSD(address, decimals=18){
     }
   } catch(_) {}
 
-  // 5) Dexscreener
   try {
     const d = await fetchDexscreenerPrice(addr);
     if (d && Number.isFinite(d) && d > 0) { priceCache.set(addr, {price:d, ts:nowTs()}); return d; }
   } catch(_) {}
 
-  // 6) Try derived via WETH route
   try {
     const derived = await derivePriceViaWeth(addr, decimals);
     if (derived && Number.isFinite(derived) && derived > 0) { priceCache.set(addr, {price:derived, ts:nowTs()}); return derived; }
   } catch(_) {}
 
-  // final fallback: mark null and return
   priceCache.set(addr, {price:null, ts:nowTs()});
   return null;
 }
 
-/* ================= SUGGESTION UI & PRIORITIZATION (CG 24h/12h first) */
+/* ================= SUGGESTION UI & PRIORITIZATION */
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
   const img = document.createElement('img'); img.src = tokenObj.logoURI || (stats && stats.image) || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
-  img.style.width='28px'; img.style.height='28px'; img.style.borderRadius='8px';
+  img.style.width='28px'; img.style.height='28px'; img.style.borderRadius='50%';
   left.appendChild(img);
   const main = document.createElement('div'); main.className='suggestion-main';
   const sym = document.createElement('div'); sym.className='suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address?tokenObj.address.slice(0,6):'');
@@ -460,17 +464,18 @@ function showDefaultList(side){
       const tk = e.t, stats = e.stat;
       const price = stats.price ?? await getTokenPriceUSD(tk.address, tk.decimals);
       const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || stats.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection((side==='from')?'from':'to', tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
+      node.addEventListener('click', ()=>{ applyTokenSelection((side==='from')?'from':'to', tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd((side==='from')?fromTokenInput:toTokenInput); });
       box.appendChild(node);
     }
     box.style.display = top.length ? 'block' : 'none';
   })();
 }
 
+/* AUTOCOMPLETE SETUP */
 function setupAutocomplete(inputEl, boxEl, side){
   let timer = null;
   inputEl.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(inputEl.value.trim().toLowerCase()), 140); });
-  inputEl.addEventListener('focus', ()=> { const q = inputEl.value.trim().toLowerCase(); if (!q) showDefaultList(side); else handle(q); });
+  inputEl.addEventListener('focus', ()=> { const q = inputEl.value.trim().toLowerCase(); if (!q) showDefaultList(side); else handle(q); placeCaretAtEnd(inputEl); });
   inputEl.addEventListener('blur', ()=> setTimeout(()=> { boxEl.style.display='none'; }, 160));
 
   async function handle(q){
@@ -482,7 +487,7 @@ function setupAutocomplete(inputEl, boxEl, side){
         const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
         const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
         const node = makeSuggestionItem(info, {change24h: stat?.change24h ?? null, image: info.logoURI}, price);
-        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
+        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
         boxEl.appendChild(node); boxEl.style.display='block';
       }
       return;
@@ -524,7 +529,7 @@ function setupAutocomplete(inputEl, boxEl, side){
       (async ()=>{
         const price = (s.stats && s.stats.price) ? s.stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
         const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || ''}, price);
-        node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
+        node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
         boxEl.appendChild(node);
       })();
     }
@@ -540,7 +545,7 @@ function renderSuggestionsFromCache(q, side, box){
       const stats = cgStatsMap.get(low(tk.symbol)) || cgStatsMap.get(low(tk.name)) || null;
       const price = await getTokenPriceUSD(tk.address, tk.decimals || 18);
       const node = makeSuggestionItem(tk, {change24h: stats?.change24h ?? null, image: tk.logoURI || stats?.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
+      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd((side==='from')?fromTokenInput:toTokenInput); });
       box.appendChild(node);
     }
     box.style.display = cached.length ? 'block' : 'none';
@@ -556,24 +561,30 @@ function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? fromTokenInput : toTokenInput;
   const logo = (side === 'from') ? fromLogo : toLogo;
-  const symbolEl = (side === 'from') ? fromSymbol : toSymbol;
+  const chip = (side === 'from') ? fromChip : toChip;
   const box = (side === 'from') ? fromBox : toBox;
   input.value = tokenObj.symbol || tokenObj.name || '';
   if (tokenObj.address) input.dataset.address = low(tokenObj.address);
   input.dataset.decimals = tokenObj.decimals || 18;
-  symbolEl.textContent = tokenObj.symbol || tokenObj.name || 'Token';
   if (tokenObj.logoURI){ logo.src = tokenObj.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
   tokenMap.set(tokenObj.address, tokenObj);
   box.classList.add('has-token');
   const imgUrl = tokenObj.logoURI ? `url('${tokenObj.logoURI}')` : 'none';
   box.style.setProperty('--token-icon-bg', imgUrl);
   ACTIVE_PRICE_ADDRS.add(low(tokenObj.address));
+  // show small chip inside icon
+  chip.textContent = tokenObj.symbol || tokenObj.name || '';
+  chip.style.display = 'inline-flex';
+  // ensure caret at end for fast typing
+  focusAndPlaceCaretAtEnd(input);
   fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 }
 function clearTokenSelection(side){
   const box = (side === 'from') ? fromBox : toBox;
   box.classList.remove('has-token');
   box.style.removeProperty('--token-icon-bg');
+  const chip = (side === 'from') ? fromChip : toChip;
+  chip.style.display = 'none';
 }
 
 document.querySelectorAll('.input-box input[type="text"], .input-box input[type="number"]').forEach(inp=>{
@@ -588,9 +599,12 @@ document.querySelectorAll('.input-box input[type="text"], .input-box input[type=
           inp.value = info.symbol || info.name || txt.slice(0,8);
           tokenMap.set(info.address, info);
           const logo = (inp.id === 'fromToken') ? fromLogo : toLogo;
+          const chip = (inp.id === 'fromToken') ? fromChip : toChip;
           if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
           const box = (inp.id === 'fromToken') ? fromBox : toBox;
           box.classList.add('has-token'); box.style.setProperty('--token-icon-bg', info.logoURI ? `url('${info.logoURI}')` : 'none');
+          chip.textContent = info.symbol || info.name || '';
+          chip.style.display = 'inline-flex';
           updateUsdVisibility();
           fetchBothPrices(); updateQuoteDebounced(); updateEstimate();
         }
@@ -702,7 +716,19 @@ function resolveTokenInputsIfNeeded(){
     if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
     if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
     if (!found) found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
-    if (found){ inputEl.dataset.address = found.address; inputEl.dataset.decimals = found.decimals || 18; const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo; if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; } const box = (inputEl.id === 'fromToken')? fromBox : toBox; box.classList.add('has-token'); box.style.setProperty('--token-icon-bg', found.logoURI ? `url('${found.logoURI}')` : 'none'); ACTIVE_PRICE_ADDRS.add(found.address); }
+    if (found){
+      inputEl.dataset.address = found.address;
+      inputEl.dataset.decimals = found.decimals || 18;
+      const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo;
+      const chip = (inputEl.id === 'fromToken')? fromChip : toChip;
+      if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+      const box = (inputEl.id === 'fromToken')? fromBox : toBox;
+      box.classList.add('has-token');
+      box.style.setProperty('--token-icon-bg', found.logoURI ? `url('${found.logoURI}')` : 'none');
+      ACTIVE_PRICE_ADDRS.add(found.address);
+      chip.textContent = found.symbol || found.name || '';
+      chip.style.display = 'inline-flex';
+    }
   };
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
 }
@@ -732,7 +758,7 @@ swapOutside.addEventListener('click', ()=>{
   try{ typeof updateEstimate === 'function' && updateEstimate(); }catch(e){}
 });
 
-/* SWAP BUTTON: simple placeholder */
+/* SWAP BUTTON: simple placeholder kept (id preserved) */
 swapBtn.addEventListener('click', ()=> {
   alert('To run a swap: connect wallet via the Connect Wallet button (top-right).');
 });
@@ -838,6 +864,33 @@ document.addEventListener('click', (ev)=>{
 });
 document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSuggestions.style.display='none'; toSuggestions.style.display='none'; } });
 
+/* ================= CARET HELPERS: focus + place caret at end for faster typing */
+function placeCaretAtEnd(inputEl){
+  try{
+    const len = (inputEl.value || '').length;
+    inputEl.setSelectionRange(len, len);
+  }catch(e){}
+}
+function focusAndPlaceCaretAtEnd(inputEl){
+  try{
+    inputEl.focus();
+    placeCaretAtEnd(inputEl);
+  }catch(e){}
+}
+
+/* Make whole left area clickable to focus the input and position caret at end for faster editing */
+fromBox.querySelector('.left').addEventListener('click', (e)=>{
+  // if clicking suggestion or amount, ignore; else focus input at end
+  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
+  focusAndPlaceCaretAtEnd(fromTokenInput);
+  showDefaultList('from');
+});
+toBox.querySelector('.left').addEventListener('click', (e)=>{
+  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
+  focusAndPlaceCaretAtEnd(toTokenInput);
+  showDefaultList('to');
+});
+
 /* ================= INIT */
 (async function init(){
   await ensureTokensLoaded();
@@ -849,7 +902,7 @@ document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSugge
     fromTokenInput.dataset.decimals = usdc.decimals || 6;
     if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
-    fromSymbol.textContent = usdc.symbol || 'USDC';
+    fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token'); fromBox.style.setProperty('--token-icon-bg', usdc.logoURI ? `url('${usdc.logoURI}')` : 'none');
   }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
@@ -859,7 +912,7 @@ document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSugge
     toTokenInput.dataset.decimals = top.decimals || 18;
     if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(top.address));
-    toSymbol.textContent = top.symbol || top.name;
+    toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
     toBox.classList.add('has-token'); toBox.style.setProperty('--token-icon-bg', top.logoURI ? `url('${top.logoURI}')` : 'none');
   }
   updateUsdVisibility();
