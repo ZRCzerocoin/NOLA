@@ -7,14 +7,25 @@
 <style>
 /* ===== RESET & THEME ===== */
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif}
-html,body{height:100%;} /* lock viewport */
-body{overflow:hidden;background:radial-gradient(circle at center,#0c0014,#1a002b 80%);color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center}
+html,body{height:100%}
+body{
+  background:radial-gradient(circle at center,#0c0014,#1a002b 80%);
+  color:#fff;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:auto;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
 :root{
   --accent-1:#b445ff;--accent-2:#7013ff;
-  --glass:rgba(255,255,255,0.05);--glass-2:rgba(255,255,255,0.03);
+  --glass:rgba(255,255,255,0.05);
   --suggest-bg:rgba(25,0,50,0.98);
   --shadow:0 0 25px rgba(180,0,255,0.3);
   --container-max:520px;
+  --footer-h:56px;
 }
 
 /* NEBULA + PARTICLES */
@@ -23,102 +34,168 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 .particle{position:absolute;width:2px;height:2px;background:#b445ff;border-radius:50%;opacity:0.8;animation:floatParticle linear infinite;z-index:-1}
 @keyframes floatParticle{0%{transform:translateY(0) translateX(0);opacity:0.8}50%{transform:translateY(-50px) translateX(20px);opacity:0.4}100%{transform:translateY(0) translateX(0);opacity:0.8}}
 
-/* TOP LOGO moved down to sit above section */
+/* LOGO */
 .logo{
   width:96px;height:auto;display:block;margin:0 auto;pointer-events:none;
   animation:logoGlow 5s ease-in-out infinite alternate,logoRotate 30s linear infinite;
-  z-index:998;position:fixed;left:50%;top:10vh;transform:translateX(-50%);
+  z-index:998;position:fixed;left:50%;top:8vh;transform:translateX(-50%);
 }
 @keyframes logoGlow{0%{filter:drop-shadow(0 0 12px #9c00ff)}50%{filter:drop-shadow(0 0 30px #d15fff)}100%{filter:drop-shadow(0 0 12px #9c00ff)}}
 @keyframes logoRotate{0%{transform:translateX(-50%) rotateY(0deg)}100%{transform:translateX(-50%) rotateY(360deg)}}
 
-/* CONTAINER (centered card) - fixed size to avoid page scroll */
-.container{width:92%;max-width:var(--container-max);background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:18px 18px 72px 18px;backdrop-filter:blur(18px);box-shadow:var(--shadow);position:relative;overflow:visible}
-h2{text-align:center;font-size:22px;font-weight:600;margin-bottom:12px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
+/* CONTAINER (section-only) */
+.wrapper {
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:28px 16px 96px 16px;
+}
+.container{
+  width:100%;
+  max-width:var(--container-max);
+  background:var(--glass);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:16px;
+  padding:18px 16px 24px 16px;
+  backdrop-filter:blur(18px);
+  box-shadow:var(--shadow);
+  position:relative;
+  max-height: calc(100vh - 180px);
+  overflow:visible;
+}
+h2{text-align:center;font-size:20px;font-weight:600;margin-bottom:12px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
 
-/* UNIFIED ROW */
-.input-box{margin-top:12px;padding:10px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative}
+/* ROWS */
+.input-box{
+  margin-top:12px;
+  padding:10px;
+  background:rgba(255,255,255,0.03);
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.05);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  position:relative;
+}
 .input-box .left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.token-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.04)}
-.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
-.token-chip{position:absolute;right:-6px;bottom:-6px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:4px 8px;border-radius:999px;font-weight:800;font-size:11px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px)}
+
+/* ICONS: small & circular */
+.token-icon{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.02);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  flex-shrink:0;
+  position:relative;
+  border:1px solid rgba(255,255,255,0.04);
+}
+.token-icon img{width:36px;height:36px;object-fit:cover;border-radius:50%;display:block}
+
+/* small chip shown near icon */
+.token-chip{
+  position:absolute;
+  right:-8px;
+  bottom:-8px;
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+  padding:4px 8px;
+  border-radius:999px;
+  font-weight:800;
+  font-size:11px;
+  color:#fff;
+  box-shadow:0 8px 20px rgba(180,68,255,0.12);
+  display:none;
+  transform:translate(6px,6px);
+}
 .input-box.has-token .token-chip{display:inline-flex}
 
-/* INPUT FIELD (one text input per row) */
+/* single visible input per row */
 .input-field{display:flex;flex-direction:column;min-width:0;width:100%}
 .input-field input[type="text"]{padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:15px}
-.input-amount{margin-left:8px;min-width:120px}
+.input-amount{margin-left:8px;min-width:110px}
 .input-amount input{width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none}
 
 /* USD RIGHT */
 .usd-right{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;text-align:right}
 
-/* SUGGESTIONS: fixed height scroll inside; card no scroll */
-.suggestions{position:absolute;top:58px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:220px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
+/* SUGGESTIONS inside card (scroll inside) */
+.suggestions{position:absolute;top:56px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:220px;overflow:auto;display:none;z-index:220;box-shadow:0 12px 34px rgba(120,0,255,0.08)}
 .suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
 .suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
-.suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
 .suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
-.suggestion-main{display:flex;flex-direction:column;min-width:0}
-.suggestion-symbol{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.suggestion-name{font-size:12px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.suggestion-price-pill{min-width:70px;text-align:right;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);font-weight:700;font-size:12px}
 
-/* BOTTOM CONTROLS (inside card, absolute) */
-.bottom-controls{position:absolute;left:12px;right:12px;bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:auto}
-
-/* SLIPPAGE: custom professional control left */
-.slippage-wrap{display:inline-block;position:relative}
-.slippage{appearance:none;-webkit-appearance:none;padding:10px 44px 10px 12px;border-radius:12px;border:none;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12);cursor:pointer;font-size:14px;outline:none;min-width:120px}
-.slippage:focus{box-shadow:0 14px 40px rgba(180,68,255,0.18)}
-.slippage-wrap::after{
-  content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:18px;height:18px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='white' d='M6 8l4 4 4-4' /></svg>");background-repeat:no-repeat;background-position:center;opacity:0.95;pointer-events:none
+/* bottom controls inside the card - tidy and placed */
+.bottom-controls{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
 }
-#customSlippage{padding:8px 10px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;display:none;width:84px;outline:none}
 
-/* SWITCH (swap) control inside card bottom-right */
-.swap-inside{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 10px 30px rgba(120,0,255,0.08),0 2px 8px rgba(0,0,0,0.35);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px)}
+/* custom slippage - aligned left */
+.slippage-wrap{display:inline-block;position:relative}
+.slippage{appearance:none;padding:10px 42px 10px 12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12);cursor:pointer;font-size:14px;min-width:120px}
+.slippage-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='white' d='M6 8l4 4 4-4' /></svg>");background-repeat:no-repeat;background-position:center;opacity:0.95;pointer-events:none}
+#customSlippage{padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff;display:none;width:84px;outline:none}
+
+/* swap-inside moved to bottom-right of bottom-controls */
+.swap-inside{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 10px 30px rgba(120,0,255,0.08);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease}
 .swap-inside:hover{transform:translateY(-6px) rotate(-8deg)}
 
-/* ELECTRIC PILL SWAP BUTTON (outside the card below) */
-.electric-outside-wrap{display:flex;align-items:center;justify-content:center;margin-top:18px}
+/* electric pill button (below the section) */
+.electric-outside-wrap{display:flex;align-items:center;justify-content:center;margin-top:18px;margin-bottom:12px}
 .electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
-.electric-pill{
-  position:relative;display:inline-flex;align-items:center;gap:12px;padding:12px 32px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 18px 46px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:16px;border:none;outline:none;overflow:hidden;
-  transition:transform 140ms ease,box-shadow 140ms ease;
-}
-.electric-pill:active{transform:translateY(-1px) scale(.998)}
+.electric-pill{position:relative;display:inline-flex;align-items:center;gap:12px;padding:12px 32px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 18px 46px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:16px;border:none;outline:none;overflow:hidden}
 .electric-pill .sweep{position:absolute;left:-30%;top:-10%;width:42%;height:120%;background:linear-gradient(90deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(10px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
 @keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
-.electric-pill .label{position:relative;z-index:2;pointer-events:none}
-.electric-pill .icon{
-  width:28px;height:28px;border-radius:999px;background:rgba(255,255,255,0.08);display:inline-flex;align-items:center;justify-content:center;font-weight:900;z-index:2;
-  box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18);
-}
 
-/* TOP-RIGHT CONNECT */
+/* top-right connect unchanged */
 .top-right-connect{position:fixed;right:18px;top:18px;z-index:70;display:flex;gap:10px;align-items:center}
 .addr-chip{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,0.03);font-weight:700;display:none}
 .connect-floating{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12)}
 
-/* FOOTER (small fixed) */
-.footer{position:fixed;left:0;right:0;bottom:8px;display:flex;align-items:center;justify-content:center;z-index:40;color:rgba(255,255,255,0.6);font-size:12px;pointer-events:none}
+/* footer visible and above everything */
+.footer{
+  position:fixed;
+  left:12px;
+  right:12px;
+  bottom:12px;
+  height:var(--footer-h);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+  color:rgba(255,255,255,0.85);
+  font-size:13px;
+  pointer-events:auto;
+  backdrop-filter:blur(6px);
+  background:linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.28));
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 6px 20px rgba(0,0,0,0.45);
+}
 
-/* RESPONSIVE */
+/* small screens */
 @media(max-width:520px){
-  :root{--container-max:92%;}
-  .container{padding:14px 14px 96px 14px;border-radius:16px}
-  .logo{top:8vh;width:76px}
+  .token-icon{width:32px;height:32px}
+  .token-icon img{width:32px;height:32px}
+  .token-chip{font-size:10px;padding:3px 6px;right:-6px;bottom:-6px}
   .input-amount{min-width:86px}
-  .slippage{min-width:98px;padding:8px 36px 8px 10px}
-  .swap-inside{width:48px;height:48px}
-  .electric-pill{padding:10px 20px;font-size:14px}
+  .slippage{min-width:92px;padding:8px 36px 8px 10px}
+  .swap-inside{width:44px;height:44px}
+  .electric-pill{padding:10px 18px;font-size:14px}
+  .container{max-height:calc(100vh - 140px)}
 }
 </style>
 </head>
 <body>
 
-<!-- particles created by script -->
+<!-- particles -->
 <img id="logoFloat" class="logo" src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='utf-8'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23b445ff'/><stop offset='1' stop-color='%237013ff'/></linearGradient></defs><rect rx='28' ry='28' width='200' height='200' fill='url(%23g)'/><text x='50%' y='54%' font-size='56' fill='white' font-family='Arial' font-weight='700' text-anchor='middle' dominant-baseline='middle'>N</text></svg>" alt="NOLA Logo">
 
 <!-- top-right connect -->
@@ -127,61 +204,62 @@ h2{text-align:center;font-size:22px;font-weight:600;margin-bottom:12px;color:#e0
   <button id="connectFloating" class="connect-floating">Connect Wallet</button>
 </div>
 
-<!-- main card -->
-<div class="container" role="main" aria-label="NOLA Exchange">
-  <h2>NOLA Exchange</h2>
+<!-- SECTION WRAPPER (only UI changed here) -->
+<div class="wrapper">
+  <div class="container" role="main" aria-label="NOLA Exchange">
+    <h2>NOLA Exchange</h2>
 
-  <!-- FROM -->
-  <div class="input-box" id="fromBox" style="position:relative;">
-    <div class="left">
-      <div class="token-icon" id="fromIcon">
-        <img id="fromLogo" src="" alt="" style="display:none">
-        <span class="token-chip" id="fromChip" style="display:none">---</span>
+    <!-- FROM -->
+    <div class="input-box" id="fromBox" style="position:relative;">
+      <div class="left">
+        <div class="token-icon" id="fromIcon">
+          <img id="fromLogo" src="" alt="" style="display:none">
+          <span class="token-chip" id="fromChip" style="display:none">---</span>
+        </div>
+        <div class="input-field">
+          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
+        </div>
+        <div class="input-amount" style="min-width:110px;">
+          <input id="fromAmount" placeholder="Amount" type="number" step="any">
+        </div>
       </div>
-      <div class="input-field">
-        <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
-      </div>
-      <div class="input-amount" style="min-width:120px;">
-        <input id="fromAmount" placeholder="Amount" type="number" step="any">
-      </div>
-    </div>
-    <div class="usd-right" id="fromUsd" style="display:none">≈ $—</div>
-    <div class="suggestions" id="fromSuggestions" data-side="from"></div>
-  </div>
-
-  <!-- TO -->
-  <div class="input-box" id="toBox" style="position:relative;margin-top:12px;">
-    <div class="left">
-      <div class="token-icon" id="toIcon">
-        <img id="toLogo" src="" alt="" style="display:none">
-        <span class="token-chip" id="toChip" style="display:none">---</span>
-      </div>
-      <div class="input-field">
-        <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
-      </div>
-      <div class="input-amount" style="min-width:120px;">
-        <input id="toAmount" placeholder="Estimate" readonly>
-      </div>
-    </div>
-    <div class="usd-right" id="toUsd" style="display:none">≈ $—</div>
-    <div class="suggestions" id="toSuggestions" data-side="to"></div>
-  </div>
-
-  <!-- bottom controls inside card -->
-  <div class="bottom-controls" aria-hidden="false">
-    <div class="slippage-wrap">
-      <select id="slippage" class="slippage" title="Select slippage">
-        <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="custom">Custom</option>
-      </select>
-      <input id="customSlippage" placeholder="Custom %" />
+      <div class="usd-right" id="fromUsd" style="display:none">≈ $—</div>
+      <div class="suggestions" id="fromSuggestions" data-side="from"></div>
     </div>
 
-    <!-- swap (switch) moved inside the card, right bottom -->
-    <div id="swapOutside" class="swap-inside" title="Swap From ↔ To">⇅</div>
+    <!-- TO -->
+    <div class="input-box" id="toBox" style="position:relative;margin-top:12px;">
+      <div class="left">
+        <div class="token-icon" id="toIcon">
+          <img id="toLogo" src="" alt="" style="display:none">
+          <span class="token-chip" id="toChip" style="display:none">---</span>
+        </div>
+        <div class="input-field">
+          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
+        </div>
+        <div class="input-amount" style="min-width:110px;">
+          <input id="toAmount" placeholder="Estimate" readonly>
+        </div>
+      </div>
+      <div class="usd-right" id="toUsd" style="display:none">≈ $—</div>
+      <div class="suggestions" id="toSuggestions" data-side="to"></div>
+    </div>
+
+    <!-- bottom controls inside card -->
+    <div class="bottom-controls" aria-hidden="false">
+      <div class="slippage-wrap">
+        <select id="slippage" class="slippage" title="Select slippage">
+          <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="custom">Custom</option>
+        </select>
+        <input id="customSlippage" placeholder="Custom %" />
+      </div>
+
+      <div id="swapOutside" class="swap-inside" title="Swap From ↔ To">⇅</div>
+    </div>
   </div>
 </div>
 
-<!-- electric swap button placed outside card (below) -->
+<!-- electric swap button below the section -->
 <div class="electric-outside-wrap" aria-hidden="false">
   <button id="swapBtn" class="electric-btn" title="Swap">
     <span class="electric-pill" role="button" aria-pressed="false">
@@ -192,7 +270,7 @@ h2{text-align:center;font-size:22px;font-weight:600;margin-bottom:12px;color:#e0
   </button>
 </div>
 
-<!-- footer (small) -->
+<!-- footer (visible) -->
 <div class="footer">© 2025 NOLA — All rights reserved</div>
 
 <!-- LIBS -->
@@ -205,15 +283,15 @@ h2{text-align:center;font-size:22px;font-weight:600;margin-bottom:12px;color:#e0
 /* ================= PARTICLES */
 (function createParticles(){ for(let i=0;i<60;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
 
-/* ================= CONFIG & STATE (unchanged) */
+/* ================= CONFIG & STATE */
 const CHAIN_ID = 137;
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPC = "https://polygon-rpc.com";
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
+const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619'; // wrapped ether on Polygon
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1";
+const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1"; // example
 
 let tokenList = [];
 let tokenMap = new Map();
@@ -225,7 +303,7 @@ const PRICE_TTL = 7000; // 7s TTL
 const SUGGEST_LIMIT = 12;
 const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
 
-/* ================= DOM REFS (updated to match moved elements) */
+/* ================= DOM REFS */
 const $ = id => document.getElementById(id);
 const fromTokenInput = $('fromToken'), toTokenInput = $('toToken');
 const fromAmountEl = $('fromAmount'), toAmountEl = $('toAmount');
@@ -233,12 +311,12 @@ const fromUsd = $('fromUsd'), toUsd = $('toUsd');
 const fromLogo = $('fromLogo'), toLogo = $('toLogo');
 const fromChip = $('fromChip'), toChip = $('toChip');
 const fromSuggestions = $('fromSuggestions'), toSuggestions = $('toSuggestions');
-const swapOutside = $('swapOutside'), swapBtn = $('swapBtn'); // ids preserved
+const swapOutside = $('swapOutside'), swapBtn = $('swapBtn');
 const fromBox = $('fromBox'), toBox = $('toBox');
 const connectFloating = $('connectFloating'), addrChip = $('addrChip');
 const slippageSel = $('slippage'), customSlippage = $('customSlippage');
 
-/* ================= HELPERS (unchanged behaviour) */
+/* ================= HELPERS */
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
 const low = s => (s||'').toLowerCase();
 const nowTs = ()=> Date.now();
@@ -246,7 +324,7 @@ function formatUSD(v){ if (v===null||v===undefined||!Number.isFinite(v)) return 
 function fetchWithTimeout(url,opts={},ms=3000){ const controller=new AbortController(); const id=setTimeout(()=>controller.abort(),ms); const init=Object.assign({},opts,{signal:controller.signal}); return fetch(url,init).finally(()=>clearTimeout(id)); }
 async function fetchJson(url,opts){ const r = await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 
-/* ================= LOAD TOKENS & COINGECKO MARKETS (unchanged) */
+/* ================= LOAD TOKENS & COINGECKO MARKETS */
 async function loadTokensAndMarkets(){
   try {
     const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
@@ -290,29 +368,7 @@ async function loadTokensAndMarkets(){
 let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
-/* ================= PRICE SOURCES, QUOTE, SUGGESTIONS, SELECTION ETC.
-   All original functions remain intact and unchanged except for a couple
-   small UI-focus helper calls to keep caret at end after selection. */
-
-/* ... (For brevity in this message the functions are kept identical to previous version)
-   We'll reinsert the exact same implementations for price fetching, suggestion
-   building, autocomplete setup, applyTokenSelection, paste handling, quote
-   fetching, estimate calculation, token resolving, wallet connect, background
-   refresh and intervals. The logic is the same as before. ... */
-
-/* To keep the reply concise, the unmodified functions (fetch1InchQuotePrice,
-   fetchCoingeckoContractPrice, fetchCoingeckoSimple, fetchDexscreenerPrice,
-   derivePriceViaWeth, getTokenPriceUSD, makeSuggestionItem,
-   showDefaultList, setupAutocomplete, renderSuggestionsFromCache, applyTokenSelection,
-   clearTokenSelection, fetchOnchainTokenInfo, fetchPriceForToken, fetchBothPrices,
-   updateQuoteDebounced, updateQuote, updateEstimate, resolveTokenInputsIfNeeded,
-   swapOutside click handler, swapBtn click handler, wallet connect init and
-   refresh loops) remain exactly as in the previous full version you already
-   approved. For transparency they are present below exactly unchanged. */
-
-/* ================= Insert unchanged large code block ================== */
-
-/* (START UNCHANGED BLOCK) */
+/* ================= PRICE SOURCES (fallback chain enhanced) */
 async function fetch1InchQuotePrice(addr, decimals=18){
   try {
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
@@ -364,8 +420,10 @@ async function fetchDexscreenerPrice(addr){
     throw new Error('dexscreener no price');
   } catch(e){ throw e; }
 }
+/* derive price via WETH route: token -> WETH (1inch) then WETH->USDC price (1inch) */
 async function derivePriceViaWeth(addr, decimals=18){
   try {
+    // token -> WETH
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
     const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${WETH_ADDR}&amount=${amountBN.toString()}`;
     const res = await fetchWithTimeout(qUrl,{},3000);
@@ -376,6 +434,7 @@ async function derivePriceViaWeth(addr, decimals=18){
     const weth = Number(ethers.utils.formatUnits(wethAmountBN, j.toToken?.decimals ?? 18));
     if (!Number.isFinite(weth) || weth <= 0) throw new Error('1inch->weth invalid');
 
+    // WETH -> USDC
     const qUrl2 = `${ONEINCH_BASE}/quote?fromTokenAddress=${WETH_ADDR}&toTokenAddress=${USDC_ADDR}&amount=${ethers.utils.parseUnits(String(weth), 18).toString()}`;
     const res2 = await fetchWithTimeout(qUrl2, {}, 3000);
     if (!res2.ok) throw new Error('weth->usdc non-ok');
@@ -384,33 +443,47 @@ async function derivePriceViaWeth(addr, decimals=18){
     const usdcAmountBN = ethers.BigNumber.from(j2.toTokenAmount);
     const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j2.toToken?.decimals ?? 6));
     if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('weth->usdc invalid');
+
+    // total USD per token = usdc (USD per 'weth') * weth (weth per token)
     const price = usdc * weth;
     if (!Number.isFinite(price) || price <= 0) throw new Error('derived invalid');
     return price;
   } catch(e){ throw e; }
 }
+
 async function getTokenPriceUSD(address, decimals=18){
   if (!address) return null;
   const addr = low(address);
   const cached = priceCache.get(addr);
   if (cached && (nowTs() - cached.ts) < PRICE_TTL) {
+    // filter out suspicious cached values (zero or extremely tiny)
     if (cached.price === null || cached.price === 0 || (Math.abs(cached.price) < 1e-18 && cached.price !== null)) {
+      // fall through to refresh
     } else {
       return cached.price;
     }
   }
+
+  // Try sources in preferred order, with safe checks
+  // 1) 1inch quote direct -> USDC
   try {
     const p1 = await fetch1InchQuotePrice(addr, decimals);
     if (p1 && Number.isFinite(p1) && p1 > 0) { priceCache.set(addr, {price:p1, ts:nowTs()}); return p1; }
   } catch(_) {}
+
+  // 2) CoinGecko contract endpoint
   try {
     const cg = await fetchCoingeckoContractPrice(addr);
     if (cg && cg.price && Number.isFinite(cg.price) && cg.price > 0) { priceCache.set(addr, {price:cg.price, ts:nowTs()}); return cg.price; }
   } catch(_) {}
+
+  // 3) CoinGecko simple token price endpoint
   try {
     const v = await fetchCoingeckoSimple(addr);
     if (v && Number.isFinite(v) && v > 0) { priceCache.set(addr, {price:v, ts:nowTs()}); return v; }
   } catch(_) {}
+
+  // 4) Try CoinGecko markets cache by symbol/name
   try {
     const t = tokenMap.get(addr);
     if (t && t.symbol){
@@ -418,18 +491,25 @@ async function getTokenPriceUSD(address, decimals=18){
       if (stat && stat.price && Number.isFinite(stat.price) && stat.price > 0) { priceCache.set(addr, {price:stat.price, ts:nowTs()}); return stat.price; }
     }
   } catch(_) {}
+
+  // 5) Dexscreener
   try {
     const d = await fetchDexscreenerPrice(addr);
     if (d && Number.isFinite(d) && d > 0) { priceCache.set(addr, {price:d, ts:nowTs()}); return d; }
   } catch(_) {}
+
+  // 6) Try derived via WETH route
   try {
     const derived = await derivePriceViaWeth(addr, decimals);
     if (derived && Number.isFinite(derived) && derived > 0) { priceCache.set(addr, {price:derived, ts:nowTs()}); return derived; }
   } catch(_) {}
+
+  // final fallback: mark null and return
   priceCache.set(addr, {price:null, ts:nowTs()});
   return null;
 }
 
+/* ================= SUGGESTION UI & PRIORITIZATION (CG 24h/12h first) */
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
@@ -554,9 +634,11 @@ function renderSuggestionsFromCache(q, side, box){
   })();
 }
 
+/* attach autocomplete */
 setupAutocomplete(fromTokenInput, fromSuggestions, 'from');
 setupAutocomplete(toTokenInput, toSuggestions, 'to');
 
+/* ================= SELECTION, USD DISPLAY, PASTE, RESOLVE ================= */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? fromTokenInput : toTokenInput;
@@ -654,6 +736,7 @@ async function fetchBothPrices(){
   ]);
 }
 
+/* ================= QUOTE via 1inch + debounce */
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 140); }
 async function updateQuote(){
@@ -680,6 +763,7 @@ async function updateQuote(){
 }
 fromAmountEl.addEventListener('input', ()=>{ updateQuoteDebounced(); updateEstimate(); });
 
+/* ================= SIMPLE MATH ESTIMATE */
 async function updateEstimate(){
   try {
     await ensureTokensLoaded();
@@ -703,6 +787,7 @@ async function updateEstimate(){
   } catch(e){ console.warn('updateEstimate error', e); }
 }
 
+/* ================= RESOLVE TYPED TOKENS HEURISTICALLY */
 function resolveTokenInputsIfNeeded(){
   const tryResolve = (inputEl) => {
     const val = (inputEl.value || '').trim(); if (!val || inputEl.dataset.address) return;
@@ -716,10 +801,11 @@ function resolveTokenInputsIfNeeded(){
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
 }
 
-/* swapOutside behavior moved but id preserved earlier; handler kept identical */
+/* ================= SWAP ICON BEHAVIOR (inside) */
 swapOutside.addEventListener('click', ()=>{
   swapOutside.classList.add('pressed');
   setTimeout(()=> swapOutside.classList.remove('pressed'), 300);
+  // swap values
   const fVal = fromTokenInput.value, tVal = toTokenInput.value;
   const fAddr = fromTokenInput.dataset.address, tAddr = toTokenInput.dataset.address;
   const fDec = fromTokenInput.dataset.decimals, tDec = toTokenInput.dataset.decimals;
@@ -740,12 +826,12 @@ swapOutside.addEventListener('click', ()=>{
   try{ typeof updateEstimate === 'function' && updateEstimate(); }catch(e){}
 });
 
-/* swapBtn kept as simple placeholder */
+/* SWAP BUTTON: simple placeholder */
 swapBtn.addEventListener('click', ()=> {
   alert('To run a swap: connect wallet via the Connect Wallet button (top-right).');
 });
 
-/* wallet connect (identical) */
+/* Connect wallet (MetaMask preferred, Web3Modal fallback if available) */
 let provider = null, signer = null, userAddress = null, web3modal = null;
 async function initWeb3Modal(){
   try{ web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' }); }catch(e){ console.warn('web3modal init', e); web3modal = null; }
@@ -783,7 +869,7 @@ async function connectWallet(){
 }
 connectFloating.addEventListener('click', connectWallet);
 
-/* Background refresh and active price refresh (identical) */
+/* ================= BACKGROUND REFRESH: CG every 7s + active price refresh every 7s */
 async function refreshCoinGeckoMarkets(){
   try {
     const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
@@ -808,6 +894,8 @@ function startBackgroundRefresh(){
   refreshCoinGeckoMarkets();
   refreshInterval = setInterval(refreshCoinGeckoMarkets, 7000);
 }
+
+/* Active price refresh for chosen tokens every 7s */
 let activePriceInterval = null;
 function scheduleActivePriceRefresh(){
   updateUsdVisibility();
@@ -828,12 +916,13 @@ async function refreshActivePrices(){
   }));
 }
 
+/* ================= UTILITY: updateUsdVisibility */
 function updateUsdVisibility(){
   if (!fromTokenInput.dataset.address) { fromUsd.style.display = 'none'; ACTIVE_PRICE_ADDRS.delete(low(fromTokenInput.dataset.address||'')); } else { fromUsd.style.display = 'block'; ACTIVE_PRICE_ADDRS.add(low(fromTokenInput.dataset.address||'')); }
   if (!toTokenInput.dataset.address) { toUsd.style.display = 'none'; ACTIVE_PRICE_ADDRS.delete(low(toTokenInput.dataset.address||'')); } else { toUsd.style.display = 'block'; ACTIVE_PRICE_ADDRS.add(low(toTokenInput.dataset.address||'')); }
 }
 
-/* hide suggestions on outside click & esc */
+/* ================= SUGGESTIONS HIDE OUTSIDE CLICK & ESC */
 document.addEventListener('click', (ev)=>{
   const inInputOrSuggest = ev.target.closest('.input-box') || ev.target.closest('.suggestions') || ev.target.closest('#fromToken') || ev.target.closest('#toToken') || ev.target.closest('.slippage-wrap');
   if (!inInputOrSuggest){
@@ -843,7 +932,48 @@ document.addEventListener('click', (ev)=>{
 });
 document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSuggestions.style.display='none'; toSuggestions.style.display='none'; } });
 
-/* caret helpers and clickable left area */
+/* ================= INIT */
+(async function init(){
+  await ensureTokensLoaded();
+  // preselect USDC as from if available
+  const usdc = tokenList.find(t => t.address && t.address.toLowerCase() === USDC_ADDR.toLowerCase());
+  if (usdc) {
+    fromTokenInput.value = usdc.symbol || 'USDC';
+    fromTokenInput.dataset.address = usdc.address;
+    fromTokenInput.dataset.decimals = usdc.decimals || 6;
+    if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
+    ACTIVE_PRICE_ADDRS.add(low(usdc.address));
+    fromChip.textContent = usdc.symbol || 'USDC';
+    fromChip.style.display = 'inline-flex';
+    fromBox.classList.add('has-token'); fromBox.style.setProperty('--token-icon-bg', usdc.logoURI ? `url('${usdc.logoURI}')` : 'none');
+  }
+  const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
+  if (top) {
+    toTokenInput.value = top.symbol || top.name;
+    toTokenInput.dataset.address = top.address;
+    toTokenInput.dataset.decimals = top.decimals || 18;
+    if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='block'; }
+    ACTIVE_PRICE_ADDRS.add(low(top.address));
+    toChip.textContent = top.symbol || top.name;
+    toChip.style.display = 'inline-flex';
+    toBox.classList.add('has-token'); toBox.style.setProperty('--token-icon-bg', top.logoURI ? `url('${top.logoURI}')` : 'none');
+  }
+  updateUsdVisibility();
+  fetchBothPrices();
+  startBackgroundRefresh();
+  scheduleActivePriceRefresh();
+
+  // animate swapOutside entrance
+  setTimeout(()=> { swapOutside.classList.add('entered'); }, 200);
+})();
+
+/* SLIPPAGE UI */
+slippageSel.addEventListener('change', ()=>{
+  if(slippageSel.value === 'custom'){ customSlippage.style.display = 'inline-block'; customSlippage.focus(); }
+  else customSlippage.style.display = 'none';
+});
+
+/* caret helpers and click-to-focus */
 function placeCaretAtEnd(inputEl){
   try{ const len = (inputEl.value || '').length; inputEl.setSelectionRange(len, len); }catch(e){}
 }
@@ -860,44 +990,7 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
   showDefaultList('to');
 });
 
-/* INIT logic (unchanged) */
-(async function init(){
-  await ensureTokensLoaded();
-  const usdc = tokenList.find(t => t.address && t.address.toLowerCase() === USDC_ADDR.toLowerCase());
-  if (usdc) {
-    fromTokenInput.value = usdc.symbol || 'USDC';
-    fromTokenInput.dataset.address = usdc.address;
-    fromTokenInput.dataset.decimals = usdc.decimals || 6;
-    if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
-    ACTIVE_PRICE_ADDRS.add(low(usdc.address));
-    fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
-    fromBox.classList.add('has-token'); fromBox.style.setProperty('--token-icon-bg', usdc.logoURI ? `url('${usdc.logoURI}')` : 'none');
-  }
-  const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
-  if (top) {
-    toTokenInput.value = top.symbol || top.name;
-    toTokenInput.dataset.address = top.address;
-    toTokenInput.dataset.decimals = top.decimals || 18;
-    if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='block'; }
-    ACTIVE_PRICE_ADDRS.add(low(top.address));
-    toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
-    toBox.classList.add('has-token'); toBox.style.setProperty('--token-icon-bg', top.logoURI ? `url('${top.logoURI}')` : 'none');
-  }
-  updateUsdVisibility();
-  fetchBothPrices();
-  startBackgroundRefresh();
-  scheduleActivePriceRefresh();
-  // animate swapInside entrance
-  setTimeout(()=> { swapOutside.classList.add('entered'); }, 200);
-})();
-
-/* slippage UI (keeps previous behavior) */
-slippageSel.addEventListener('change', ()=>{
-  if(slippageSel.value === 'custom'){ customSlippage.style.display = 'inline-block'; customSlippage.focus(); }
-  else customSlippage.style.display = 'none';
-});
-
-/* expose functions for debugging */
+/* expose some functions globally for debugging or external calls */
 window.getTokenPriceUSD = getTokenPriceUSD;
 window.applyTokenSelection = applyTokenSelection;
 window.clearTokenSelection = clearTokenSelection;
@@ -905,8 +998,6 @@ window.updateQuoteDebounced = updateQuoteDebounced;
 window.fetchBothPrices = fetchBothPrices;
 window.updateEstimate = updateEstimate;
 window.scheduleActivePriceRefresh = scheduleActivePriceRefresh;
-
-/* (END UNCHANGED BLOCK) */
 </script>
 
 </body>
