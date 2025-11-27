@@ -275,4 +275,201 @@ function attachAutocomplete(){
       const startSym = tokenList.filter(t => (t.symbol||'').toLowerCase().startsWith(q));
       const startName = tokenList.filter(t => (t.name||'').toLowerCase().startsWith(q) && !startSym.includes(t));
       const containsSym = tokenList.filter(t => (t.symbol||'').toLowerCase().includes(q) && !startSym.includes(t) && !startName.includes(t));
-      const containsName = token
+      const containsName = tokenList.filter(t => (t.name||'').toLowerCase().includes(q) && !startSym.includes(t) && !startName.includes(t) && !containsSym.includes(t));
+      const list = [...startSym, ...startName, ...containsSym, ...containsName].slice(0,12);
+      for(const tok of list){
+        const item = buildSuggestion(tok);
+        item.onclick = ()=>{ suggestEl.style.display='none'; onPick(tok); };
+        suggestEl.appendChild(item);
+      }
+      suggestEl.style.display = list.length ? 'block' : 'none';
+    });
+
+    inputEl.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        const q = (inputEl.value||'').trim().toLowerCase();
+        if(!q) return;
+        const exact = tokenList.find(t => ((t.symbol||'').toLowerCase() === q) || ((t.name||'').toLowerCase() === q) || ((t.address||'').toLowerCase() === q));
+        if(exact){ inputEl.value = exact.symbol; suggestEl.style.display='none'; onPick(exact); return; }
+        const fuzzy = tokenList.find(t => (t.symbol||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q));
+        if(fuzzy){ inputEl.value = fuzzy.symbol; suggestEl.style.display='none'; onPick(fuzzy); return; }
+      }
+    });
+  }
+
+  bind(fromInput, fromSuggest, async (tok)=>{
+    selectedFrom = tok;
+    fromSymbol.textContent = tok.symbol;
+    fromIconImg.src = tok.logoURI || ''; fromIconImg.style.display = tok.logoURI ? 'block' : 'none';
+    const usd = await fetchUsd(tok.address); fromUsd.textContent = usd ? `${tok.symbol} ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
+    if(fromAmount.value && selectedTo) computeEstimate();
+  });
+
+  bind(toInput, toSuggest, async (tok)=>{
+    selectedTo = tok;
+    toSymbol.textContent = tok.symbol;
+    toIconImg.src = tok.logoURI || ''; toIconImg.style.display = tok.logoURI ? 'block' : 'none';
+    const usd = await fetchUsd(tok.address); toUsd.textContent = usd ? `${tok.symbol} ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
+    if(fromAmount.value && selectedFrom) computeEstimate();
+  });
+}
+
+/* ================= compute estimate (1inch quote) ================= */
+async function computeEstimate(){
+  if(!selectedFrom || !selectedTo) return;
+  const amt = (fromAmount.value||'').trim();
+  if(!amt || isNaN(Number(amt))) return;
+  try{
+    const decimals = selectedFrom.decimals || 18;
+    const amountInt = toBigIntAmount(amt, decimals).toString();
+    const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('quote failed');
+    const j = await r.json();
+    const out = Number(j.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
+    toAmount.value = Number(out.toFixed(6));
+    return out;
+  }catch(e){
+    console.warn('estimate failed', e);
+    toAmount.value = '';
+    return null;
+  }
+}
+
+function toBigIntAmount(value, decimals=18){
+  const parts = String(value).split('.');
+  if(parts.length===1) return BigInt(parts[0]||'0') * (BigInt(10)**BigInt(decimals));
+  const intPart = parts[0] || '0';
+  const decPart = (parts[1] || '').slice(0,decimals).padEnd(decimals,'0');
+  return BigInt(intPart) * (BigInt(10)**BigInt(decimals)) + BigInt(decPart);
+}
+
+/* recompute while typing (debounce) */
+fromAmount.addEventListener('input', ()=>{ clearTimeout(fromAmount._t); fromAmount._t = setTimeout(()=> computeEstimate(), 450); });
+
+/* slippage UI */
+slippageSel.addEventListener('change', ()=>{ if(slippageSel.value==='custom'){ customSlippage.style.display='inline-block'; customSlippage.focus(); } else customSlippage.style.display='none'; });
+
+/* ================= Web3Modal + WalletConnect v2 init (deep-linking) ================= */
+async function initWeb3Modal(){
+  try{
+    web3modal = new window.WalletConnectWeb3Modal.default({
+      projectId: WALLETCONNECT_PROJECT_ID,
+      themeMode: 'dark'
+    });
+  }catch(e){ console.warn('web3modal init failed', e); web3modal = null; }
+}
+initWeb3Modal();
+
+/* ================= Connect wallet (MetaMask preferred, WalletConnect fallback) ================= */
+async function connectWallet(){
+  try{
+    if(window.ethereum && window.ethereum.isMetaMask){
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      addrChip.style.display = 'inline-block'; addrChip.textContent = short(userAddress);
+      return true;
+    }
+    if(web3modal && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== ''){
+      // openModal returns a provider that supports EIP-1193
+      const p = await web3modal.openModal(); // triggers deep-link / QR
+      if(!p) return false;
+      provider = new ethers.providers.Web3Provider(p);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      addrChip.style.display = 'inline-block'; addrChip.textContent = short(userAddress);
+      return true;
+    }
+    alert('No wallet found. Install MetaMask or set WalletConnect project ID.');
+    return false;
+  }catch(e){
+    console.error('connectWallet error', e);
+    alert('Wallet connect failed: ' + (e.message || e));
+    return false;
+  }
+}
+connectFloating.addEventListener('click', connectWallet);
+
+/* ================= One-button swap (quote → approve → swap) ================= */
+swapBtn.addEventListener('click', async ()=>{
+  try{
+    if(!selectedFrom || !selectedTo) return alert('Select both tokens first');
+    const amt = (fromAmount.value||'').trim();
+    if(!amt || isNaN(Number(amt))) return alert('Enter valid amount');
+    // slippage
+    let slippage = Number(slippageSel.value);
+    if(slippageSel.value === 'custom'){
+      const c = parseFloat(customSlippage.value); if(isNaN(c) || c<=0) return alert('Enter valid slippage'); slippage = c;
+    }
+    // ensure wallet
+    if(!provider || !signer){
+      const ok = confirm('Connect wallet to swap now?'); if(!ok) return;
+      const ok2 = await connectWallet(); if(!ok2) return;
+    }
+    swapBtn.disabled = true; swapBtn.textContent = 'Preparing...';
+    const amountInt = toBigIntAmount(amt, selectedFrom.decimals || 18).toString();
+    // quote
+    const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}`;
+    const qj = await fetchJson(qUrl);
+    const outAmt = Number(qj.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
+    // allowance & approve (if needed and not native)
+    const fromAddr = (selectedFrom.address||'').toLowerCase();
+    if(fromAddr !== NATIVE_1INCH){
+      const allowUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${userAddress}`;
+      const allowJson = await fetchJson(allowUrl);
+      const allowance = BigInt(allowJson.allowance || '0');
+      const want = BigInt(amountInt);
+      if(allowance < want){
+        const approveUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;
+        const approveTx = await fetchJson(approveUrl);
+        if(!approveTx || !approveTx.data) throw new Error('Approve build failed');
+        swapBtn.textContent = 'Approving...';
+        const sent = await signer.sendTransaction({ to: approveTx.to, data: approveTx.data, value: approveTx.value ? approveTx.value : undefined });
+        alert('Approve tx sent: ' + sent.hash);
+        await sent.wait();
+        alert('Approve confirmed');
+      }
+    }
+    // build swap
+    swapBtn.textContent = 'Swapping...';
+    const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}&fromAddress=${userAddress}&slippage=${slippage}`;
+    const sJson = await fetchJson(swapUrl);
+    if(!sJson || !sJson.tx) throw new Error('Swap build failed');
+    const txData = sJson.tx;
+    const tx = await signer.sendTransaction({ to: txData.to, data: txData.data, value: txData.value ? txData.value : undefined });
+    alert('Swap tx sent: ' + tx.hash);
+    toAmount.value = Number(outAmt.toFixed(6));
+    swapBtn.textContent = 'Swap';
+    swapBtn.disabled = false;
+  }catch(e){
+    console.error('swap error', e);
+    alert('Swap failed: ' + (e.message || e));
+    swapBtn.textContent = 'Swap';
+    swapBtn.disabled = false;
+  }
+});
+
+/* ================= Chat (Gun) ================= */
+const gun = Gun({ peers: GUN_PEERS });
+const chatNode = gun.get('nola_chat_global_v1'); let chatUser = null; const userColors = {};
+function pickColor(n){ if(userColors[n]) return userColors[n]; const c = '#'+Math.floor(Math.random()*16777215).toString(16); userColors[n]=c; return c; }
+document.getElementById('sendChat').addEventListener('click', ()=>{
+  const txt = (document.getElementById('chatInput').value||'').trim(); if(!txt) return;
+  if(!chatUser){ document.getElementById('usernameModal').style.display='flex'; return; }
+  chatNode.set({ user: chatUser, text: txt, color: pickColor(chatUser), t: Date.now() });
+  document.getElementById('chatInput').value = '';
+});
+document.getElementById('confirmUsername').addEventListener('click', ()=>{
+  const v = (document.getElementById('modalUsername').value||'').trim(); chatUser = v || ('Anon'+Math.floor(Math.random()*999)); document.getElementById('usernameModal').style.display='none';
+});
+chatNode.map().on(m=>{ if(!m || !m.user || !m.text) return; const el = document.createElement('div'); el.className='chat-msg'; el.style.background=(m.color||'#8a2be233'); el.innerHTML = `<b style="color:${m.color||'#fff'}">${escapeHtml(m.user)}</b><div style="margin-top:6px">${escapeHtml(m.text)}</div>`; document.getElementById('chatMessages').appendChild(el); document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight; });
+document.getElementById('chatToggle').addEventListener('click', ()=> { const c = document.getElementById('chatSidebar'); c.style.display = (c.style.display==='flex') ? 'none' : 'flex'; });
+
+/* ================= INIT (log) ================= */
+setTimeout(()=>{ console.log('Tokens:', tokenList.length); }, 1200);
+</script>
+</body>
+</html>
