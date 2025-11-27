@@ -26,14 +26,16 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* suggestions */
-.suggestions { position:absolute; top:70px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:220px; overflow-y:auto; display:none; z-index:100; }
-.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; }
-.suggestion-left { display:flex; gap:10px; align-items:center; }
-.suggestion-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; }
-.suggestion-main { display:flex; flex-direction:column; }
-.suggestion-symbol { font-weight:700; font-size:14px; }
-.suggestion-name { font-size:12px; opacity:0.8; }
-.suggestion-price { text-align:right; font-size:13px; opacity:0.9; min-width:88px; }
+.suggestions { position:absolute; top:70px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:300px; overflow-y:auto; display:none; z-index:100; box-shadow:0 6px 20px rgba(0,0,0,0.6);}
+.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.02); }
+.suggestion-left { display:flex; gap:10px; align-items:center; min-width:180px; }
+.suggestion-left img { width:32px; height:32px; border-radius:8px; object-fit:cover; }
+.suggestion-main { display:flex; flex-direction:column; overflow:hidden; }
+.suggestion-symbol { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;}
+.suggestion-name { font-size:12px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:200px;}
+.suggestion-meta { text-align:right; font-size:12px; opacity:0.9; min-width:92px; display:flex; flex-direction:column; align-items:flex-end; }
+
+.suggestion-change { font-size:11px; opacity:0.85; margin-top:6px; }
 
 /* button styles */
 .btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}
@@ -158,9 +160,10 @@ const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'; // USDC on Polyg
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'; // 1inch native placeholder
 
 /* STATE */
-let tokenList = [];
-let tokenMap = new Map();
-let volumeMap = new Map();
+let tokenList = [];           // all known tokens (from coingecko list + merged 1inch)
+let tokenMap = new Map();     // address -> token obj
+let volumeMap = new Map();    // symbol/name -> volume (from CoinGecko 24h)
+let cgStatsMap = new Map();   // symbol/name -> { price, change24h, volume }
 let provider = null, signer = null, signerAddress = null, walletConnected = false;
 const priceCache = new Map(); // address -> { price, ts }
 
@@ -175,39 +178,88 @@ const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`
 );
 
-/* LOAD token lists (CoinGecko polygon tokens + 1inch merge) */
+/* UTILS: throttle */
+function throttle(fn, wait) {
+  let last = 0, timeout = null;
+  return function(...args) {
+    const now = Date.now();
+    const remaining = wait - (now - last);
+    if (remaining <= 0) {
+      if (timeout) { clearTimeout(timeout); timeout = null; }
+      last = now;
+      fn.apply(this, args);
+    } else if (!timeout) {
+      timeout = setTimeout(() => { last = Date.now(); timeout = null; fn.apply(this, args); }, remaining);
+    }
+  };
+}
+
+/* LOAD token lists (CoinGecko polygon tokens + CoinGecko markets + 1inch merge)
+   - CoinGecko primary: use polygon tokens list file + markets endpoint for price/change/volume
+   - 1inch tokens merged for autocomplete fallback (deduplicated; keep CG when duplicate)
+*/
 async function loadTokensAndVolumes(){
   try {
+    // 1) load coin gecko polygon token list (static file)
     const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
     const j = await r.json();
-    tokenList = (j.tokens || []).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
+    tokenList = (j.tokens || []).map(t => ({
+      address: low(t.address),
+      symbol: t.symbol || '',
+      name: t.name || '',
+      decimals: t.decimals || 18,
+      logoURI: t.logoURI || t.logo || ''
+    }));
     tokenList.forEach(t => tokenMap.set(t.address, t));
-    tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol: 'MATIC', name: 'Polygon', decimals: 18, logoURI: ''});
-    if (!tokenMap.has(MATIC_ADDR)) tokenList.push(tokenMap.get(MATIC_ADDR));
-    else if (!tokenList.find(x => x.address === MATIC_ADDR)) tokenList.push(tokenMap.get(MATIC_ADDR));
 
-    // merge 1inch tokens (non-fatal)
+    // ensure MATIC placeholder exists
+    if (!tokenMap.has(MATIC_ADDR)) {
+      const m = { address: MATIC_ADDR, symbol: 'MATIC', name: 'Polygon', decimals: 18, logoURI: '' };
+      tokenMap.set(MATIC_ADDR, m);
+      tokenList.unshift(m);
+    }
+
+    // 2) fetch CoinGecko markets (top by volume) to extract price, 24h change, 24h volume
+    try {
+      const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+      const rm = await fetch(marketsUrl);
+      const jm = await rm.json();
+      jm.forEach(c => {
+        const keySym = low(c.symbol || '');
+        const keyName = low(c.name || '');
+        const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), logo: c.image || '' };
+        if (keySym) cgStatsMap.set(keySym, stat);
+        if (keyName) cgStatsMap.set(keyName, stat);
+        if (c.symbol) volumeMap.set(low(c.symbol), stat.volume24h || 0);
+        if (c.name) volumeMap.set(low(c.name), stat.volume24h || 0);
+      });
+    } catch(e){ console.warn('coingecko markets failed', e); }
+
+    // 3) Merge 1inch tokens (non-fatal) for autocomplete fallback; keep CG when duplicate
     try {
       const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
       const j1 = await r1.json();
       if (j1 && j1.tokens) {
         Object.values(j1.tokens).forEach(t => {
-          const addr = low(t.address);
-          if (!tokenMap.has(addr)) {
-            const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
-            tokenList.push(obj); tokenMap.set(addr, obj);
-          }
+          const addr = low(t.address || '');
+          if (!addr) return;
+          // if coinGecko already has this address, skip (per requirement keep CoinGecko)
+          if (tokenMap.has(addr)) return;
+          const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
+          tokenList.push(obj); tokenMap.set(addr, obj);
         });
       }
     } catch(e){ console.warn('1inch tokens merge failed', e); }
 
-    // top markets volume (for suggestion sorting)
-    try {
-      const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false`;
-      const rm = await fetch(marketsUrl);
-      const jm = await rm.json();
-      jm.forEach(c => { if (c && c.symbol) volumeMap.set(low(c.symbol), c.total_volume||0); if (c && c.name) volumeMap.set(low(c.name), c.total_volume||0);});
-    } catch(e){ console.warn('coingecko markets failed', e); }
+    // make tokenList unique by address
+    const seen = new Set();
+    tokenList = tokenList.filter(t => {
+      if (!t || !t.address) return false;
+      if (seen.has(t.address)) return false;
+      seen.add(t.address);
+      return true;
+    });
+
   } catch (e) {
     console.error('loadTokensAndVolumes error', e);
   }
@@ -233,13 +285,6 @@ async function fetchOnchainTokenInfo(address){
   }
 }
 
-/* === PRICE: multi-route stack (1inch -> CoinGecko -> Dexscreener)
-   - Each call is wrapped with a 3s timeout (AbortController)
-   - First valid response wins (Promise.any when available)
-   - Decimal-accurate using ethers.BigNumber and formatUnits
-   - Caching TTL = 30s
-*/
-
 /* wrapper fetchWithTimeout using AbortController */
 function fetchWithTimeout(url, opts = {}, ms = 3000) {
   const controller = new AbortController();
@@ -251,14 +296,12 @@ function fetchWithTimeout(url, opts = {}, ms = 3000) {
 /* 1) 1inch quote — precise using BigNumber */
 async function fetch1InchQuotePrice(addr, decimals) {
   try {
-    // Quote 1 unit of token in/from token decimals
     const amountBN = ethers.BigNumber.from(10).pow(decimals); // 1 * 10^decimals
     const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${USDC_ADDR}&amount=${amountBN.toString()}`;
     const res = await fetchWithTimeout(qUrl, {}, 3000);
     if (!res.ok) throw new Error('1inch quote non-ok');
     const j = await res.json();
     if (!j || !j.toTokenAmount) throw new Error('1inch returned no toTokenAmount');
-    // toTokenAmount is in USDC decimals (6)
     const usdcAmountBN = ethers.BigNumber.from(j.toTokenAmount);
     const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j.toToken?.decimals ?? 6));
     if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('invalid 1inch price');
@@ -277,7 +320,8 @@ async function fetchCoingeckoContractPrice(addr) {
     if (!res.ok) throw new Error('coingecko contract non-ok');
     const j = await res.json();
     const price = j?.market_data?.current_price?.usd;
-    if (typeof price === 'number' && price > 0) return price;
+    const change = j?.market_data?.price_change_percentage_24h;
+    if (typeof price === 'number' && price > 0) return { price, change };
     throw new Error('coingecko no price');
   } catch (e) {
     throw e;
@@ -308,108 +352,182 @@ async function fetchDexscreenerPrice(addr) {
   }
 }
 
-/* orchestrator: run the three sources in parallel and pick the first success */
+/* price orchestrator: try CoinGecko (contract) -> 1inch -> Dexscreener */
 async function getTokenPriceUSD(address, decimals = 18) {
   if (!address) return null;
-  const addr = (address || '').toString();
+  const addr = low(address);
 
-  // cache
+  // cache short TTL
   const c = priceCache.get(addr);
   if (c && (nowTs() - c.ts) < 30000) return c.price;
 
-  const p1 = (async () => { try { return await fetch1InchQuotePrice(addr, decimals); } catch(_) { throw new Error('1inch-failed'); } })();
-  const p2 = (async () => { try { return await fetchCoingeckoContractPrice(addr); } catch(_) { throw new Error('coingecko-failed'); } })();
-  const p3 = (async () => { try { return await fetchDexscreenerPrice(addr); } catch(_) { throw new Error('dexscreener-failed'); } })();
-
-  // Prefer Promise.any (first fulfilled). Fallback to sequential checks if unavailable or all fail.
+  // try coingecko contract endpoint
   try {
-    if (typeof Promise.any === 'function') {
-      const first = await Promise.any([p1, p2, p3]);
-      if (Number.isFinite(first) && first > 0) {
-        priceCache.set(addr, { price: first, ts: nowTs() });
-        return first;
-      }
-    }
-  } catch (e) {
-    // Promise.any may reject if all rejected — we'll fallback below.
-  }
+    const cg = await fetchCoingeckoContractPrice(addr);
+    if (cg && cg.price) { priceCache.set(addr, { price: cg.price, ts: nowTs() }); return cg.price; }
+  } catch(_) {}
 
-  // fallback: try sequentially
+  // try 1inch quote -> gives USDC price for 1 unit
   try {
-    const one = await (async () => { try { return await fetch1InchQuotePrice(addr, decimals); } catch(e){ return null; } })();
-    if (one) { priceCache.set(addr, { price: one, ts: nowTs() }); return one; }
-    const two = await (async () => { try { return await fetchCoingeckoContractPrice(addr); } catch(e){ return null; } })();
-    if (two) { priceCache.set(addr, { price: two, ts: nowTs() }); return two; }
-    const three = await (async () => { try { return await fetchDexscreenerPrice(addr); } catch(e){ return null; } })();
-    if (three) { priceCache.set(addr, { price: three, ts: nowTs() }); return three; }
-  } catch(e){ /* ignore */ }
+    const v = await fetch1InchQuotePrice(addr, decimals);
+    if (v) { priceCache.set(addr, { price: v, ts: nowTs() }); return v; }
+  } catch(_) {}
 
-  // last-resort: null
+  // try dexscreener
+  try {
+    const v2 = await fetchDexscreenerPrice(addr);
+    if (v2) { priceCache.set(addr, { price: v2, ts: nowTs() }); return v2; }
+  } catch(_) {}
+
   priceCache.set(addr, { price: null, ts: nowTs() });
   return null;
 }
 
-/* SUGGESTION item builder */
-function makeSuggestionItem(tokenObj, priceUSD, extraLabel){
+/* SUGGESTION item builder (shows price and 24h change if available) */
+function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className = 'suggestion-item';
   const left = document.createElement('div'); left.className = 'suggestion-left';
-  const img = document.createElement('img'); img.src = tokenObj.logoURI || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
+  const img = document.createElement('img'); img.src = tokenObj.logoURI || stats?.logo || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
   left.appendChild(img);
   const main = document.createElement('div'); main.className = 'suggestion-main';
   const sym = document.createElement('div'); sym.className = 'suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address ? tokenObj.address.slice(0,6) : '');
   const nm = document.createElement('div'); nm.className = 'suggestion-name'; nm.textContent = tokenObj.name || '';
   main.appendChild(sym); main.appendChild(nm); left.appendChild(main);
-  const right = document.createElement('div'); right.className = 'suggestion-price';
-  if (priceUSD != null && Number.isFinite(priceUSD)) right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;font-weight:600;">≈ $${Number(priceUSD).toFixed(4)}</div>`;
-  else right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;opacity:0.8">—</div>`;
-  row.appendChild(left); row.appendChild(right); return row;
+
+  const right = document.createElement('div'); right.className = 'suggestion-meta';
+  const priceLine = document.createElement('div'); priceLine.textContent = (priceUSD != null && Number.isFinite(priceUSD)) ? `≈ $${Number(priceUSD).toFixed(4)}` : '≈ $—';
+  const changeLine = document.createElement('div'); changeLine.className = 'suggestion-change';
+  const changeVal = stats?.change24h ?? null;
+  if (changeVal !== null && typeof changeVal === 'number') {
+    const sign = changeVal >= 0 ? '+' : '';
+    changeLine.textContent = `${sign}${changeVal.toFixed(2)}% (24h)`;
+    changeLine.style.color = changeVal >= 0 ? '#9ef39e' : '#ff9e9e';
+  } else {
+    changeLine.textContent = '— (24h)';
+    changeLine.style.opacity = 0.75;
+  }
+  right.appendChild(priceLine); right.appendChild(changeLine);
+
+  row.appendChild(left); row.appendChild(right);
+  return row;
 }
 
-/* AUTOCOMPLETE for from/to */
+/* Show default CoinGecko top list (used on focus when input empty) */
+function showDefaultList(side) {
+  const box = (side === 'from') ? $('fromSuggestions') : $('toSuggestions');
+  box.innerHTML = '';
+  // choose tokens that have cgStatsMap entries (CoinGecko markets)
+  const candidates = tokenList.filter(t => {
+    // rely on cgStatsMap by symbol/name presence
+    const sym = low(t.symbol); const name = low(t.name);
+    return (cgStatsMap.has(sym) || cgStatsMap.has(name));
+  });
+  // map to combined objects with stats
+  const withStats = candidates.map(t => {
+    const sym = low(t.symbol); const name = low(t.name);
+    const stats = cgStatsMap.get(sym) || cgStatsMap.get(name) || { price: null, change24h: null, volume24h: 0 };
+    return { t, stats };
+  });
+  // sort by volume24h desc
+  withStats.sort((a,b) => (b.stats.volume24h || 0) - (a.stats.volume24h || 0));
+  // limit to top 20
+  const top = withStats.slice(0,20);
+  // render
+  (async () => {
+    for (const entry of top) {
+      const tk = entry.t;
+      const stats = entry.stats;
+      // price prefer stats.price else fallback to price fetch
+      let price = stats.price;
+      if (!price) {
+        price = await getTokenPriceUSD(tk.address, tk.decimals);
+      }
+      const node = makeSuggestionItem(tk, { change24h: stats.change24h ?? null, logo: tk.logoURI || stats.logo }, price);
+      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); });
+      box.appendChild(node);
+    }
+    if (top.length) box.style.display='block'; else box.style.display='none';
+  })();
+}
+
+/* AUTOCOMPLETE for from/to (supports default list on focus + typed search)
+   - When typing: merge CoinGecko matches and 1inch matches, dedupe (CG wins)
+   - Scoring: CG 24h volume first, fallback to symbol start, fallback to nothing
+*/
 function setupAutocomplete(inputId, suggestionsId, side){
   const input = $(inputId), box = $(suggestionsId);
   let timer = null;
   input.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 160); });
-  input.addEventListener('focus', ()=> { if (input.value.trim()) handle(input.value.trim().toLowerCase()); });
-  // hide suggestions shortly after blur to allow click to register
+  input.addEventListener('focus', ()=> {
+    const q = input.value.trim().toLowerCase();
+    if (!q) {
+      // show default CG top list
+      showDefaultList(side);
+    } else {
+      handle(q);
+    }
+  });
+  // hide suggestions shortly after blur to allow clicks
   input.addEventListener('blur', ()=> setTimeout(()=> { if (box) box.style.display='none'; }, 180));
 
   async function handle(q){
     box.innerHTML = ''; if (!q) { box.style.display='none'; return; }
 
-    // address -> onchain metadata or tokenMap
+    // If q is an address: show token by on-chain info or tokenMap
     if (isAddress(q)) {
       let info = tokenMap.get(low(q));
       if (!info) info = await fetchOnchainTokenInfo(q);
       if (info) {
-        const price = await getTokenPriceUSD(info.address, info.decimals);
-        const node = makeSuggestionItem(info, price, `${info.symbol}`);
+        const cgStat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
+        let price = cgStat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
+        const node = makeSuggestionItem(info, { change24h: cgStat?.change24h ?? null, logo: info.logoURI }, price);
         node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); });
         box.appendChild(node); box.style.display='block';
       }
       return;
     }
 
-    // find matches by symbol or name (case-insensitive)
-    const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
-    if (!matches.length) { box.style.display='none'; return; }
+    // 1) find coinGecko matches (symbol or name)
+    const cgMatches = tokenList.filter(t => {
+      const s = t.symbol || ''; const n = t.name || '';
+      return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q)) && (cgStatsMap.has(low(s)) || cgStatsMap.has(low(n)));
+    });
 
-    // score by 24h volume (volumeMap) with large prefix bonus
-    const scored = matches.map(t => {
-      const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
-      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e15 : 0;
-      return { t, score: vol + startBonus };
-    }).sort((a,b)=> b.score - a.score).slice(0,8);
+    // build scored CG list
+    const cgScored = cgMatches.map(t => {
+      const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || { volume24h: 0, price: null, change24h: null };
+      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e12 : 0;
+      return { t, stats, score: (stats.volume24h || 0) + startBonus };
+    });
 
-    for (const s of scored) {
+    // 2) find 1inch matches (tokenList contains merged 1inch too but without CG stats)
+    const inchMatches = tokenList.filter(t => {
+      const s = t.symbol || ''; const n = t.name || '';
+      // only tokens that are NOT CoinGecko primary (so dedupe CG wins)
+      const alreadyCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
+      return !alreadyCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
+    });
+    // For inch matches we don't have 12h volume reliably; keep them after CG results and prefer symbols starting with query
+    const inchScored = inchMatches.map(t => {
+      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0;
+      return { t, stats: null, score: startBonus };
+    });
+
+    // merge and sort: CG first by score desc, then 1inch by score desc
+    const merged = cgScored.sort((a,b)=> b.score - a.score).concat(inchScored.sort((a,b)=> b.score - a.score)).slice(0,12);
+
+    if (!merged.length) { box.style.display='none'; return; }
+
+    // render
+    for (const s of merged) {
       const tk = s.t;
-      const price = await getTokenPriceUSD(tk.address, tk.decimals);
-      const label = `${tk.symbol} | ${tk.name}`;
-      const node = makeSuggestionItem(tk, price, label);
+      const stats = s.stats || { change24h: null, logo: tk.logoURI || '' };
+      const price = (stats && stats.price) ? stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
+      const node = makeSuggestionItem(tk, { change24h: stats.change24h ?? null, logo: tk.logoURI || '' }, price);
       node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); });
       box.appendChild(node);
     }
-    box.style.display = 'block';
+    box.style.display='block';
   }
 }
 
@@ -421,7 +539,6 @@ function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? $('fromToken') : $('toToken');
   const logo = (side === 'from') ? $('fromLogo') : $('toLogo');
-  // normalize address to lowercase for consistent storage
   const addrLower = tokenObj.address ? low(tokenObj.address) : undefined;
   input.value = tokenObj.symbol || tokenObj.name || (addrLower ? addrLower.slice(0,8) : '');
   if (addrLower) input.dataset.address = addrLower;
@@ -432,8 +549,9 @@ function applyTokenSelection(side, tokenObj){
     tokenMap.set(addrLower, Object.assign({}, tokenObj, { address: addrLower }));
     if (!tokenList.find(t => t.address === addrLower)) tokenList.push(Object.assign({}, tokenObj, { address: addrLower }));
   }
-  // fetch price for that token immediately
+  // immediate price fetch and update quote
   fetchPriceForToken(addrLower || tokenObj.address, tokenObj.decimals, side);
+  updateQuoteDebounced();
 }
 
 /* show/hide spinner helpers */
@@ -448,7 +566,7 @@ async function fetchPriceForToken(address, decimals, side){
   try {
     if (!address) return;
     showSpinner(side, true);
-    const price = await getTokenPriceUSD(low(address), decimals);
+    const price = await getTokenPriceUSD(address, decimals);
     const usdElText = (side === 'from') ? $('fromUsdText') : $('toUsdText');
     const amtEl = (side === 'from') ? $('fromAmount') : $('toAmount');
     // show total USD if user typed an amount; otherwise show per-token USD
@@ -474,22 +592,26 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* QUOTE logic: using 1inch quote to compute toAmount (live) */
+/* QUOTE logic: using 1inch quote to compute toAmount (live)
+   - Fixed decimals handling
+   - Throttled to avoid flooding
+*/
 let quoteTimer = null;
-function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 120); }
+function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 150); }
 
 async function updateQuote(){
   try {
     const fromAddr = low($('fromToken').dataset.address || '');
     const toAddr = low($('toToken').dataset.address || '');
     const amount = $('fromAmount').value;
+    // if user didn't choose addresses, attempt to resolve symbols via tokenList heuristic
     if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; await fetchBothPrices(); return; }
 
     const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
     const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
     const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
     const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
-    const r = await fetchWithTimeout(quoteUrl, {}, 3000);
+    const r = await fetchWithTimeout(quoteUrl, {}, 4000);
     if (!r.ok) { $('toAmount').value = ''; await fetchBothPrices(); return; }
     const j = await r.json();
     if (j && j.toTokenAmount) {
@@ -508,7 +630,7 @@ async function updateQuote(){
   }
 }
 
-/* live update when typing amount */
+/* live update when typing amount (throttled) */
 $('fromAmount').addEventListener('input', updateQuoteDebounced);
 
 /* paste address behavior (on from/to input) */
@@ -567,7 +689,7 @@ async function ensureApprovalAndSwap(){
     }
 
     const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsedAmount}&fromAddress=${signerAddress}&slippage=${slippage}`;
-    const sr = await fetchWithTimeout(swapUrl, {}, 3000);
+    const sr = await fetchWithTimeout(swapUrl, {}, 4000);
     const sj = await sr.json();
     if (!sj || !sj.tx) { console.error('swap build failed', sj); alert('Swap build failed'); return; }
     const txReq = sj.tx;
