@@ -182,7 +182,6 @@ const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
 function formatUSD(value) {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
   const n = Number(value);
-  // choose digits: tiny numbers get more precision
   const abs = Math.abs(n);
   const opts = { style: 'currency', currency: 'USD', maximumFractionDigits: 2, minimumFractionDigits: 2 };
   if (abs > 0 && abs < 0.01) { opts.maximumFractionDigits = 6; opts.minimumFractionDigits = 4; }
@@ -229,12 +228,11 @@ async function loadTokensAndVolumes(){
       tokenList.unshift(m);
     }
 
-    // CoinGecko markets (global top by volume) - used only to enrich tokens present in polygon tokenList
+    // CoinGecko markets to enrich tokens
     try {
       const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
       const rm = await fetch(marketsUrl);
       const jm = await rm.json();
-      // Map stats by symbol and name for tokens that appear in tokenList (polygon)
       jm.forEach(c => {
         const sym = low(c.symbol || '');
         const name = low(c.name || '');
@@ -274,7 +272,13 @@ async function loadTokensAndVolumes(){
     console.error('loadTokensAndVolumes error', e);
   }
 }
-loadTokensAndVolumes();
+
+// ensure tokens are loaded before trying to quote
+async function ensureTokensLoaded() {
+  if (tokenList && tokenList.length > 10) return;
+  // attempt to load (if previous load failed or still running)
+  await loadTokensAndVolumes();
+}
 
 /* ON-CHAIN metadata fallback */
 async function fetchOnchainTokenInfo(address){
@@ -412,7 +416,6 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
 function showDefaultList(side) {
   const box = (side === 'from') ? $('fromSuggestions') : $('toSuggestions');
   box.innerHTML = '';
-  // tokens present in tokenList & have CG stats (by symbol or name)
   const candidates = tokenList.filter(t => {
     const s = low(t.symbol), n = low(t.name);
     return (cgStatsMap.has(s) || cgStatsMap.has(n));
@@ -438,7 +441,7 @@ function showDefaultList(side) {
   })();
 }
 
-/* AUTOCOMPLETE setup (default CG top list on focus; typed search merges CG + 1inch fallback) */
+/* AUTOCOMPLETE setup */
 function setupAutocomplete(inputId, suggestionsId, side){
   const input = $(inputId), box = $(suggestionsId);
   let timer = null;
@@ -466,7 +469,7 @@ function setupAutocomplete(inputId, suggestionsId, side){
       return;
     }
 
-    // CG matches first (only tokens that exist in tokenList)
+    // CG matches first
     const cgMatches = tokenList.filter(t => {
       const s = t.symbol || '', n = t.name || '';
       const symHasStat = cgStatsMap.has(low(s));
@@ -480,13 +483,12 @@ function setupAutocomplete(inputId, suggestionsId, side){
       return { t, stats, score: (stats.volume24h || 0) + startBonus };
     });
 
-    // 1inch fallback matches (from merged tokenList but excluding CG-primary ones)
+    // 1inch fallback matches
     const inchMatches = tokenList.filter(t => {
       const s = t.symbol || '', n = t.name || '';
       const alreadyCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
       return !alreadyCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
     });
-
     const inchScored = inchMatches.map(t => {
       const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0;
       return { t, stats: null, score: startBonus };
@@ -525,7 +527,6 @@ function applyTokenSelection(side, tokenObj){
     tokenMap.set(addrLower, Object.assign({}, tokenObj, { address: addrLower }));
     if (!tokenList.find(t => t.address === addrLower)) tokenList.push(Object.assign({}, tokenObj, { address: addrLower }));
   }
-  // immediate price fetch and quote update
   fetchPriceForToken(addrLower || tokenObj.address, tokenObj.decimals, side);
   updateQuoteDebounced();
 }
@@ -551,7 +552,6 @@ async function fetchPriceForToken(address, decimals, side){
     const amtEl = (side === 'from') ? $('fromAmount') : $('toAmount');
     const amtRaw = amtEl ? amtEl.value : '';
     const amt = (typeof amtRaw === 'string' && amtRaw.trim() === '') ? null : Number(amtRaw);
-    // if user typed amount -> show total and per-token second line
     if (price != null && amt !== null && !Number.isNaN(amt)) {
       const total = Number(price) * amt;
       usdElText.innerHTML = `<div style="font-size:11px;opacity:0.85">≈ ${formatUSD(total)}</div><div style="margin-top:4px;font-weight:600;font-size:12px;opacity:0.95">${formatUSD(price)} / unit</div>`;
@@ -576,22 +576,26 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* resolve token inputs (if user typed symbol/name instead of selecting) */
+/* improved resolver: try to resolve typed tokens to tokenList entries (preferring CoinGecko polygon tokens) */
 function resolveTokenInputsIfNeeded() {
-  // helper to resolve an input element if it lacks dataset.address
   const tryResolve = (inputEl) => {
     const val = (inputEl.value || '').trim();
     if (!val || inputEl.dataset.address) return;
     const q = val.toLowerCase();
-    // try exact symbol match first
-    let found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
+
+    // prefer exact symbol match among polygon (CoinGecko) tokens
+    let found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
     if (!found) {
-      // try exact name match
-      found = tokenList.find(t => t.name && t.name.toLowerCase() === q);
+      // exact symbol among all tokens
+      found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
     }
     if (!found) {
-      // try startsWith symbol
+      // startsWith symbol
       found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
+    }
+    if (!found) {
+      // fallback: name contains
+      found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
     }
     if (found) {
       inputEl.dataset.address = found.address;
@@ -605,13 +609,19 @@ function resolveTokenInputsIfNeeded() {
   tryResolve($('toToken'));
 }
 
-/* QUOTE logic: using 1inch to compute toAmount (live) */
+/* QUOTE logic: using 1inch to compute toAmount (live)
+   - Wait for tokens to be loaded
+   - Resolve typed symbols if needed
+*/
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 150); }
 
 async function updateQuote(){
   try {
-    // try to resolve typed symbols to addresses (Polygon-only tokenList)
+    // ensure token lists loaded first
+    await ensureTokensLoaded();
+
+    // attempt to resolve typed symbols -> addresses before quoting
     resolveTokenInputsIfNeeded();
 
     const fromAddr = low($('fromToken').dataset.address || '');
@@ -622,8 +632,17 @@ async function updateQuote(){
     const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
     const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
 
-    // parse carefully
-    const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
+    // safe parseUnits: guard parse errors
+    let parsed;
+    try {
+      parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
+    } catch (pe) {
+      console.warn('parseUnits failed', pe);
+      $('toAmount').value = '';
+      await fetchBothPrices();
+      return;
+    }
+
     const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
     const r = await fetchWithTimeout(quoteUrl, {}, 5000);
     if (!r.ok) { $('toAmount').value = ''; await fetchBothPrices(); return; }
@@ -635,7 +654,7 @@ async function updateQuote(){
       $('toAmount').value = '';
     }
 
-    // update USD displays after we set toAmount
+    // update USD displays for both
     await fetchBothPrices();
   } catch (e) {
     console.error('updateQuote error', e);
@@ -662,7 +681,6 @@ document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
           const logo = (inp.id === 'fromToken') ? $('fromLogo') : $('toLogo');
           if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'inline-block'; }
           else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
-          // fetch both prices & update quote
           fetchBothPrices();
           updateQuoteDebounced();
         }
@@ -671,7 +689,7 @@ document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
   });
 });
 
-/* SWAP flow (unchanged main behavior; uses 1inch swap) */
+/* SWAP flow (unchanged main behavior) */
 async function ensureApprovalAndSwap(){
   try {
     await connectWallet();
@@ -716,7 +734,7 @@ async function ensureApprovalAndSwap(){
 }
 $('swapBtn').addEventListener('click', ensureApprovalAndSwap);
 
-/* WALLET connect (improved detection) */
+/* WALLET connect */
 async function connectWallet(){
   if (walletConnected && signer) return;
   try {
@@ -771,7 +789,6 @@ function swapTokenFields(){
   const tmpAmt = fAmount.value; fAmount.value = tAmount.value; tAmount.value = tmpAmt;
   const tmpUsd = fUsdText.innerHTML; fUsdText.innerHTML = tUsdText.innerHTML; tUsdText.innerHTML = tmpUsd;
 
-  // refresh quote & prices
   updateQuoteDebounced();
   fetchBothPrices();
 }
