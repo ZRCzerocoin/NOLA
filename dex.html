@@ -1,17 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>NOLA Exchange</title>
 <style>
 /* ===== BASIC THEME ===== (kept exactly as you provided, with tiny additions for suggestions) */
 body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
 .container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}
 h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
-.input-box {margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:16px; position:relative;}
-.input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
-.suggestions { position:absolute; top:50px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
+.input-box {margin-top:20px; padding:12px; background:rgba(255,255,255,0.02); border-radius:16px; position:relative;}
+.input-box .token-top {display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.token-left {display:flex; align-items:center; gap:10px; min-width:140px; overflow:hidden;}
+.token-left img { width:36px; height:36px; border-radius:10px; object-fit:cover; flex-shrink:0; }
+.token-left input[type="text"]{border:none; background:transparent; color:#fff; font-weight:700; font-size:16px; outline:none; width:100%; min-width:60px;}
+
+/* amount + USD on the right */
+.token-right {display:flex; align-items:center; gap:10px;}
+.token-right .amount{ padding:8px 10px; border-radius:12px; border:none; background:rgba(255,255,255,0.03); color:#fff; font-size:16px; width:110px; text-align:right; }
+.token-right .usd { font-size:13px; opacity:0.9; min-width:80px; text-align:right; }
+
+/* suggestions unchanged */
+.suggestions { position:absolute; top:70px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:220px; overflow-y:auto; display:none; z-index:100; }
 .suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; }
 .suggestion-left { display:flex; gap:10px; align-items:center; }
 .suggestion-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; }
@@ -19,6 +29,8 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
 .suggestion-symbol { font-weight:700; font-size:14px; }
 .suggestion-name { font-size:12px; opacity:0.8; }
 .suggestion-price { text-align:right; font-size:13px; opacity:0.9; min-width:88px; }
+
+/* button styles left mostly same */
 .btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}
 footer {text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;}
 footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
@@ -68,6 +80,13 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   font-size:14px;
   outline:none;
 }
+
+/* responsive tweaks */
+@media (max-width:420px){
+  .token-right .amount { width:86px; font-size:14px; }
+  .token-left input[type="text"]{font-size:14px;}
+  .token-left img{width:32px;height:32px;}
+}
 </style>
 </head>
 <body>
@@ -80,21 +99,34 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
     <!-- Compact global search inside container -->
     <input id="globalSearch" placeholder="Search contract address or token (fills To)" autocomplete="off">
 
-    <div class="input-box">
-        <input type="text" id="fromToken" placeholder="From Token">
+    <div class="input-box" id="fromBox">
+        <div class="token-top">
+            <div class="token-left">
+                <img id="fromLogo" src="https://via.placeholder.com/36" alt="logo">
+                <input type="text" id="fromToken" placeholder="From Token" autocomplete="off">
+            </div>
+            <div class="token-right">
+                <input id="fromAmount" class="amount" type="number" placeholder="Amount" min="0" step="any">
+                <div id="fromUsd" class="usd">≈ $—</div>
+            </div>
+        </div>
         <div class="suggestions" id="fromSuggestions"></div>
     </div>
 
     <div id="swapTokensBtn" title="Swap From ↔ To">⇅</div>
 
-    <div class="input-box" style="margin-top:44px;">
-        <input type="text" id="toToken" placeholder="To Token">
+    <div class="input-box" id="toBox" style="margin-top:12px;">
+        <div class="token-top">
+            <div class="token-left">
+                <img id="toLogo" src="https://via.placeholder.com/36" alt="logo">
+                <input type="text" id="toToken" placeholder="To Token" autocomplete="off">
+            </div>
+            <div class="token-right">
+                <input id="toAmount" class="amount" type="number" placeholder="Estimated" readonly>
+                <div id="toUsd" class="usd">≈ $—</div>
+            </div>
+        </div>
         <div class="suggestions" id="toSuggestions"></div>
-    </div>
-
-    <div style="margin-top:12px; display:flex; gap:8px;">
-        <input id="fromAmount" type="number" placeholder="Amount" style="flex:1; padding:10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;">
-        <input id="toAmount" type="number" placeholder="Estimated" readonly style="flex:1; padding:10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;">
     </div>
 
     <div style="margin-top:10px;">
@@ -142,10 +174,10 @@ const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
 const low = s => (s||'').toLowerCase();
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 
-/* ========== LOAD TOKENS + 24H VOLUME (CoinGecko) ========== */
+/* ========== LOAD TOKENS + 24H VOLUME (CoinGecko) + 1inch tokens merge ========= */
 async function loadTokensAndVolumes(){
     try {
-        // load polygon token list (includes decimals & logo)
+        // load polygon token list (includes decimals & logo) from CoinGecko tokens list
         const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
         const j = await r.json();
         tokenList = (j.tokens || []).map(t=>({
@@ -159,15 +191,33 @@ async function loadTokensAndVolumes(){
 
         // add MATIC pseudo-token
         tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol: 'MATIC', name:'Polygon', decimals:18, logoURI:'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png' });
+        tokenList.push(tokenMap.get(MATIC_ADDR));
+
+        // try load 1inch tokens list and merge (helps find tokens not in coingecko list)
+        try {
+            const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
+            const j1 = await r1.json();
+            if (j1 && j1.tokens) {
+                Object.values(j1.tokens).forEach(t => {
+                    const addr = low(t.address);
+                    if (!tokenMap.has(addr)) {
+                        const obj = { address: addr, symbol: t.symbol || '', name: t.name || '', decimals: t.decimals || 18, logoURI: t.logoURI || t.logo || '' };
+                        tokenList.push(obj);
+                        tokenMap.set(addr, obj);
+                    }
+                });
+            }
+        } catch (e) {
+            // non-fatal
+            console.warn('1inch tokens fetch failed', e);
+        }
 
         // fetch top markets by volume (per_page 250)
-        // use markets endpoint to get total_volume (24h)
         const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false`;
         const rm = await fetch(marketsUrl);
         const jm = await rm.json();
         jm.forEach(c => {
             if (c && c.symbol) volumeMap.set(low(c.symbol), c.total_volume || 0);
-            // Also map name -> volume to help matching (e.g., 'polygon' name)
             if (c && c.name) volumeMap.set(low(c.name), c.total_volume || 0);
         });
     } catch (e) {
@@ -187,8 +237,9 @@ async function fetchOnchainTokenInfo(address){
             c.name().catch(()=>null),
             c.decimals().catch(()=>18)
         ]);
-        const info = { address: low(address), symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals || 18, logoURI: 'https://via.placeholder.com/28' };
+        const info = { address: low(address), symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals || 18, logoURI: 'https://via.placeholder.com/36' };
         tokenMap.set(info.address, info);
+        tokenList.push(info);
         return info;
     } catch (e) {
         console.warn('fetchOnchainTokenInfo failed', e);
@@ -250,7 +301,7 @@ function makeSuggestionItem(tokenObj, priceUSD, extraLabel){
 }
 
 /* ========== AUTOCOMPLETE (FROM / TO) prioritized by 24h volume ========== */
-function setupAutocomplete(inputId, suggestionsId){
+function setupAutocomplete(inputId, suggestionsId, side){
     const input = $(inputId);
     const box = $(suggestionsId);
     let timer = null;
@@ -274,9 +325,7 @@ function setupAutocomplete(inputId, suggestionsId){
                 const price = await fetchTokenPriceUSD(info.address);
                 const node = makeSuggestionItem(info, price, `${info.symbol}`);
                 node.onclick = ()=>{
-                    input.value = info.symbol || info.name || info.address;
-                    input.dataset.address = info.address;
-                    input.dataset.decimals = info.decimals || 18;
+                    applyTokenSelection(side, info);
                     box.style.display='none';
                     updateQuoteDebounced();
                 };
@@ -292,7 +341,7 @@ function setupAutocomplete(inputId, suggestionsId){
         // score by 24h volume, and give bonus if startsWith
         const scored = matches.map(t => {
             const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
-            const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;
+            const startBonus = (t.symbol && t.symbol.toLowerCase().startsWith(q) || t.name && t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;
             return { t, score: vol + startBonus };
         }).sort((a,b)=> b.score - a.score).slice(0,8);
 
@@ -304,9 +353,7 @@ function setupAutocomplete(inputId, suggestionsId){
             const label = `${tk.symbol} | ${tk.name}`;
             const node = makeSuggestionItem(tk, price, label);
             node.onclick = ()=>{
-                input.value = tk.symbol || tk.name;
-                input.dataset.address = tk.address;
-                input.dataset.decimals = tk.decimals || 18;
+                applyTokenSelection(side, tk);
                 box.style.display='none';
                 updateQuoteDebounced();
             };
@@ -316,8 +363,20 @@ function setupAutocomplete(inputId, suggestionsId){
     }
 }
 
-setupAutocomplete('fromToken','fromSuggestions');
-setupAutocomplete('toToken','toSuggestions');
+setupAutocomplete('fromToken','fromSuggestions','from');
+setupAutocomplete('toToken','toSuggestions','to');
+
+/* ========== helper to apply token selection to UI ========== */
+function applyTokenSelection(side, tokenObj) {
+    if (!tokenObj) return;
+    const input = (side === 'from') ? $('fromToken') : $('toToken');
+    const logo = (side === 'from') ? $('fromLogo') : $('toLogo');
+    input.value = tokenObj.symbol || tokenObj.name || tokenObj.address;
+    input.dataset.address = tokenObj.address;
+    input.dataset.decimals = tokenObj.decimals || 18;
+    logo.src = tokenObj.logoURI || 'https://via.placeholder.com/36';
+    tokenMap.set(tokenObj.address, tokenObj);
+}
 
 /* ========== GLOBAL SEARCH (compact, suggestions same style) ========= */
 const globalSearch = $('globalSearch');
@@ -350,9 +409,7 @@ async function handleGlobal(q){
             const node = makeSuggestionItem(info, price, `${info.symbol}`);
             node.onclick = ()=>{
                 // fill To
-                $('toToken').value = info.symbol || info.name;
-                $('toToken').dataset.address = info.address;
-                $('toToken').dataset.decimals = info.decimals || 18;
+                applyTokenSelection('to', info);
                 globalBox.style.display='none';
                 updateQuoteDebounced();
             };
@@ -366,7 +423,7 @@ async function handleGlobal(q){
     const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
     const scored = matches.map(t => {
         const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
-        const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;
+        const startBonus = (t.symbol && t.symbol.toLowerCase().startsWith(q) || t.name && t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;
         return { t, score: vol + startBonus };
     }).sort((a,b)=> b.score - a.score).slice(0,8);
 
@@ -375,9 +432,7 @@ async function handleGlobal(q){
         const price = await fetchTokenPriceUSD(tk.address);
         const node = makeSuggestionItem(tk, price, `${tk.symbol}`);
         node.onclick = ()=>{
-            $('toToken').value = tk.symbol;
-            $('toToken').dataset.address = tk.address;
-            $('toToken').dataset.decimals = tk.decimals || 18;
+            applyTokenSelection('to', tk);
             globalBox.style.display='none';
             updateQuoteDebounced();
         };
@@ -437,7 +492,7 @@ async function connectWallet(){
 }
 $('walletConnectBtn').addEventListener('click', connectWallet);
 
-/* ========== QUOTE LOGIC (1inch) - decimal-aware ========== */
+/* ========== QUOTE LOGIC (1inch) - decimal-aware, updates USD displays ========== */
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=>updateQuote(), 200); }
 
@@ -446,9 +501,8 @@ async function updateQuote(){
         const fromAddr = low($('fromToken').dataset.address || '');
         const toAddr = low($('toToken').dataset.address || '');
         const amount = $('fromAmount').value;
-        if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; return; }
+        if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; updateUsdDisplays(); return; }
 
-        // determine decimals: from dataset decimals or tokenMap or default 18
         const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
         const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
 
@@ -457,15 +511,49 @@ async function updateQuote(){
         const r = await fetch(quoteUrl);
         const j = await r.json();
         if (j && j.toTokenAmount) {
-            $('toAmount').value = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
+            const formattedTo = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
+            $('toAmount').value = formattedTo;
         } else {
             $('toAmount').value = '';
         }
+
+        // update USD displays for both tokens
+        await updateUsdDisplays();
     } catch (e) {
         console.error('updateQuote error', e);
         $('toAmount').value = '';
+        await updateUsdDisplays();
     }
 }
+
+/* update USD displays using token prices and current amounts */
+async function updateUsdDisplays(){
+    try {
+        const fromAddr = low($('fromToken').dataset.address || '');
+        const toAddr = low($('toToken').dataset.address || '');
+        const fromVal = Number($('fromAmount').value || 0);
+        const toVal = Number($('toAmount').value || 0);
+
+        let fromUsdText = '≈ $—';
+        let toUsdText = '≈ $—';
+
+        if (fromAddr) {
+            const p = await fetchTokenPriceUSD(fromAddr);
+            if (p != null) fromUsdText = '≈ $' + (Number(p) * fromVal).toFixed(4);
+        }
+        if (toAddr) {
+            const p2 = await fetchTokenPriceUSD(toAddr);
+            if (p2 != null) toUsdText = '≈ $' + (Number(p2) * toVal).toFixed(4);
+        }
+
+        $('fromUsd').textContent = fromUsdText;
+        $('toUsd').textContent = toUsdText;
+    } catch (e) {
+        console.warn('updateUsdDisplays error', e);
+    }
+}
+
+/* hooked up: when from amount changes -> update quote */
 $('fromAmount').addEventListener('input', updateQuoteDebounced);
 
 /* When user pastes an address into from/to input, fetch on-chain info and set decimals */
@@ -480,6 +568,9 @@ document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
                     inp.dataset.decimals = info.decimals || 18;
                     inp.value = info.symbol || info.name || txt.slice(0,8);
                     tokenMap.set(info.address, info);
+                    // update logo and USD
+                    if (inp.id === 'fromToken') $('fromLogo').src = info.logoURI || 'https://via.placeholder.com/36';
+                    else $('toLogo').src = info.logoURI || 'https://via.placeholder.com/36';
                     updateQuoteDebounced();
                 }
             }, 10);
@@ -548,9 +639,7 @@ globalSearch.addEventListener('keydown', (e)=>{
             // fallback: try find by symbol or name
             const found = tokenList.find(t => (t.symbol && low(t.symbol).includes(low(v))) || (t.name && low(t.name).includes(low(v))));
             if (found) {
-                $('toToken').value = found.symbol;
-                $('toToken').dataset.address = found.address;
-                $('toToken').dataset.decimals = found.decimals || 18;
+                applyTokenSelection('to', found);
                 updateQuoteDebounced();
             }
         }
@@ -564,9 +653,7 @@ async function setToFromAddress(addr){
     let info = tokenMap.get(lowAddr);
     if (!info) info = await fetchOnchainTokenInfo(addr);
     if (info) {
-        $('toToken').value = info.symbol || info.name;
-        $('toToken').dataset.address = info.address;
-        $('toToken').dataset.decimals = info.decimals || 18;
+        applyTokenSelection('to', info);
         updateQuoteDebounced();
     } else {
         $('toToken').value = addr;
@@ -575,6 +662,33 @@ async function setToFromAddress(addr){
         updateQuoteDebounced();
     }
 }
+
+/* ========== Swap tokens UI action (works small & clean) ========== */
+function swapTokenFields(){
+    // swap token inputs (value + dataset + logo + decimals)
+    const fToken = $('fromToken'), tToken = $('toToken');
+    const fLogo = $('fromLogo'), tLogo = $('toLogo');
+    const fAmount = $('fromAmount'), tAmount = $('toAmount');
+    const fUsd = $('fromUsd'), tUsd = $('toUsd');
+
+    // swap address & decimals & visible text
+    const tmpVal = fToken.value; fToken.value = tToken.value; tToken.value = tmpVal;
+    const tmpAddr = fToken.dataset.address; fToken.dataset.address = tToken.dataset.address; tToken.dataset.address = tmpAddr;
+    const tmpDec = fToken.dataset.decimals; fToken.dataset.decimals = tToken.dataset.decimals; tToken.dataset.decimals = tmpDec;
+
+    // swap logos
+    const tmpLogo = fLogo.src; fLogo.src = tLogo.src; tLogo.src = tmpLogo;
+
+    // swap amounts (keep toAmount readonly -> move into from)
+    const tmpAmt = fAmount.value; fAmount.value = tAmount.value; tAmount.value = tmpAmt;
+
+    // swap USD displays
+    const tmpUsd = fUsd.textContent; fUsd.textContent = tUsd.textContent; tUsd.textContent = tmpUsd;
+
+    // recalc quote
+    updateQuoteDebounced();
+}
+$('swapTokensBtn').addEventListener('click', swapTokenFields);
 
 /* ========== Initialization: ensure token list warm-up and style positions ========== */
 (async function init(){
