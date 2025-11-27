@@ -5,19 +5,41 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>NOLA Exchange</title>
 <style>
-/* layout: center page */
+/* ===== THEME / LAYOUT ===== */
+:root{
+  --bg-1: #0c0014;
+  --bg-2: #1a002b;
+  --accent-1: #b445ff;
+  --accent-2: #7013ff;
+  --glass: rgba(255,255,255,0.05);
+  --glass-2: rgba(255,255,255,0.03);
+  --suggest-bg: rgba(25,0,50,0.98);
+  --shadow: 0 0 25px rgba(180,0,255,0.3);
+}
 html,body{height:100%; margin:0;}
-body {display:flex; align-items:center; justify-content:center; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
+body {
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Arial',sans-serif;
+  background: radial-gradient(circle at center, var(--bg-1), var(--bg-2) 80%);
+  color:#fff;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
 
 /* container centered */
-.container {width:90%; max-width:480px; background:rgba(255,255,255,0.05); border-radius:25px; padding:20px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3); position:relative; margin:auto;}
-h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff; margin:6px 0 12px 0;}
+.container {
+  width:90%; max-width:480px;
+  background:var(--glass); border-radius:25px; padding:20px;
+  backdrop-filter:blur(18px); box-shadow:var(--shadow);
+  position:relative; margin:auto;
+}
+h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px var(--accent-1); margin:6px 0 12px 0;}
 
-/* thin professional bars */
+/* token input rows */
 .input-box {margin-top:14px; padding:8px 10px; background:rgba(255,255,255,0.02); border-radius:12px; position:relative;}
 .input-box .token-top {display:flex; align-items:center; justify-content:space-between; gap:8px;}
 .token-left {display:flex; align-items:center; gap:8px; min-width:140px; overflow:hidden;}
-.token-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; flex-shrink:0; display:none;} /* hidden until token chosen */
+.token-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; flex-shrink:0; display:none;}
 .token-left input[type="text"]{border:none; background:transparent; color:#fff; font-weight:700; font-size:15px; outline:none; width:100%; min-width:60px; padding:6px 0;}
 
 /* amount + USD on the right */
@@ -28,7 +50,7 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff; margin:6px 0 1
 .usd-main { font-weight:700; font-size:13px; margin-top:4px; }
 
 /* suggestions */
-.suggestions { position:absolute; top:56px; left:8px; right:8px; background:rgba(25,0,50,0.98); border-radius:12px; max-height:320px; overflow-y:auto; display:none; z-index:220; box-shadow:0 8px 30px rgba(0,0,0,0.7); }
+.suggestions { position:absolute; top:56px; left:8px; right:8px; background:var(--suggest-bg); border-radius:12px; max-height:320px; overflow-y:auto; display:none; z-index:220; box-shadow:0 8px 30px rgba(0,0,0,0.7); }
 .suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; gap:8px; border-bottom:1px solid rgba(255,255,255,0.02); }
 .suggestion-left { display:flex; gap:10px; align-items:center; min-width:170px; overflow:hidden; }
 .suggestion-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; }
@@ -38,35 +60,33 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff; margin:6px 0 1
 .suggestion-price { text-align:right; font-size:13px; opacity:0.95; min-width:100px; }
 
 /* buttons */
-.btn {width:100%; padding:14px; margin-top:18px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 14px 30px rgba(180,68,255,0.12);}
-footer {text-align:center; margin:26px 0 10px 0; font-size:14px; opacity:0.8;}
-footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
+.btn {width:100%; padding:14px; margin-top:18px; border:none; border-radius:20px; background: linear-gradient(135deg,var(--accent-1),var(--accent-2)); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 14px 30px rgba(180,68,255,0.12);}
 
-/* swap button */
+/* footer */
+footer {text-align:center; margin:26px 0 10px 0; font-size:14px; opacity:0.8;}
+footer a{color:var(--accent-1); text-decoration:none; margin:0 5px;}
+
+/* swap icon — moved to LEFT edge of container near the section */
 #swapTokensBtn {
   position:absolute;
-  right:18px;
+  left:10px; /* now near left edge of the section */
   top:calc(50% - 20px);
-  width:40px;
-  height:40px;
-  border-radius:10px;
+  width:40px; height:40px; border-radius:10px;
   background:rgba(30,20,60,0.95);
   border:2px solid rgba(255,255,255,0.06);
   display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; color:#fff; z-index:250;
-  transition:transform 200ms ease, box-shadow 200ms ease;
+  transition:transform 160ms ease, box-shadow 160ms ease;
 }
 #swapTokensBtn:hover{ transform:translateY(-4px); box-shadow:0 12px 30px rgba(104,0,200,0.18); }
-#swapTokensBtn.pressed{ transform: rotate(180deg) scale(0.98); }
+#swapTokensBtn.pressed{ transform: translateY(0) scale(0.98); }
 
 /* wallet iframe slot (top-right) */
 #walletFrame {
   position:fixed; top:12px; right:12px; width:48px; height:48px; border:0; border-radius:12px; overflow:hidden; z-index:999;
   box-shadow:0 10px 30px rgba(0,0,0,0.6);
-  background:linear-gradient(135deg,#b445ff,#7013ff);
+  background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
 }
-
-/* fallback small button if iframe blocked */
-#walletFallback { position:fixed; top:14px; right:14px; z-index:1000; display:none; padding:8px 10px; border-radius:12px; border:none; color:#fff; background:linear-gradient(135deg,#b445ff,#7013ff); }
+#walletFallback { position:fixed; top:14px; right:14px; z-index:1000; display:none; padding:8px 10px; border-radius:12px; border:none; color:#fff; background:linear-gradient(135deg,var(--accent-1),var(--accent-2)); }
 
 /* logo floating upper-middle center */
 #logoFloat {
@@ -87,7 +107,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   .token-right .amount { width:86px; font-size:14px; }
   .token-left input[type="text"]{font-size:14px;}
   .token-left img{width:24px;height:24px;}
-  #swapTokensBtn{ right:12px; top:calc(50% - 18px); width:36px; height:36px; }
+  #swapTokensBtn{ left:8px; top:calc(50% - 18px); width:36px; height:36px; }
   #logoFloat{ width:64px; height:64px; top:8px; }
 }
 </style>
@@ -108,17 +128,17 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
         <div class="token-top">
             <div class="token-left">
                 <img id="fromLogo" alt="logo">
-                <input type="text" id="fromToken" placeholder="From Token (symbol or contract)" autocomplete="off">
+                <input type="text" id="fromToken" placeholder="From Token (symbol or contract)" autocomplete="off" aria-label="From token">
             </div>
             <div class="token-right">
-                <input id="fromAmount" class="amount" type="number" placeholder="Amount" min="0" step="any">
+                <input id="fromAmount" class="amount" type="number" placeholder="Amount" min="0" step="any" aria-label="From amount">
                 <div id="fromUsd" class="usd" style="display:none;">
                   <span class="usd-top" id="fromUsdTop">≈ $—</span>
                   <span class="usd-main" id="fromUsdMain">— / unit</span>
                 </div>
             </div>
         </div>
-        <div class="suggestions" id="fromSuggestions"></div>
+        <div class="suggestions" id="fromSuggestions" data-side="from"></div>
     </div>
 
     <div id="swapTokensBtn" title="Swap From ↔ To">⇅</div>
@@ -127,17 +147,17 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
         <div class="token-top">
             <div class="token-left">
                 <img id="toLogo" alt="logo">
-                <input type="text" id="toToken" placeholder="To Token (symbol or contract)" autocomplete="off">
+                <input type="text" id="toToken" placeholder="To Token (symbol or contract)" autocomplete="off" aria-label="To token">
             </div>
             <div class="token-right">
-                <input id="toAmount" class="amount" type="number" placeholder="Estimated" readonly>
+                <input id="toAmount" class="amount" type="number" placeholder="Estimated" readonly aria-label="To amount">
                 <div id="toUsd" class="usd" style="display:none;">
                   <span class="usd-top" id="toUsdTop">≈ $—</span>
                   <span class="usd-main" id="toUsdMain">per unit</span>
                 </div>
             </div>
         </div>
-        <div class="suggestions" id="toSuggestions"></div>
+        <div class="suggestions" id="toSuggestions" data-side="to"></div>
     </div>
 
     <div style="margin-top:10px;">
@@ -156,7 +176,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 
 <script>
-/* CONFIG */
+/* ===== CONFIG ===== */
 const CHAIN_ID = 137;
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO_CHAIN = 'polygon-pos';
@@ -164,13 +184,18 @@ const FALLBACK_RPC = "https://polygon-rpc.com";
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 
-/* STATE */
+/* ===== STATE & CACHES ===== */
 let tokenList = [];
 let tokenMap = new Map();
-let cgStatsMap = new Map();
-const priceCache = new Map();
+let cgStatsMap = new Map(); // maps symbol/name -> {price, change24h, volume24h, volume12h?, image}
+const priceCache = new Map(); // addr -> {price, ts}
+const suggestionCache = new Map(); // query -> results
+const ACTIVE_PRICE_ADDRS = new Set(); // addresses to refresh
+const PRICE_TTL = 7000; // ms, matches 7s update
+const SUGGEST_LIMIT = 12;
+const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
 
-/* DOM */
+/* ===== DOM shortcuts ===== */
 const $ = id => document.getElementById(id);
 const fromTokenInput = $('fromToken'), toTokenInput = $('toToken');
 const fromAmountEl = $('fromAmount'), toAmountEl = $('toAmount');
@@ -185,8 +210,8 @@ const walletFallback = $('walletFallback');
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
 const low = s => (s||'').toLowerCase();
 const nowTs = ()=> Date.now();
-const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
 
+/* small utilities */
 function formatUSD(v){
   if (v === null || v === undefined || !Number.isFinite(v)) return '—';
   const n = Number(v);
@@ -194,7 +219,6 @@ function formatUSD(v){
   if (Math.abs(n)>0 && Math.abs(n) < 0.01){ opts.maximumFractionDigits=6; opts.minimumFractionDigits=4; }
   return new Intl.NumberFormat('en-US', opts).format(n);
 }
-
 function fetchWithTimeout(url, opts={}, ms=3000){
   const controller = new AbortController();
   const id = setTimeout(()=> controller.abort(), ms);
@@ -202,7 +226,7 @@ function fetchWithTimeout(url, opts={}, ms=3000){
   return fetch(url, init).finally(()=> clearTimeout(id));
 }
 
-/* LOAD tokens & CoinGecko markets */
+/* ===== LOAD TOKENS & COINGECKO MARKETS (initial) ===== */
 async function loadTokensAndMarkets(){
   try {
     const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
@@ -211,20 +235,27 @@ async function loadTokensAndMarkets(){
     tokenList.forEach(t => tokenMap.set(t.address, t));
     if (!tokenMap.has(MATIC_ADDR)) tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
 
-    // CG markets (top 250)
+    // initial Coingecko markets (top 250). store volume24h; if future responses include 12h volume we'll store it too.
     try {
       const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-      const rm = await fetch(marketsUrl);
+      const rm = await fetchWithTimeout(marketsUrl, {}, 4000);
       const jm = await rm.json();
       jm.forEach(c => {
         const sym = low(c.symbol||''), name = low(c.name||'');
-        const stat = { price: (typeof c.current_price==='number'?c.current_price:null), change24h: (typeof c.price_change_percentage_24h==='number'?c.price_change_percentage_24h:null), volume24h: (typeof c.total_volume==='number'?c.total_volume:0), image: c.image||'' };
+        const stat = {
+          price: (typeof c.current_price === 'number' ? c.current_price : null),
+          change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null),
+          volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0),
+          image: c.image||'',
+          // note: coingecko does not provide 12h volume in this endpoint; keep placeholder if available later
+          volume12h: null
+        };
         if (sym) cgStatsMap.set(sym, stat);
         if (name) cgStatsMap.set(name, stat);
       });
     } catch(e){ console.warn('CoinGecko markets failed', e); }
 
-    // merge 1inch tokens fallback
+    // merge 1inch token list as fallback (avoid duplicates)
     try {
       const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
       const j1 = await r1.json();
@@ -248,20 +279,9 @@ async function loadTokensAndMarkets(){
 let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
-/* Price fetchers */
-async function fetchCoingeckoContractPrice(addr){
-  try {
-    const url = `https://api.coingecko.com/api/v3/coins/${COINGECKO_CHAIN}/contract/${addr}`;
-    const res = await fetchWithTimeout(url,{},3000);
-    if (!res.ok) throw new Error('cg contract non-ok');
-    const j = await res.json();
-    const price = j?.market_data?.current_price?.usd;
-    const change = j?.market_data?.price_change_percentage_24h;
-    if (typeof price === 'number' && price > 0) return { price, change };
-    throw new Error('cg no price');
-  } catch(e){ throw e; }
-}
+/* ===== PRICE SOURCES & FALLBACK ORDER (1inch -> Coingecko Contract -> Dexscreener) ===== */
 
+/* fetch price via 1inch quote (fast, often available) */
 async function fetch1InchQuotePrice(addr, decimals=18){
   try {
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
@@ -277,6 +297,21 @@ async function fetch1InchQuotePrice(addr, decimals=18){
   } catch(e){ throw e; }
 }
 
+/* fetch coingecko contract (slower but authoritative) */
+async function fetchCoingeckoContractPrice(addr){
+  try {
+    const url = `https://api.coingecko.com/api/v3/coins/${COINGECKO_CHAIN}/contract/${addr}`;
+    const res = await fetchWithTimeout(url,{},3000);
+    if (!res.ok) throw new Error('cg contract non-ok');
+    const j = await res.json();
+    const price = j?.market_data?.current_price?.usd;
+    const change = j?.market_data?.price_change_percentage_24h;
+    if (typeof price === 'number' && price > 0) return { price, change };
+    throw new Error('cg no price');
+  } catch(e){ throw e; }
+}
+
+/* fetch dexscreener as last fallback */
 async function fetchDexscreenerPrice(addr){
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
@@ -292,35 +327,31 @@ async function fetchDexscreenerPrice(addr){
   } catch(e){ throw e; }
 }
 
+/* unified getTokenPriceUSD: tries 1inch -> coingecko -> dexscreener, caches result */
 async function getTokenPriceUSD(address, decimals=18){
   if (!address) return null;
   const addr = low(address);
-  const c = priceCache.get(addr);
-  if (c && (nowTs() - c.ts) < 7000) return c.price; // 7s TTL
+  const cached = priceCache.get(addr);
+  if (cached && (nowTs() - cached.ts) < PRICE_TTL) return cached.price;
+  // try in preferred order: 1inch, coingecko contract, dexscreener
+  try {
+    const p1 = await fetch1InchQuotePrice(addr, decimals);
+    priceCache.set(addr, {price:p1, ts:nowTs()});
+    return p1;
+  } catch(_) {}
   try {
     const cg = await fetchCoingeckoContractPrice(addr);
-    if (cg && cg.price){ priceCache.set(addr,{price:cg.price,ts:nowTs()}); return cg.price; }
+    if (cg && typeof cg.price === 'number') { priceCache.set(addr, {price:cg.price, ts:nowTs()}); return cg.price; }
   } catch(_) {}
   try {
-    const t = tokenMap.get(addr);
-    if (t && t.symbol){
-      const stat = cgStatsMap.get(low(t.symbol));
-      if (stat && stat.price){ priceCache.set(addr,{price:stat.price,ts:nowTs()}); return stat.price; }
-    }
-  } catch(_) {}
-  try {
-    const v = await fetch1InchQuotePrice(addr, decimals);
-    if (v){ priceCache.set(addr,{price:v,ts:nowTs()}); return v; }
-  } catch(_) {}
-  try {
-    const v2 = await fetchDexscreenerPrice(addr);
-    if (v2){ priceCache.set(addr,{price:v2,ts:nowTs()}); return v2; }
+    const d = await fetchDexscreenerPrice(addr);
+    if (d) { priceCache.set(addr,{price:d,ts:nowTs()}); return d; }
   } catch(_) {}
   priceCache.set(addr,{price:null,ts:nowTs()});
   return null;
 }
 
-/* suggestion item */
+/* ===== SUGGESTION RENDERING & PRIORITIZATION ===== */
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
@@ -331,7 +362,8 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   const nm = document.createElement('div'); nm.className='suggestion-name'; nm.textContent = tokenObj.name || '';
   main.appendChild(sym); main.appendChild(nm);
   if (stats && typeof stats.change24h === 'number') {
-    const ch = document.createElement('div'); ch.style.fontSize='11px'; ch.style.marginTop='6px'; ch.style.opacity='0.9'; ch.textContent = (stats.change24h>=0?'+':'')+stats.change24h.toFixed(2)+'% (24h)';
+    const ch = document.createElement('div'); ch.style.fontSize='11px'; ch.style.marginTop='6px'; ch.style.opacity='0.9';
+    ch.textContent = (stats.change24h>=0?'+':'')+stats.change24h.toFixed(2)+'% (24h)';
     ch.style.color = stats.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
     main.appendChild(ch);
   }
@@ -343,37 +375,51 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   return row;
 }
 
-/* default list (top 15 CG by 24h volume) */
+/* show default list (top by CG volume) */
 function showDefaultList(side){
   const box = (side === 'from') ? $('fromSuggestions') : $('toSuggestions');
   box.innerHTML = '';
-  const candidates = tokenList.filter(t => { const s = low(t.symbol), n = low(t.name); return cgStatsMap.has(s) || cgStatsMap.has(n); });
-  const withStats = candidates.map(t => { const s = low(t.symbol), n = low(t.name); const stat = cgStatsMap.get(s) || cgStatsMap.get(n) || {price:null,change24h:null,volume24h:0,image:''}; return {t,stat}; });
+  const candidates = tokenList.filter(t => {
+    const s = low(t.symbol), n = low(t.name);
+    return cgStatsMap.has(s) || cgStatsMap.has(n);
+  });
+  const withStats = candidates.map(t => {
+    const s = low(t.symbol), n = low(t.name);
+    const stat = cgStatsMap.get(s) || cgStatsMap.get(n) || {price:null,change24h:null,volume24h:0,image:''};
+    return {t,stat};
+  });
   withStats.sort((a,b)=> (b.stat.volume24h||0) - (a.stat.volume24h||0));
-  const top = withStats.slice(0,15);
+  const top = withStats.slice(0, Math.min(15, withStats.length));
   (async ()=>{
     for (const e of top){
       const tk = e.t, stats = e.stat;
-      let price = stats.price;
-      if (!price) price = await getTokenPriceUSD(tk.address, tk.decimals);
+      const price = stats.price ?? await getTokenPriceUSD(tk.address, tk.decimals);
       const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || stats.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); fetchBothPrices(); });
+      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
       box.appendChild(node);
     }
     box.style.display = top.length ? 'block' : 'none';
   })();
 }
 
-/* autocomplete — typing: prioritize CG 24h volume */
+/* cached promise for fetch suggestions to reduce repeated work */
+const suggestionPromises = new Map();
+
+/* Setup autocomplete with prioritization: CG 24h/12h first, then 1inch tokens (fallback) */
 function setupAutocomplete(inputId, suggestionsId, side){
   const input = $(inputId), box = $(suggestionsId);
   let timer = null;
   input.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 140); });
   input.addEventListener('focus', ()=> { const q = input.value.trim().toLowerCase(); if (!q) showDefaultList(side); else handle(q); });
-  input.addEventListener('blur', ()=> setTimeout(()=> box.style.display='none', 160));
+  input.addEventListener('blur', ()=> setTimeout(()=> {
+    // don't force hide here; we handle outside-click globally. keep a small delay for click-to-select.
+    box.style.display = 'none';
+  }, 160));
 
   async function handle(q){
     box.innerHTML = ''; if (!q){ box.style.display='none'; return; }
+
+    // address typed: onchain fetch
     if (isAddress(q)){
       let info = tokenMap.get(low(q));
       if (!info) info = await fetchOnchainTokenInfo(q);
@@ -381,57 +427,94 @@ function setupAutocomplete(inputId, suggestionsId, side){
         const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
         const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
         const node = makeSuggestionItem(info, {change24h: stat?.change24h ?? null, image: info.logoURI}, price);
-        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; updateEstimate(); fetchBothPrices(); });
+        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
         box.appendChild(node); box.style.display='block';
       }
       return;
     }
 
-    // CG matches with stats first (sorted by 24h volume)
-    const cgMatches = tokenList.filter(t => {
+    // caching common queries
+    if (suggestionCache.has(q)){
+      renderSuggestionsFromCache(q, side, box);
+      return;
+    }
+
+    // build candidate list in two stages:
+    // 1) coingecko-backed tokens that match
+    // 2) 1inch list fallback matches
+    await ensureTokensLoaded();
+
+    const matches = tokenList.filter(t => {
       const s = t.symbol || '', n = t.name || '';
-      const hasStat = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
-      return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q)) && hasStat;
+      return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
     });
-    let cgScored = cgMatches.map(t => {
-      const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || {volume24h:0,price:null,change24h:null};
+
+    const cgMatches = matches.filter(t => {
+      return cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name));
+    }).map(t => {
+      const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || {volume24h:0,volume12h:null,price:null,change24h:null,image:''};
+      // scoring: prefer volume24h and optional volume12h (if stored); give prefix matches bonus
       const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e12 : 0;
-      return { t, stats, score: (stats.volume24h||0) + startBonus };
-    });
-    // sort by volume desc (primary), then by startBonus
-    cgScored.sort((a,b)=> {
-      const va = (a.stats.volume24h||0), vb = (b.stats.volume24h||0);
-      if (vb !== va) return vb - va;
-      return b.score - a.score;
+      const v24 = stats.volume24h || 0;
+      const v12 = stats.volume12h || 0;
+      const score = v24 + (v12 * 1.2) + startBonus;
+      return {t, stats, score};
     });
 
-    // 1inch fallback matches (no CG stats) — keep them after CG
-    const inchMatches = tokenList.filter(t => {
+    cgMatches.sort((a,b)=> b.score - a.score);
+
+    const inchMatches = matches.filter(t => {
       const s = t.symbol || '', n = t.name || '';
-      const alreadyCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
-      return !alreadyCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
-    });
-    const inchScored = inchMatches.map(t => { const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0; return {t,stats:null,score:startBonus}; });
-    inchScored.sort((a,b)=> b.score - a.score);
+      const hasCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
+      return !hasCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
+    }).map(t => {
+      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0;
+      return {t, stats:null, score:startBonus};
+    }).sort((a,b)=> b.score - a.score);
 
-    const merged = cgScored.concat(inchScored).slice(0,18);
-    if (!merged.length){ box.style.display='none'; return; }
+    const merged = cgMatches.concat(inchMatches).slice(0, SUGGEST_LIMIT);
 
+    // cache the merged result structure (addresses + minimal metadata) for quick re-render
+    const cacheResult = merged.map(x => ({ address: x.t.address, symbol: x.t.symbol, name: x.t.name, logoURI: x.t.logoURI, score: x.score }));
+    suggestionCache.set(q, cacheResult);
+
+    // render UI
     for (const s of merged){
       const tk = s.t;
       const stats = s.stats || {change24h:null,image: tk.logoURI||''};
-      const price = (stats && stats.price) ? stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
-      const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || ''}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); fetchBothPrices(); });
-      box.appendChild(node);
+      // fetch price but don't block (still render quickly)
+      (async ()=>{
+        const price = (s.stats && s.stats.price) ? s.stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
+        const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || ''}, price);
+        node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
+        box.appendChild(node);
+      })();
     }
-    box.style.display='block';
+    box.style.display = merged.length ? 'block' : 'none';
   }
 }
+
+function renderSuggestionsFromCache(q, side, box){
+  const cached = suggestionCache.get(q) || [];
+  box.innerHTML = '';
+  (async ()=>{
+    for (const item of cached.slice(0,SUGGEST_LIMIT)){
+      const tk = tokenMap.get(low(item.address)) || { address: item.address, symbol: item.symbol, name: item.name, logoURI: item.logoURI };
+      const stats = cgStatsMap.get(low(tk.symbol)) || cgStatsMap.get(low(tk.name)) || null;
+      const price = await getTokenPriceUSD(tk.address, tk.decimals || 18);
+      const node = makeSuggestionItem(tk, {change24h: stats?.change24h ?? null, image: tk.logoURI || stats?.image}, price);
+      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
+      box.appendChild(node);
+    }
+    box.style.display = cached.length ? 'block' : 'none';
+  })();
+}
+
+/* Install autocomplete for both inputs */
 setupAutocomplete('fromToken','fromSuggestions','from');
 setupAutocomplete('toToken','toSuggestions','to');
 
-/* apply token selection: show USD block only when token chosen */
+/* apply token selection and show USD area only when token chosen */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? fromTokenInput : toTokenInput;
@@ -443,18 +526,19 @@ function applyTokenSelection(side, tokenObj){
   input.dataset.decimals = tokenObj.decimals || 18;
   if (tokenObj.logoURI){ logo.src = tokenObj.logoURI; logo.style.display = 'inline-block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
   tokenMap.set(tokenObj.address, tokenObj);
-  // show usd area (it will be updated by fetchPriceForToken)
   usdBlock.style.display = 'flex';
-  fetchPriceForToken(tokenObj.address, tokenObj.decimals, side);
+  // mark for active price refresh
+  ACTIVE_PRICE_ADDRS.add(addrLower);
+  fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 }
 
 /* hide USD blocks if no token selected */
 function updateUsdVisibility(){
-  if (!fromTokenInput.dataset.address) { fromUsd.style.display = 'none'; } else { fromUsd.style.display = 'flex'; }
-  if (!toTokenInput.dataset.address) { toUsd.style.display = 'none'; } else { toUsd.style.display = 'flex'; }
+  if (!fromTokenInput.dataset.address) { fromUsd.style.display = 'none'; ACTIVE_PRICE_ADDRS.delete(low(fromTokenInput.dataset.address||'')); } else { fromUsd.style.display = 'flex'; ACTIVE_PRICE_ADDRS.add(low(fromTokenInput.dataset.address||'')); }
+  if (!toTokenInput.dataset.address) { toUsd.style.display = 'none'; ACTIVE_PRICE_ADDRS.delete(low(toTokenInput.dataset.address||'')); } else { toUsd.style.display = 'flex'; ACTIVE_PRICE_ADDRS.add(low(toTokenInput.dataset.address||'')); }
 }
 
-/* on-paste detection */
+/* detect paste of address and auto-resolve */
 document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
   inp.addEventListener('paste', (ev)=>{
     const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
@@ -492,7 +576,7 @@ async function fetchOnchainTokenInfo(address){
   } catch(e){ console.warn('fetchOnchainTokenInfo failed', e); return null; }
 }
 
-/* fetch price for a token and update USD displays */
+/* fetch price for a token and update USD displays (used when selection or periodic refresh) */
 async function fetchPriceForToken(address, decimals, side){
   try {
     if (!address) return;
@@ -501,6 +585,7 @@ async function fetchPriceForToken(address, decimals, side){
     const usdElMain = (side === 'from') ? fromUsdMain : toUsdMain;
     const amtEl = (side === 'from') ? fromAmountEl : toAmountEl;
     const amt = Number(amtEl.value || 0);
+
     if (price != null && !Number.isNaN(amt) && amt>0) {
       usdElTop.textContent = '≈ ' + formatUSD(Number(price) * amt);
       usdElMain.textContent = `${formatUSD(price)} / unit`;
@@ -514,7 +599,7 @@ async function fetchPriceForToken(address, decimals, side){
   } catch(e){ console.warn('fetchPriceForToken error', e); }
 }
 
-/* fetch both prices */
+/* fetch both prices (for from/to) */
 async function fetchBothPrices(){
   const fAddr = low(fromTokenInput.dataset.address || '');
   const tAddr = low(toTokenInput.dataset.address || '');
@@ -526,16 +611,16 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* QUOTE via 1inch */
+/* ===== QUOTE (1inch) with debounce ===== */
 let quoteTimer = null;
-function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 120); }
+function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 140); }
 
 async function updateQuote(){
   try {
     const fromAddr = low(fromTokenInput.dataset.address || '');
     const toAddr = low(toTokenInput.dataset.address || '');
     const amount = fromAmountEl.value;
-    if (!fromAddr || !toAddr || !amount) { /* keep existing */ await fetchBothPrices(); return; }
+    if (!fromAddr || !toAddr || !amount) { await fetchBothPrices(); return; }
 
     const fromDecimals = Number(fromTokenInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
     const toDecimals = Number(toTokenInput.dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
@@ -557,7 +642,7 @@ async function updateQuote(){
 /* live update when typing amount */
 fromAmountEl.addEventListener('input', ()=>{ updateQuoteDebounced(); updateEstimate(); });
 
-/* SIMPLE MATH ESTIMATE: FROM_USD -> TO_ESTIMATE */
+/* SIMPLE MATH ESTIMATE */
 async function updateEstimate(){
   try {
     await ensureTokensLoaded();
@@ -588,7 +673,7 @@ async function updateEstimate(){
   } catch(e){ console.warn('updateEstimate error', e); }
 }
 
-/* resolve typed tokens to addresses quickly */
+/* resolve typed tokens heuristically */
 function resolveTokenInputsIfNeeded(){
   const tryResolve = (inputEl) => {
     const val = (inputEl.value || '').trim(); if (!val || inputEl.dataset.address) return;
@@ -602,10 +687,10 @@ function resolveTokenInputsIfNeeded(){
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
 }
 
-/* swap fields action */
+/* swap fields action (button moved left) */
 swapBtn.addEventListener('click', ()=>{
   swapBtn.classList.add('pressed');
-  setTimeout(()=> swapBtn.classList.remove('pressed'), 400);
+  setTimeout(()=> swapBtn.classList.remove('pressed'), 300);
 
   const fVal = fromTokenInput.value, tVal = toTokenInput.value;
   const fAddr = fromTokenInput.dataset.address, tAddr = toTokenInput.dataset.address;
@@ -627,7 +712,7 @@ swapBtn.addEventListener('click', ()=>{
   updateQuoteDebounced(); fetchBothPrices(); updateEstimate(); updateUsdVisibility();
 });
 
-/* "swap" button behaviour: expects wallet in iframe */
+/* simple 'swap' flow notice */
 $('swapBtn').addEventListener('click', ()=> {
   try { walletFrame.focus(); } catch(e){}
   alert('To run a swap: connect wallet via the small Wallet UI in the top-right iframe (walletconnect.html).');
@@ -636,7 +721,7 @@ $('swapBtn').addEventListener('click', ()=> {
 /* iframe fallback */
 walletFrame.addEventListener('error', ()=>{ walletFrame.style.display='none'; walletFallback.style.display='block'; walletFallback.addEventListener('click', ()=> window.open('walletconnect.html','walletconnect','width=420,height=760')); });
 
-/* refresh CG every 7s and update price cache + UI */
+/* ===== GLOBAL REFRESH: COINGECKO MARKETS (7s) & ACTIVE PRICE REFRESH ===== */
 async function refreshCoinGeckoMarkets(){
   try {
     const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
@@ -645,11 +730,19 @@ async function refreshCoinGeckoMarkets(){
     const jm = await rm.json();
     jm.forEach(c => {
       const sym = low(c.symbol||''), name = low(c.name||'');
-      const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'' };
+      const stat = {
+        price: (typeof c.current_price === 'number' ? c.current_price : null),
+        change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null),
+        volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0),
+        image: c.image||'',
+        volume12h: null
+      };
       if (sym) cgStatsMap.set(sym, stat);
       if (name) cgStatsMap.set(name, stat);
+      // update price cache for matching tokens
       tokenList.forEach(t => { if (t.symbol && low(t.symbol) === sym) priceCache.set(t.address, { price: stat.price, ts: nowTs() }); });
     });
+    // after refreshing CG markets, update displayed prices & estimates
     fetchBothPrices();
     updateEstimate();
     updateUsdVisibility();
@@ -659,20 +752,77 @@ async function refreshCoinGeckoMarkets(){
 let refreshInterval = null;
 function startBackgroundRefresh(){
   if (refreshInterval) clearInterval(refreshInterval);
+  // refresh markets every 7s
   refreshCoinGeckoMarkets();
   refreshInterval = setInterval(refreshCoinGeckoMarkets, 7000);
 }
 
-/* init */
+/* Active price refresh (for tokens selected in UI), runs every 7s too */
+let activePriceInterval = null;
+function scheduleActivePriceRefresh(){
+  // ensure ACTIVE_PRICE_ADDRS has the currently selected tokens
+  updateUsdVisibility();
+  if (activePriceInterval) return; // already running
+  // immediate run then interval
+  (async()=>{
+    await refreshActivePrices();
+    activePriceInterval = setInterval(refreshActivePrices, 7000);
+  })();
+}
+async function refreshActivePrices(){
+  const addrs = Array.from(ACTIVE_PRICE_ADDRS).filter(a => a && a.length === 42);
+  if (!addrs.length) return;
+  // refresh prices in parallel (but rely on getTokenPriceUSD cache and ordering)
+  await Promise.all(addrs.map(async addr => {
+    const decimals = tokenMap.get(addr)?.decimals || 18;
+    const price = await getTokenPriceUSD(addr, decimals);
+    // update cached prices and UI
+    if (addr === low(fromTokenInput.dataset.address || '')) fetchPriceForToken(addr, decimals, 'from');
+    if (addr === low(toTokenInput.dataset.address || '')) fetchPriceForToken(addr, decimals, 'to');
+  }));
+}
+
+/* call scheduleActivePriceRefresh so active tokens update every 7s */
+(function ensureActiveUpdater(){
+  // start once when page inits
+  scheduleActivePriceRefresh();
+})();
+
+/* ===== SUGGESTIONS HIDE WHEN CLICK OUTSIDE / ESC ===== */
+document.addEventListener('click', (ev)=>{
+  const inInputOrSuggest = ev.target.closest('.input-box') || ev.target.closest('.suggestions') || ev.target.closest('#fromToken') || ev.target.closest('#toToken');
+  if (!inInputOrSuggest){
+    $('fromSuggestions').style.display = 'none';
+    $('toSuggestions').style.display = 'none';
+  }
+});
+document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ $('fromSuggestions').style.display='none'; $('toSuggestions').style.display='none'; } });
+
+/* ===== INIT ===== */
 (async function init(){
   await ensureTokensLoaded();
+  // preselect USDC on from side if available
   const usdc = tokenList.find(t => t.address && t.address.toLowerCase() === USDC_ADDR.toLowerCase());
-  if (usdc) { fromTokenInput.value = usdc.symbol || 'USDC'; fromTokenInput.dataset.address = usdc.address; fromTokenInput.dataset.decimals = usdc.decimals || 6; if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='inline-block'; } }
+  if (usdc) {
+    fromTokenInput.value = usdc.symbol || 'USDC';
+    fromTokenInput.dataset.address = usdc.address;
+    fromTokenInput.dataset.decimals = usdc.decimals || 6;
+    if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='inline-block'; }
+    ACTIVE_PRICE_ADDRS.add(low(usdc.address));
+  }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
-  if (top) { toTokenInput.value = top.symbol || top.name; toTokenInput.dataset.address = top.address; toTokenInput.dataset.decimals = top.decimals || 18; if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='inline-block'; } }
+  if (top) {
+    toTokenInput.value = top.symbol || top.name;
+    toTokenInput.dataset.address = top.address;
+    toTokenInput.dataset.decimals = top.decimals || 18;
+    if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='inline-block'; }
+    ACTIVE_PRICE_ADDRS.add(low(top.address));
+  }
   updateUsdVisibility();
   fetchBothPrices();
   startBackgroundRefresh();
+  // ensure active price refresh is running
+  scheduleActivePriceRefresh();
 })();
 </script>
 </body>
