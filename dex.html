@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>NOLA Exchange</title>
 <style>
-/* YOUR THEME (kept intact) */
+/* THEME (kept intact) */
 body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
 .container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}
 h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
@@ -67,18 +67,6 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   z-index:999;
   font-weight:600;
 }
-#globalSearch {
-  width:calc(100% - 10px);
-  display:block;
-  margin:8px auto 8px;
-  padding:8px 10px;
-  border-radius:10px;
-  border:none;
-  background:rgba(255,255,255,0.03);
-  color:#fff;
-  font-size:14px;
-  outline:none;
-}
 
 /* dark blank icon fallback (SVG data URL) */
 .icon-fallback {
@@ -102,13 +90,11 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <div class="container">
     <h2>NOLA Exchange</h2>
 
-    <input id="globalSearch" placeholder="Search contract address or token (fills To)" autocomplete="off">
-
     <div class="input-box" id="fromBox">
         <div class="token-top">
             <div class="token-left">
                 <img id="fromLogo" alt="logo">
-                <input type="text" id="fromToken" placeholder="From Token" autocomplete="off">
+                <input type="text" id="fromToken" placeholder="From Token (symbol or contract)" autocomplete="off">
             </div>
             <div class="token-right">
                 <input id="fromAmount" class="amount" type="number" placeholder="Amount" min="0" step="any">
@@ -124,7 +110,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
         <div class="token-top">
             <div class="token-left">
                 <img id="toLogo" alt="logo">
-                <input type="text" id="toToken" placeholder="To Token" autocomplete="off">
+                <input type="text" id="toToken" placeholder="To Token (symbol or contract)" autocomplete="off">
             </div>
             <div class="token-right">
                 <input id="toAmount" class="amount" type="number" placeholder="Estimated" readonly>
@@ -153,6 +139,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <a href="#" id="telegramLink">Telegram</a>
 </footer>
 
+<!-- ethers + WalletConnect v1 -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 
@@ -170,8 +157,6 @@ let tokenList = [];
 let tokenMap = new Map();
 let volumeMap = new Map();
 let provider = null, signer = null, signerAddress = null, walletConnected = false;
-
-/* price cache so we don't spam endpoints */
 const priceCache = new Map(); // address -> { price, ts }
 
 /* HELPERS */
@@ -180,20 +165,18 @@ const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
 const low = s => (s||'').toLowerCase();
 const nowTs = ()=> Date.now();
 
-/* FALLBACK SVG placeholder (dark) */
+/* DARK SVG FALLBACK */
 const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`
 );
 
-/* === Load token lists (CoinGecko polygon tokens + merge 1inch tokens) === */
+/* LOAD token lists (CoinGecko polygon tokens + 1inch merge) */
 async function loadTokensAndVolumes(){
   try {
-    // coinGecko token list for polygon (logos, decimals)
     const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
     const j = await r.json();
     tokenList = (j.tokens || []).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
     tokenList.forEach(t => tokenMap.set(t.address, t));
-    // add MATIC pseudo
     tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol: 'MATIC', name: 'Polygon', decimals: 18, logoURI: ''});
     tokenList.push(tokenMap.get(MATIC_ADDR));
 
@@ -206,14 +189,13 @@ async function loadTokensAndVolumes(){
           const addr = low(t.address);
           if (!tokenMap.has(addr)) {
             const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
-            tokenList.push(obj);
-            tokenMap.set(addr, obj);
+            tokenList.push(obj); tokenMap.set(addr, obj);
           }
         });
       }
     } catch(e){ console.warn('1inch tokens merge failed', e); }
 
-    // top markets volume (helps scoring)
+    // top markets volume (for suggestion sorting)
     try {
       const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false`;
       const rm = await fetch(marketsUrl);
@@ -226,7 +208,7 @@ async function loadTokensAndVolumes(){
 }
 loadTokensAndVolumes();
 
-/* === On-chain fallback metadata fetch === */
+/* ON-CHAIN metadata fallback */
 async function fetchOnchainTokenInfo(address){
   try {
     const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
@@ -243,83 +225,83 @@ async function fetchOnchainTokenInfo(address){
   }
 }
 
-/* === MULTI-ROUTE PRICE FETCH ===
-   tries:
-     1) CoinGecko simple token price
-     2) 1inch /quote into USDC (1 token -> USDC amount)
-     3) 1inch /quote into MATIC then multiply by MATIC price from CoinGecko
-   returns number USD price or null */
+/* === PRICE: multi-route using 1inch as primary
+   1) try 1inch quote token -> USDC
+   2) try 1inch quote token -> MATIC, then multiply by MATIC USD (CoinGecko)
+   3) fallback: coinGecko simple/token_price (last resort)
+   caching TTL = 30s for performance
+*/
 async function getTokenPriceUSD(address, decimals = 18){
   if (!address) return null;
   const addr = low(address);
-  // cache: ttl 60s
-  const cached = priceCache.get(addr);
-  if (cached && (nowTs() - cached.ts) < 60000) return cached.price;
+  const cache = priceCache.get(addr);
+  if (cache && (nowTs() - cache.ts) < 30000) return cache.price;
 
-  // 1) coinGecko simple/token_price
-  try {
-    if (addr === MATIC_ADDR) {
-      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
-      const j = await r.json();
-      const p = j['matic-network']?.usd ?? null;
-      if (p != null) { priceCache.set(addr,{price:p,ts:nowTs()}); return p; }
-    } else {
-      const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${addr}&vs_currencies=usd`;
-      const r = await fetch(url);
-      const j = await r.json();
-      const p = j[addr]?.usd ?? null;
-      if (p != null) { priceCache.set(addr,{price:p,ts:nowTs()}); return p; }
-    }
-  } catch(e){ /* continue to next route */ }
-
-  // helper to try 1inch quotes
-  async function quoteTo(targetAddr, amountRaw){
+  // Helper: try 1inch quote to target
+  async function quoteTo(targetAddr){
     try {
-      const qurl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${targetAddr}&amount=${amountRaw}`;
+      // quote 1 token
+      const amtRaw = ethers.BigNumber.from('1').mul(ethers.BigNumber.from('10').pow(decimals)).toString();
+      const qurl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${targetAddr}&amount=${amtRaw}`;
       const qr = await fetch(qurl);
       const qj = await qr.json();
-      if (qj && qj.toTokenAmount) return qj.toTokenAmount; // string big integer
+      if (qj && qj.toTokenAmount) return qj.toTokenAmount; // big integer string
     } catch(e){ /* ignore */ }
     return null;
   }
 
-  // 2) try quote to USDC (best)
+  // 1) try USDC
   try {
-    const amtRaw = ethers.BigNumber.from('1').mul(ethers.BigNumber.from('10').pow(decimals)).toString(); // 1 token
-    const toUSDC = await quoteTo(USDC_ADDR, amtRaw);
+    if (addr === MATIC_ADDR) {
+      // special-case MATIC -> get via coinGecko
+      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
+      const j = await r.json();
+      const m = j['matic-network']?.usd ?? null;
+      priceCache.set(addr, { price: m, ts: nowTs() });
+      return m;
+    }
+    const toUSDC = await quoteTo(USDC_ADDR);
     if (toUSDC) {
       // USDC decimals 6
       const usdcAmount = Number(ethers.BigNumber.from(toUSDC).toString()) / (10 ** 6);
-      if (!Number.isNaN(usdcAmount) && usdcAmount > 0) { priceCache.set(addr,{price:usdcAmount,ts:nowTs()}); return usdcAmount; }
+      if (!Number.isNaN(usdcAmount) && usdcAmount > 0) { priceCache.set(addr, { price: usdcAmount, ts: nowTs() }); return usdcAmount; }
     }
-  } catch(e){ /* ignore */ }
+  } catch(e){ /* continue */ }
 
-  // 3) try quote to MATIC then get MATIC USD
+  // 2) try MATIC route and convert to USD via CoinGecko
   try {
-    const amtRaw = ethers.BigNumber.from('1').mul(ethers.BigNumber.from('10').pow(decimals)).toString();
-    const toMatic = await quoteTo(MATIC_ADDR, amtRaw);
+    const toMatic = await quoteTo(MATIC_ADDR);
     if (toMatic) {
       const maticAmount = Number(ethers.BigNumber.from(toMatic).toString()) / (10 ** 18);
       if (!Number.isNaN(maticAmount) && maticAmount > 0) {
-        // get MATIC USD price
+        // get MATIC USD
         const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
         const j = await r.json();
         const maticPrice = j['matic-network']?.usd ?? null;
         if (maticPrice != null) {
           const computed = maticAmount * Number(maticPrice);
-          priceCache.set(addr,{price:computed,ts:nowTs()});
+          priceCache.set(addr, { price: computed, ts: nowTs() });
           return computed;
         }
       }
     }
+  } catch(e){ /* continue */ }
+
+  // 3) fallback to CoinGecko simple/token_price (if token is known to CoinGecko)
+  try {
+    const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${addr}&vs_currencies=usd`;
+    const r = await fetch(url);
+    const j = await r.json();
+    const p = j[addr]?.usd ?? null;
+    priceCache.set(addr, { price: p, ts: nowTs() });
+    return p;
   } catch(e){ /* ignore */ }
 
-  // nothing worked
-  priceCache.set(addr,{price:null,ts:nowTs()});
+  priceCache.set(addr, { price: null, ts: nowTs() });
   return null;
 }
 
-/* === Suggestion item builder (unchanged visual) === */
+/* SUGGESTION item builder */
 function makeSuggestionItem(tokenObj, priceUSD, extraLabel){
   const row = document.createElement('div'); row.className = 'suggestion-item';
   const left = document.createElement('div'); left.className = 'suggestion-left';
@@ -335,7 +317,7 @@ function makeSuggestionItem(tokenObj, priceUSD, extraLabel){
   row.appendChild(left); row.appendChild(right); return row;
 }
 
-/* === Autocomplete setup for from/to with volume scoring and click handler === */
+/* AUTOCOMPLETE for from/to */
 function setupAutocomplete(inputId, suggestionsId, side){
   const input = $(inputId), box = $(suggestionsId);
   let timer = null;
@@ -346,24 +328,19 @@ function setupAutocomplete(inputId, suggestionsId, side){
   async function handle(q){
     box.innerHTML = ''; if (!q) { box.style.display='none'; return; }
 
+    // address -> onchain metadata or tokenMap
     if (isAddress(q)) {
       let info = tokenMap.get(low(q));
-      if (!info) {
-        // try 1inch tokens map (we merged already), otherwise onchain
-        info = tokenMap.get(low(q)) || await fetchOnchainTokenInfo(q);
-      }
+      if (!info) info = await fetchOnchainTokenInfo(q);
       if (info) {
         const price = await getTokenPriceUSD(info.address, info.decimals);
         const node = makeSuggestionItem(info, price, `${info.symbol}`);
-        node.onclick = ()=>{ applyTokenSelection(side, info); box.style.display='none'; updateQuoteDebounced(); };
+        node.onclick = ()=>{ applyTokenSelection(side, info); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); };
         box.appendChild(node); box.style.display='block';
-      } else {
-        box.style.display='none';
       }
       return;
     }
 
-    // substring search
     const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
     const scored = matches.map(t => {
       const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
@@ -378,7 +355,7 @@ function setupAutocomplete(inputId, suggestionsId, side){
       const price = await getTokenPriceUSD(tk.address, tk.decimals);
       const label = `${tk.symbol} | ${tk.name}`;
       const node = makeSuggestionItem(tk, price, label);
-      node.onclick = ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateQuoteDebounced(); };
+      node.onclick = ()=>{ applyTokenSelection(side, tk); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); };
       box.appendChild(node);
     }
     box.style.display = 'block';
@@ -388,7 +365,7 @@ function setupAutocomplete(inputId, suggestionsId, side){
 setupAutocomplete('fromToken','fromSuggestions','from');
 setupAutocomplete('toToken','toSuggestions','to');
 
-/* === Apply token to UI: set value, dataset, show logo immediately (if available) === */
+/* Apply selected token to UI and trigger price fetch */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? $('fromToken') : $('toToken');
@@ -396,79 +373,145 @@ function applyTokenSelection(side, tokenObj){
   input.value = tokenObj.symbol || tokenObj.name || tokenObj.address;
   input.dataset.address = tokenObj.address;
   input.dataset.decimals = tokenObj.decimals || 18;
-  // show logo only when chosen
-  if (tokenObj.logoURI) {
-    logo.src = tokenObj.logoURI;
-    logo.style.display = 'inline-block';
-  } else {
-    logo.src = DARK_SVG_PLACEHOLDER;
-    logo.style.display = 'inline-block';
-  }
+  if (tokenObj.logoURI) { logo.src = tokenObj.logoURI; logo.style.display = 'inline-block'; }
+  else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
   tokenMap.set(tokenObj.address, tokenObj);
+  // fetch price for that token immediately
+  fetchPriceForToken(tokenObj.address, tokenObj.decimals, side);
 }
 
-/* === GLOBAL search box (relies on tokenMap + onchain + 1inch routing for price) === */
-const globalSearch = $('globalSearch');
-const globalBox = document.createElement('div'); globalBox.className = 'suggestions';
-globalBox.style.position = 'absolute'; globalBox.style.zIndex = 200;
-globalSearch.parentElement.insertBefore(globalBox, globalSearch.nextSibling);
-let gTimer = null;
-globalSearch.addEventListener('input', ()=> { clearTimeout(gTimer); gTimer = setTimeout(()=> handleGlobal(globalSearch.value.trim().toLowerCase()), 160); });
-globalSearch.addEventListener('blur', ()=> setTimeout(()=> globalBox.style.display='none', 160));
+/* fetch price for a single token and update its USD display */
+async function fetchPriceForToken(address, decimals, side){
+  try {
+    if (!address) return;
+    const price = await getTokenPriceUSD(address, decimals);
+    const usdEl = (side === 'from') ? $('fromUsd') : $('toUsd');
+    const amtEl = (side === 'from') ? $('fromAmount') : $('toAmount');
+    const amt = Number(amtEl.value || 0);
+    if (price != null && !Number.isNaN(amt)) usdEl.textContent = '≈ $' + (Number(price) * amt).toFixed(4);
+    else usdEl.textContent = '≈ $—';
+  } catch(e){ console.warn('fetchPriceForToken error', e); }
+}
 
-async function handleGlobal(q){
-  globalBox.innerHTML = '';
-  globalBox.style.left = (globalSearch.offsetLeft) + 'px';
-  globalBox.style.top = (globalSearch.offsetTop + globalSearch.offsetHeight + 8) + 'px';
-  globalBox.style.width = (globalSearch.offsetWidth) + 'px';
-  if (!q) { globalBox.style.display='none'; return; }
+/* fetch both prices concurrently and update displays */
+async function fetchBothPrices(){
+  const fAddr = low($('fromToken').dataset.address || '');
+  const tAddr = low($('toToken').dataset.address || '');
+  const fDec = Number($('fromToken').dataset.decimals || 18);
+  const tDec = Number($('toToken').dataset.decimals || 18);
+  // do them in parallel
+  await Promise.all([
+    fAddr ? fetchPriceForToken(fAddr, fDec, 'from') : Promise.resolve(),
+    tAddr ? fetchPriceForToken(tAddr, tDec, 'to') : Promise.resolve()
+  ]);
+}
 
-  if (isAddress(q)) {
-    let info = tokenMap.get(low(q));
-    if (!info) {
-      // try 1inch token list (we merged earlier), else onchain
-      info = tokenMap.get(low(q)) || await fetchOnchainTokenInfo(q);
-    }
-    if (info) {
-      const price = await getTokenPriceUSD(info.address, info.decimals);
-      const node = makeSuggestionItem(info, price, `${info.symbol}`);
-      node.onclick = ()=>{ applyTokenSelection('to', info); globalBox.style.display='none'; updateQuoteDebounced(); };
-      globalBox.appendChild(node); globalBox.style.display='block';
+/* QUOTE logic: using 1inch quote to compute toAmount (live) */
+let quoteTimer = null;
+function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 120); }
+
+async function updateQuote(){
+  try {
+    const fromAddr = low($('fromToken').dataset.address || '');
+    const toAddr = low($('toToken').dataset.address || '');
+    const amount = $('fromAmount').value;
+    if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; await fetchBothPrices(); return; }
+
+    const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
+    const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
+    const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
+    const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
+    const r = await fetch(quoteUrl);
+    const j = await r.json();
+    if (j && j.toTokenAmount) {
+      const formattedTo = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
+      $('toAmount').value = formattedTo;
     } else {
-      // couldn't fetch metadata: show raw address item and allow selecting it
-      const raw = { address: low(q), symbol: q.slice(0,6), name: 'Unknown', decimals: 18, logoURI: '' };
-      const node = makeSuggestionItem(raw, null, 'contract');
-      node.onclick = ()=>{ applyTokenSelection('to', raw); globalBox.style.display='none'; updateQuoteDebounced(); };
-      globalBox.appendChild(node); globalBox.style.display='block';
+      $('toAmount').value = '';
     }
-    return;
-  }
 
-  // non-address: search in tokenList like before
-  const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
-  const scored = matches.map(t => {
-    const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
-    const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e15 : 0;
-    return { t, score: vol + startBonus };
-  }).sort((a,b)=> b.score - a.score).slice(0,8);
-
-  for (const s of scored) {
-    const tk = s.t;
-    const price = await getTokenPriceUSD(tk.address, tk.decimals);
-    const node = makeSuggestionItem(tk, price, `${tk.symbol}`);
-    node.onclick = ()=>{ applyTokenSelection('to', tk); globalBox.style.display='none'; updateQuoteDebounced(); };
-    globalBox.appendChild(node);
+    // update USD displays for both using our multi-route price method
+    await fetchBothPrices();
+  } catch (e) {
+    console.error('updateQuote error', e);
+    $('toAmount').value = '';
+    await fetchBothPrices();
   }
-  globalBox.style.display = scored.length ? 'block' : 'none';
 }
 
-/* reposition globalBox on resize */
-window.addEventListener('resize', ()=> {
-  globalBox.style.width = (globalSearch.offsetWidth) + 'px';
-  globalBox.style.left = (globalSearch.offsetLeft) + 'px';
+/* live update when typing amount */
+$('fromAmount').addEventListener('input', updateQuoteDebounced);
+
+/* paste address behavior (on from/to input) */
+document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
+  inp.addEventListener('paste', (ev)=>{
+    const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
+    if (isAddress(txt)) {
+      setTimeout(async ()=> {
+        inp.dataset.address = low(txt);
+        let info = tokenMap.get(low(txt)) || await fetchOnchainTokenInfo(txt);
+        if (info) {
+          inp.dataset.decimals = info.decimals || 18;
+          inp.value = info.symbol || info.name || txt.slice(0,8);
+          tokenMap.set(info.address, info);
+          const logo = (inp.id === 'fromToken') ? $('fromLogo') : $('toLogo');
+          if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'inline-block'; }
+          else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
+          // fetch both prices & update quote
+          fetchBothPrices();
+          updateQuoteDebounced();
+        }
+      }, 10);
+    }
+  });
 });
 
-/* === Wallet connect (unchanged) === */
+/* SWAP flow (unchanged behavior) */
+async function ensureApprovalAndSwap(){
+  try {
+    await connectWallet();
+    const fromInput = $('fromToken'), toInput = $('toToken');
+    const amountInput = $('fromAmount').value;
+    const slippage = $('slippage')?.value || 1;
+    if (!fromInput.dataset.address || !toInput.dataset.address || !amountInput) { alert('Fill both tokens and amount'); return; }
+
+    const fromAddr = low(fromInput.dataset.address);
+    const toAddr = low(toInput.dataset.address);
+    const fromDecimals = Number(fromInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
+    const parsedAmount = ethers.utils.parseUnits(String(amountInput), fromDecimals).toString();
+
+    if (fromAddr !== MATIC_ADDR) {
+      const allowanceUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${signerAddress}`;
+      const ar = await fetch(allowanceUrl);
+      const aj = await ar.json();
+      const allowance = aj.allowance ? ethers.BigNumber.from(aj.allowance) : ethers.BigNumber.from('0');
+      if (allowance.lt(ethers.BigNumber.from(parsedAmount))) {
+        const aprUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;
+        const aprRes = await fetch(aprUrl);
+        const aprJson = await aprRes.json();
+        if (!aprJson || !aprJson.data) throw new Error('Approve data unavailable');
+        const txReq = { to: aprJson.to, data: aprJson.data, value: aprJson.value ? ethers.BigNumber.from(aprJson.value) : undefined };
+        const sent = await signer.sendTransaction(txReq);
+        alert('Approve sent: ' + sent.hash);
+        await sent.wait();
+      }
+    }
+
+    const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsedAmount}&fromAddress=${signerAddress}&slippage=${slippage}`;
+    const sr = await fetch(swapUrl);
+    const sj = await sr.json();
+    if (!sj || !sj.tx) { console.error('swap build failed', sj); alert('Swap build failed'); return; }
+    const txReq = sj.tx;
+    const sentSwap = await signer.sendTransaction(txReq);
+    alert('Swap sent: ' + sentSwap.hash);
+  } catch (e) {
+    console.error('swap error', e);
+    alert('Swap failed: ' + (e.message || e));
+  }
+}
+$('swapBtn').addEventListener('click', ensureApprovalAndSwap);
+
+/* WALLET connect (same as before) */
 async function connectWallet(){
   if (walletConnected && signer) return;
   try {
@@ -481,189 +524,47 @@ async function connectWallet(){
     }
     const WC = window.WalletConnectProvider;
     if (!WC) { alert('WalletConnect library not loaded. Please allow loading external scripts or use MetaMask.'); throw new Error('WC v1 library missing'); }
-    const wcProvider = new WC.default({ rpc: { [CHAIN_ID]: FALLBACK_RPC }, chainId: CHAIN_ID, qrcode: true, });
+    const wcProvider = new WC.default({ rpc: { [CHAIN_ID]: FALLBACK_RPC }, chainId: CHAIN_ID, qrcode: true });
     await wcProvider.enable();
     provider = new ethers.providers.Web3Provider(wcProvider, "any");
     signer = provider.getSigner();
     signerAddress = await signer.getAddress();
     walletConnected = true; $('walletConnectBtn').textContent = 'Connected';
     wcProvider.on && wcProvider.on("disconnect", ()=> { walletConnected = false; provider = null; signer = null; signerAddress = null; $('walletConnectBtn').textContent = 'Connect Wallet'; });
-  } catch(e){
-    console.error('connectWallet error', e); alert('Wallet connect failed: ' + (e.message||e)); throw e;
-  }
+  } catch(e){ console.error('connectWallet error', e); alert('Wallet connect failed: ' + (e.message||e)); throw e; }
 }
 $('walletConnectBtn').addEventListener('click', connectWallet);
 
-/* === Quote logic: live update of toAmount as you type and USD displays using getTokenPriceUSD === */
-let quoteTimer = null;
-function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 160); }
-
-async function updateQuote(){
-  try {
-    const fromAddr = low($('fromToken').dataset.address || '');
-    const toAddr = low($('toToken').dataset.address || '');
-    const amountStr = $('fromAmount').value;
-    if (!fromAddr || !toAddr || !amountStr) { $('toAmount').value = ''; await updateUsdDisplays(); return; }
-
-    const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
-    const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
-    // parse amount and compute parsed integer
-    const parsed = ethers.utils.parseUnits(String(amountStr), fromDecimals).toString();
-    const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
-    const r = await fetch(quoteUrl);
-    const j = await r.json();
-    if (j && j.toTokenAmount) {
-      const formattedTo = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
-      // set toAmount immediately (live)
-      $('toAmount').value = formattedTo;
-    } else {
-      $('toAmount').value = '';
-    }
-    // update USD displays
-    await updateUsdDisplays();
-  } catch(e){
-    console.error('updateQuote error', e);
-    $('toAmount').value = '';
-    await updateUsdDisplays();
-  }
-}
-
-/* update USD displays for both tokens (uses cached multi-route price if possible) */
-async function updateUsdDisplays(){
-  try {
-    const fromAddr = low($('fromToken').dataset.address || '');
-    const toAddr = low($('toToken').dataset.address || '');
-    const fromVal = Number($('fromAmount').value || 0);
-    const toVal = Number($('toAmount').value || 0);
-    let fromUsdText = '≈ $—', toUsdText = '≈ $—';
-    if (fromAddr) {
-      const p = await getTokenPriceUSD(fromAddr, Number($('fromToken').dataset.decimals || 18));
-      if (p != null) fromUsdText = '≈ $' + (Number(p) * fromVal).toFixed(4);
-    }
-    if (toAddr) {
-      const p2 = await getTokenPriceUSD(toAddr, Number($('toToken').dataset.decimals || 18));
-      if (p2 != null) toUsdText = '≈ $' + (Number(p2) * toVal).toFixed(4);
-    }
-    $('fromUsd').textContent = fromUsdText;
-    $('toUsd').textContent = toUsdText;
-  } catch(e){ console.warn('updateUsdDisplays error', e); }
-}
-
-/* keep live estimate while typing */
-$('fromAmount').addEventListener('input', updateQuoteDebounced);
-
-/* when user pastes address into token inputs: fetch metadata + show logo + recalc */
-document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
-  inp.addEventListener('paste', (ev)=>{
-    const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
-    if (isAddress(txt)) {
-      setTimeout(async ()=> {
-        inp.dataset.address = low(txt);
-        let info = tokenMap.get(low(txt)) || await fetchOnchainTokenInfo(txt);
-        if (info) {
-          inp.dataset.decimals = info.decimals || 18;
-          inp.value = info.symbol || info.name || txt.slice(0,8);
-          tokenMap.set(info.address, info);
-          // show logo if available
-          const logo = (inp.id === 'fromToken') ? $('fromLogo') : $('toLogo');
-          if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'inline-block'; }
-          else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
-          updateQuoteDebounced();
-        }
-      }, 10);
-    }
-  });
-});
-
-/* === Swap flow (allowance -> approve -> swap) same as before === */
-async function ensureApprovalAndSwap(){
-  try {
-    await connectWallet();
-    const fromInput = $('fromToken'), toInput = $('toToken');
-    const amountInput = $('fromAmount').value;
-    const slippage = $('slippage')?.value || 1;
-    if (!fromInput.dataset.address || !toInput.dataset.address || !amountInput) { alert('Fill both tokens and amount'); return; }
-    const fromAddr = low(fromInput.dataset.address);
-    const fromDecimals = Number(fromInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
-    const parsedAmount = ethers.utils.parseUnits(String(amountInput), fromDecimals).toString();
-
-    if (fromAddr !== MATIC_ADDR) {
-      const allowanceUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${signerAddress}`;
-      const ar = await fetch(allowanceUrl);
-      const aj = await ar.json();
-      const allowance = aj.allowance ? ethers.BigNumber.from(aj.allowance) : ethers.BigNumber.from('0');
-      if (allowance.lt(ethers.BigNumber.from(parsedAmount))) {
-        const aprUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;
-        const aprRes = await fetch(aprUrl); const aprJson = await aprRes.json();
-        if (!aprJson || !aprJson.data) throw new Error('Approve data unavailable');
-        const txReq = { to: aprJson.to, data: aprJson.data, value: aprJson.value ? ethers.BigNumber.from(aprJson.value) : undefined };
-        const sent = await signer.sendTransaction(txReq);
-        alert('Approve sent: ' + sent.hash); await sent.wait();
-      }
-    }
-
-    const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${low(toInput.dataset.address)}&amount=${parsedAmount}&fromAddress=${signerAddress}&slippage=${slippage}`;
-    const sr = await fetch(swapUrl); const sj = await sr.json();
-    if (!sj || !sj.tx) { console.error('swap build failed', sj); alert('Swap build failed'); return; }
-    const txReq = sj.tx; const sentSwap = await signer.sendTransaction(txReq);
-    alert('Swap sent: ' + sentSwap.hash);
-  } catch(e){ console.error('swap error', e); alert('Swap failed: ' + (e.message || e)); }
-}
-$('swapBtn').addEventListener('click', ensureApprovalAndSwap);
-
-/* === Small utility: global search Enter fills To === */
-globalSearch.addEventListener('keydown', (e)=>{
-  if (e.key === 'Enter') {
-    const v = globalSearch.value.trim(); if (!v) return;
-    if (isAddress(v)) setToFromAddress(v);
-    else {
-      const found = tokenList.find(t => (t.symbol && low(t.symbol).includes(low(v))) || (t.name && low(t.name).includes(low(v))));
-      if (found) { applyTokenSelection('to', found); updateQuoteDebounced(); }
-    }
-    globalBox.style.display = 'none';
-  }
-});
-
-/* helper to set To from address */
-async function setToFromAddress(addr){
-  const lowAddr = low(addr);
-  let info = tokenMap.get(lowAddr);
-  if (!info) info = await fetchOnchainTokenInfo(addr);
-  if (info) { applyTokenSelection('to', info); updateQuoteDebounced(); }
-  else { $('toToken').value = addr; $('toToken').dataset.address = lowAddr; $('toToken').dataset.decimals = 18; updateQuoteDebounced(); }
-}
-
-/* === Swap tokens fields (keeps logos hidden/display logic) === */
+/* SWAP tokens UI action */
 function swapTokenFields(){
   const fToken = $('fromToken'), tToken = $('toToken');
   const fLogo = $('fromLogo'), tLogo = $('toLogo');
   const fAmount = $('fromAmount'), tAmount = $('toAmount');
   const fUsd = $('fromUsd'), tUsd = $('toUsd');
 
-  // swap text & dataset
+  // swap values
   const tmpVal = fToken.value; fToken.value = tToken.value; tToken.value = tmpVal;
   const tmpAddr = fToken.dataset.address; fToken.dataset.address = tToken.dataset.address; tToken.dataset.address = tmpAddr;
   const tmpDec = fToken.dataset.decimals; fToken.dataset.decimals = tToken.dataset.decimals; tToken.dataset.decimals = tmpDec;
 
-  // swap logos (if hidden still hidden)
+  // logos
   const tmpSrc = fLogo.src; fLogo.src = tLogo.src; tLogo.src = tmpSrc;
   const tmpDisplay = fLogo.style.display; fLogo.style.display = tLogo.style.display; tLogo.style.display = tmpDisplay;
 
-  // swap amounts & usd
+  // amounts & usd
   const tmpAmt = fAmount.value; fAmount.value = tAmount.value; tAmount.value = tmpAmt;
   const tmpUsd = fUsd.textContent; fUsd.textContent = tUsd.textContent; tUsd.textContent = tmpUsd;
 
+  // refresh quote & prices
   updateQuoteDebounced();
+  fetchBothPrices();
 }
 $('swapTokensBtn').addEventListener('click', swapTokenFields);
 
-/* === Init: warm token lists and set globalBox position === */
+/* INIT: warm token lists */
 (async function init(){
   await loadTokensAndVolumes();
-  // position globalBox initial
-  globalBox.style.left = (globalSearch.offsetLeft) + 'px';
-  globalBox.style.top = (globalSearch.offsetTop + globalSearch.offsetHeight + 8) + 'px';
-  globalBox.style.width = (globalSearch.offsetWidth) + 'px';
+  // nothing else to position (global search removed)
 })();
 </script>
 </body>
