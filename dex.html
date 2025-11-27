@@ -39,29 +39,29 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 @keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
 
-/* UNIFIED ROW */
-.input-box{margin-top:14px;padding:12px;background:rgba(255,255,255,0.04);border-radius:14px;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.06)}
+/* UNIFIED ROW - THIN BARS */
+.input-box{margin-top:14px;padding:8px;background:rgba(255,255,255,0.025);border-radius:12px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.03)}
 .input-box .left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.token-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.04)}
-.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.token-icon{width:28px;height:28px;border-radius:8px;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.04)}
+.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:6px}
 .token-chip{position:absolute;right:-6px;bottom:-6px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:4px 8px;border-radius:999px;font-weight:800;font-size:11px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px)}
 .input-box.has-token .token-chip{display:inline-flex}
 
 /* INPUT BLOCK (single visible text input per row) */
 .input-field{display:flex;flex-direction:column;min-width:0;width:100%}
-.input-field input[type="text"]{padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:15px}
+.input-field input[type="text"]{padding:6px 8px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:14px}
 .input-amount{margin-left:8px;min-width:120px}
-.input-amount input{width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none}
+.input-amount input{width:100%;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:#fff;font-size:14px;outline:none;height:36px}
 
 /* USD RIGHT */
-.usd-right{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;text-align:right}
+.usd-right{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:rgba(255,255,255,0.9);font-weight:700;text-align:right}
 
 /* SUGGESTIONS: COMPACT & STYLISH */
-.suggestions{position:absolute;top:72px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
+.suggestions{position:absolute;top:64px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
 .suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
-.suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
+.suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.04), rgba(112,19,255,0.02))}
 .suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
-.suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.suggestion-left img{width:26px;height:26px;border-radius:6px;object-fit:cover}
 .suggestion-main{display:flex;flex-direction:column;min-width:0}
 .suggestion-symbol{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .suggestion-name{font-size:12px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -144,7 +144,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
           <span class="token-chip" id="fromChip" style="display:none">---</span>
         </div>
         <div class="input-field">
-          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:6px 8px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
         <div class="input-amount" style="min-width:120px;">
           <input id="fromAmount" placeholder="Amount" type="number" step="any">
@@ -162,7 +162,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
           <span class="token-chip" id="toChip" style="display:none">---</span>
         </div>
         <div class="input-field">
-          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:6px 8px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
         <div class="input-amount" style="min-width:120px;">
           <input id="toAmount" placeholder="Estimate" readonly>
@@ -294,6 +294,18 @@ async function loadTokensAndMarkets(){
 }
 let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
+
+/* ================= IMAGE HELPER: prefer CoinGecko images when available */
+function getBestTokenImage(tokenObj){
+  // prefer explicit logoURI if provided (often hosted by Coingecko tokens list), else fall back to cgStatsMap image by symbol or name
+  if (!tokenObj) return DARK_SVG_PLACEHOLDER;
+  if (tokenObj.logoURI) return tokenObj.logoURI;
+  const sym = low(tokenObj.symbol||'');
+  const name = low(tokenObj.name||'');
+  const sstat = cgStatsMap.get(sym) || cgStatsMap.get(name);
+  if (sstat && sstat.image) return sstat.image;
+  return DARK_SVG_PLACEHOLDER;
+}
 
 /* ================= PRICE SOURCES (fallback chain enhanced) */
 async function fetch1InchQuotePrice(addr, decimals=18){
@@ -430,8 +442,9 @@ async function getTokenPriceUSD(address, decimals=18){
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
-  const img = document.createElement('img'); img.src = tokenObj.logoURI || (stats && stats.image) || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
-  img.style.width='28px'; img.style.height='28px'; img.style.borderRadius='50%';
+  const img = document.createElement('img');
+  img.src = getBestTokenImage(tokenObj) || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
+  img.style.width='26px'; img.style.height='26px'; img.style.borderRadius='6px';
   left.appendChild(img);
   const main = document.createElement('div'); main.className='suggestion-main';
   const sym = document.createElement('div'); sym.className='suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address?tokenObj.address.slice(0,6):'');
@@ -556,7 +569,7 @@ function renderSuggestionsFromCache(q, side, box){
 setupAutocomplete(fromTokenInput, fromSuggestions, 'from');
 setupAutocomplete(toTokenInput, toSuggestions, 'to');
 
-/* ================= SELECTION, USD DISPLAY, PASTE, RESOLVE ================= */
+/* ================= SELECTION, USD DISPLAY, PASTE, RESOLVE */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? fromTokenInput : toTokenInput;
@@ -566,7 +579,8 @@ function applyTokenSelection(side, tokenObj){
   input.value = tokenObj.symbol || tokenObj.name || '';
   if (tokenObj.address) input.dataset.address = low(tokenObj.address);
   input.dataset.decimals = tokenObj.decimals || 18;
-  if (tokenObj.logoURI){ logo.src = tokenObj.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+  const bestImg = getBestTokenImage(tokenObj);
+  if (bestImg){ logo.src = bestImg; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
   tokenMap.set(tokenObj.address, tokenObj);
   box.classList.add('has-token');
   const imgUrl = tokenObj.logoURI ? `url('${tokenObj.logoURI}')` : 'none';
@@ -600,7 +614,8 @@ document.querySelectorAll('.input-box input[type="text"], .input-box input[type=
           tokenMap.set(info.address, info);
           const logo = (inp.id === 'fromToken') ? fromLogo : toLogo;
           const chip = (inp.id === 'fromToken') ? fromChip : toChip;
-          if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+          const bestImg = getBestTokenImage(info);
+          if (bestImg) { logo.src = bestImg; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
           const box = (inp.id === 'fromToken') ? fromBox : toBox;
           box.classList.add('has-token'); box.style.setProperty('--token-icon-bg', info.logoURI ? `url('${info.logoURI}')` : 'none');
           chip.textContent = info.symbol || info.name || '';
@@ -721,7 +736,8 @@ function resolveTokenInputsIfNeeded(){
       inputEl.dataset.decimals = found.decimals || 18;
       const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo;
       const chip = (inputEl.id === 'fromToken')? fromChip : toChip;
-      if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+      const bestImg = getBestTokenImage(found);
+      if (bestImg){ logo.src = bestImg; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
       const box = (inputEl.id === 'fromToken')? fromBox : toBox;
       box.classList.add('has-token');
       box.style.setProperty('--token-icon-bg', found.logoURI ? `url('${found.logoURI}')` : 'none');
@@ -900,7 +916,8 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     fromTokenInput.value = usdc.symbol || 'USDC';
     fromTokenInput.dataset.address = usdc.address;
     fromTokenInput.dataset.decimals = usdc.decimals || 6;
-    if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
+    const best = getBestTokenImage(usdc);
+    if (best){ fromLogo.src = best; fromLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
     fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token'); fromBox.style.setProperty('--token-icon-bg', usdc.logoURI ? `url('${usdc.logoURI}')` : 'none');
@@ -910,7 +927,8 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     toTokenInput.value = top.symbol || top.name;
     toTokenInput.dataset.address = top.address;
     toTokenInput.dataset.decimals = top.decimals || 18;
-    if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='block'; }
+    const best2 = getBestTokenImage(top);
+    if (best2){ toLogo.src = best2; toLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(top.address));
     toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
     toBox.classList.add('has-token'); toBox.style.setProperty('--token-icon-bg', top.logoURI ? `url('${top.logoURI}')` : 'none');
