@@ -2,30 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>NOLA Exchange — Full</title>
 <style>
 /* ===== RESET & THEME ===== */
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif}
-html,body{height:100%}
-body{
-  background:radial-gradient(circle at center,#0c0014,#1a002b 80%);
-  color:#fff;
-  min-height:100vh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:auto;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
+body{overflow-x:hidden;background:radial-gradient(circle at center,#0c0014,#1a002b 80%);color:#fff;scroll-behavior:smooth;min-height:100vh}
 :root{
   --accent-1:#b445ff;--accent-2:#7013ff;
-  --glass:rgba(255,255,255,0.05);
+  --glass:rgba(255,255,255,0.05);--glass-2:rgba(255,255,255,0.03);
   --suggest-bg:rgba(25,0,50,0.98);
   --shadow:0 0 25px rgba(180,0,255,0.3);
-  --container-max:520px;
-  --footer-h:56px;
+  --container-max:480px;
 }
 
 /* NEBULA + PARTICLES */
@@ -34,168 +22,105 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 .particle{position:absolute;width:2px;height:2px;background:#b445ff;border-radius:50%;opacity:0.8;animation:floatParticle linear infinite;z-index:-1}
 @keyframes floatParticle{0%{transform:translateY(0) translateX(0);opacity:0.8}50%{transform:translateY(-50px) translateX(20px);opacity:0.4}100%{transform:translateY(0) translateX(0);opacity:0.8}}
 
-/* LOGO */
+/* TOP LOGO moved down to sit above section */
 .logo{
-  width:96px;height:auto;display:block;margin:0 auto;pointer-events:none;
+  width:112px;height:auto;display:block;margin:0 auto;pointer-events:none;
   animation:logoGlow 5s ease-in-out infinite alternate,logoRotate 30s linear infinite;
-  z-index:998;position:fixed;left:50%;top:8vh;transform:translateX(-50%);
+  z-index:998;position:fixed;left:50%;top:18vh;transform:translateX(-50%);
 }
 @keyframes logoGlow{0%{filter:drop-shadow(0 0 12px #9c00ff)}50%{filter:drop-shadow(0 0 30px #d15fff)}100%{filter:drop-shadow(0 0 12px #9c00ff)}}
 @keyframes logoRotate{0%{transform:translateX(-50%) rotateY(0deg)}100%{transform:translateX(-50%) rotateY(360deg)}}
 
-/* CONTAINER (section-only) */
-.wrapper {
-  width:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:28px 16px 96px 16px;
-}
-.container{
-  width:100%;
-  max-width:var(--container-max);
-  background:var(--glass);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:16px;
-  padding:18px 16px 24px 16px;
-  backdrop-filter:blur(18px);
-  box-shadow:var(--shadow);
-  position:relative;
-  max-height: calc(100vh - 180px);
-  overflow:visible;
-}
-h2{text-align:center;font-size:20px;font-weight:600;margin-bottom:12px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
+/* SECTION WRAPPER - CENTER EVERYTHING */
+.section-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:18px;padding:28px;position:relative;z-index:1}
 
-/* ROWS */
-.input-box{
-  margin-top:12px;
-  padding:10px;
-  background:rgba(255,255,255,0.03);
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.05);
-  display:flex;
-  align-items:center;
-  gap:10px;
-  position:relative;
-}
+/* CARD */
+.container{width:90%;max-width:var(--container-max);margin:0;background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:25px;padding:22px;backdrop-filter:blur(18px);box-shadow:var(--shadow);animation:cardIn 800ms ease;position:relative}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
+
+/* UNIFIED ROW */
+.input-box{margin-top:14px;padding:12px;background:rgba(255,255,255,0.04);border-radius:14px;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.06)}
 .input-box .left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-
-/* ICONS: small & circular */
-.token-icon{
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  background:rgba(255,255,255,0.02);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-  flex-shrink:0;
-  position:relative;
-  border:1px solid rgba(255,255,255,0.04);
-}
-.token-icon img{width:36px;height:36px;object-fit:cover;border-radius:50%;display:block}
-
-/* small chip shown near icon */
-.token-chip{
-  position:absolute;
-  right:-8px;
-  bottom:-8px;
-  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
-  padding:4px 8px;
-  border-radius:999px;
-  font-weight:800;
-  font-size:11px;
-  color:#fff;
-  box-shadow:0 8px 20px rgba(180,68,255,0.12);
-  display:none;
-  transform:translate(6px,6px);
-}
+.token-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.04)}
+.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
+.token-chip{position:absolute;right:-6px;bottom:-6px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:4px 8px;border-radius:999px;font-weight:800;font-size:11px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px)}
 .input-box.has-token .token-chip{display:inline-flex}
 
-/* single visible input per row */
+/* INPUT BLOCK (single visible text input per row) */
 .input-field{display:flex;flex-direction:column;min-width:0;width:100%}
 .input-field input[type="text"]{padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:15px}
-.input-amount{margin-left:8px;min-width:110px}
+.input-amount{margin-left:8px;min-width:120px}
 .input-amount input{width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none}
 
 /* USD RIGHT */
 .usd-right{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:13px;color:rgba(255,255,255,0.9);font-weight:700;text-align:right}
 
-/* SUGGESTIONS inside card (scroll inside) */
-.suggestions{position:absolute;top:56px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:220px;overflow:auto;display:none;z-index:220;box-shadow:0 12px 34px rgba(120,0,255,0.08)}
+/* SUGGESTIONS: COMPACT & STYLISH */
+.suggestions{position:absolute;top:72px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
 .suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
 .suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
+.suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
 .suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.suggestion-main{display:flex;flex-direction:column;min-width:0}
+.suggestion-symbol{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggestion-name{font-size:12px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggestion-price-pill{min-width:70px;text-align:right;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);font-weight:700;font-size:12px}
 
-/* bottom controls inside the card - tidy and placed */
-.bottom-controls{
-  margin-top:14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
+/* SWAP OUTSIDE CONTROL (moved outside) with entrance animation */
+.swap-outside{
+  width:56px;height:56px;border-radius:14px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.06);box-shadow:0 10px 30px rgba(120,0,255,0.08),0 2px 8px rgba(0,0,0,0.35);cursor:pointer;font-size:22px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px);opacity:0;transform:translateY(8px) scale(0.96)
+}
+.swap-outside:hover{transform:translateY(-6px) rotate(-10deg)}
+.swap-outside.enter{animation:swapEnter 700ms cubic-bezier(.2,.9,.3,1) forwards}
+@keyframes swapEnter{0%{opacity:0;transform:translateY(12px) scale(.96)}60%{opacity:1;transform:translateY(-6px) scale(1.03)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+/* SLIPPAGE THEME */
+.slippage{appearance:none;padding:8px 12px;border-radius:10px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:none;font-weight:700;box-shadow:0 8px 20px rgba(180,68,255,0.08);cursor:pointer}
+#customSlippage{padding:8px 10px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;display:none;width:90px}
+
+/* ELECTRIC PILL SWAP BUTTON (replaces old .btn visually) */
+.electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
+.electric-pill{
+  position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 26px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 12px 36px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:15px;border:none;outline:none;overflow:hidden;
+  transition:transform 140ms ease,box-shadow 140ms ease;
+}
+.electric-pill:active{transform:translateY(-1px) scale(.997)}
+.electric-pill .sweep{position:absolute;left:-30%;top:-10%;width:40%;height:120%;background:linear-gradient(90deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(10px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
+@keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
+.electric-pill .label{position:relative;z-index:2;pointer-events:none}
+.electric-pill .icon{
+  width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,0.08);display:inline-flex;align-items:center;justify-content:center;font-weight:900;z-index:2;
+  box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18);
 }
 
-/* custom slippage - aligned left */
-.slippage-wrap{display:inline-block;position:relative}
-.slippage{appearance:none;padding:10px 42px 10px 12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12);cursor:pointer;font-size:14px;min-width:120px}
-.slippage-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'><path fill='white' d='M6 8l4 4 4-4' /></svg>");background-repeat:no-repeat;background-position:center;opacity:0.95;pointer-events:none}
-#customSlippage{padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff;display:none;width:84px;outline:none}
+/* SMALLER variant for the container's swap appearance */
+.swap-row{display:flex;gap:12px}
+.swap-row .electric-btn{flex:1}
 
-/* swap-inside moved to bottom-right of bottom-controls */
-.swap-inside{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 10px 30px rgba(120,0,255,0.08);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease}
-.swap-inside:hover{transform:translateY(-6px) rotate(-8deg)}
-
-/* electric pill button (below the section) */
-.electric-outside-wrap{display:flex;align-items:center;justify-content:center;margin-top:18px;margin-bottom:12px}
-.electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
-.electric-pill{position:relative;display:inline-flex;align-items:center;gap:12px;padding:12px 32px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 18px 46px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:16px;border:none;outline:none;overflow:hidden}
-.electric-pill .sweep{position:absolute;left:-30%;top:-10%;width:42%;height:120%;background:linear-gradient(90deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(10px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
-@keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
-
-/* top-right connect unchanged */
+/* TOP-RIGHT CONNECT */
 .top-right-connect{position:fixed;right:18px;top:18px;z-index:70;display:flex;gap:10px;align-items:center}
 .addr-chip{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,0.03);font-weight:700;display:none}
 .connect-floating{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12)}
 
-/* footer visible and above everything */
-.footer{
-  position:fixed;
-  left:12px;
-  right:12px;
-  bottom:12px;
-  height:var(--footer-h);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-  color:rgba(255,255,255,0.85);
-  font-size:13px;
-  pointer-events:auto;
-  backdrop-filter:blur(6px);
-  background:linear-gradient(180deg,rgba(0,0,0,0.18),rgba(0,0,0,0.28));
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.03);
-  box-shadow:0 6px 20px rgba(0,0,0,0.45);
-}
+/* FOOTER */
+.footer{position:fixed;left:0;right:0;bottom:12px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;z-index:40;color:rgba(255,255,255,0.75);font-size:13px}
+.footer a{color:rgba(215,165,255,0.95);text-decoration:none;font-weight:700;margin-left:8px}
 
-/* small screens */
-@media(max-width:520px){
-  .token-icon{width:32px;height:32px}
-  .token-icon img{width:32px;height:32px}
-  .token-chip{font-size:10px;padding:3px 6px;right:-6px;bottom:-6px}
-  .input-amount{min-width:86px}
-  .slippage{min-width:92px;padding:8px 36px 8px 10px}
-  .swap-inside{width:44px;height:44px}
-  .electric-pill{padding:10px 18px;font-size:14px}
-  .container{max-height:calc(100vh - 140px)}
+/* SMALL SCREEN POLISH: slightly reduce chip + layout stack */
+@media(max-width:720px){
+  .section-wrapper{padding:18px;gap:12px;flex-direction:column-reverse}
+  .swap-outside{transform:none}
+  .container{width:100%;max-width:520px}
+  .input-box .token-chip{font-size:10px;padding:3px 6px;right:-4px;bottom:-4px}
+  .logo{top:12vh;width:88px}
 }
 </style>
 </head>
 <body>
 
-<!-- particles -->
+<!-- particles will be created by script -->
+<!-- logo (inline SVG fallback) -->
 <img id="logoFloat" class="logo" src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='utf-8'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23b445ff'/><stop offset='1' stop-color='%237013ff'/></linearGradient></defs><rect rx='28' ry='28' width='200' height='200' fill='url(%23g)'/><text x='50%' y='54%' font-size='56' fill='white' font-family='Arial' font-weight='700' text-anchor='middle' dominant-baseline='middle'>N</text></svg>" alt="NOLA Logo">
 
 <!-- top-right connect -->
@@ -204,8 +129,10 @@ h2{text-align:center;font-size:20px;font-weight:600;margin-bottom:12px;color:#e0
   <button id="connectFloating" class="connect-floating">Connect Wallet</button>
 </div>
 
-<!-- SECTION WRAPPER (only UI changed here) -->
-<div class="wrapper">
+<!-- SECTION WRAPPER centers card and swap control -->
+<div class="section-wrapper">
+  <div id="swapOutside" class="swap-outside" title="Swap From ↔ To">⇅</div>
+
   <div class="container" role="main" aria-label="NOLA Exchange">
     <h2>NOLA Exchange</h2>
 
@@ -219,7 +146,7 @@ h2{text-align:center;font-size:20px;font-weight:600;margin-bottom:12px;color:#e0
         <div class="input-field">
           <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
         </div>
-        <div class="input-amount" style="min-width:110px;">
+        <div class="input-amount" style="min-width:120px;">
           <input id="fromAmount" placeholder="Amount" type="number" step="any">
         </div>
       </div>
@@ -237,7 +164,7 @@ h2{text-align:center;font-size:20px;font-weight:600;margin-bottom:12px;color:#e0
         <div class="input-field">
           <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
         </div>
-        <div class="input-amount" style="min-width:110px;">
+        <div class="input-amount" style="min-width:120px;">
           <input id="toAmount" placeholder="Estimate" readonly>
         </div>
       </div>
@@ -245,33 +172,32 @@ h2{text-align:center;font-size:20px;font-weight:600;margin-bottom:12px;color:#e0
       <div class="suggestions" id="toSuggestions" data-side="to"></div>
     </div>
 
-    <!-- bottom controls inside card -->
-    <div class="bottom-controls" aria-hidden="false">
-      <div class="slippage-wrap">
-        <select id="slippage" class="slippage" title="Select slippage">
-          <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="custom">Custom</option>
-        </select>
-        <input id="customSlippage" placeholder="Custom %" />
-      </div>
+    <!-- CONTROLS -->
+    <div class="controls" style="margin-top:14px">
+      <select id="slippage" class="slippage" title="Select slippage">
+        <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="custom">Custom</option>
+      </select>
+      <input id="customSlippage" placeholder="Custom %" style="padding:8px 10px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;display:none;width:90px">
+    </div>
 
-      <div id="swapOutside" class="swap-inside" title="Swap From ↔ To">⇅</div>
+    <div class="swap-row" style="margin-top:14px">
+      <!-- new electric pill swap button (id kept as swapBtn) -->
+      <button id="swapBtn" class="electric-btn" title="Swap">
+        <span class="electric-pill" role="button" aria-pressed="false">
+          <span class="sweep" aria-hidden="true"></span>
+          <span class="icon">⇄</span>
+          <span class="label">Swap</span>
+        </span>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- electric swap button below the section -->
-<div class="electric-outside-wrap" aria-hidden="false">
-  <button id="swapBtn" class="electric-btn" title="Swap">
-    <span class="electric-pill" role="button" aria-pressed="false">
-      <span class="sweep" aria-hidden="true"></span>
-      <span class="icon">⇄</span>
-      <span class="label">Swap</span>
-    </span>
-  </button>
+<!-- footer -->
+<div class="footer">
+  <div>© 2025 NOLA — All rights reserved</div>
+  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
 </div>
-
-<!-- footer (visible) -->
-<div class="footer">© 2025 NOLA — All rights reserved</div>
 
 <!-- LIBS -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
@@ -289,9 +215,9 @@ const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPC = "https://polygon-rpc.com";
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619'; // wrapped ether on Polygon
+const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1"; // example
+const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1";
 
 let tokenList = [];
 let tokenMap = new Map();
@@ -313,6 +239,7 @@ const fromChip = $('fromChip'), toChip = $('toChip');
 const fromSuggestions = $('fromSuggestions'), toSuggestions = $('toSuggestions');
 const swapOutside = $('swapOutside'), swapBtn = $('swapBtn');
 const fromBox = $('fromBox'), toBox = $('toBox');
+const swapOutsideElem = $('swapOutside');
 const connectFloating = $('connectFloating'), addrChip = $('addrChip');
 const slippageSel = $('slippage'), customSlippage = $('customSlippage');
 
@@ -456,34 +383,27 @@ async function getTokenPriceUSD(address, decimals=18){
   const addr = low(address);
   const cached = priceCache.get(addr);
   if (cached && (nowTs() - cached.ts) < PRICE_TTL) {
-    // filter out suspicious cached values (zero or extremely tiny)
     if (cached.price === null || cached.price === 0 || (Math.abs(cached.price) < 1e-18 && cached.price !== null)) {
-      // fall through to refresh
     } else {
       return cached.price;
     }
   }
 
-  // Try sources in preferred order, with safe checks
-  // 1) 1inch quote direct -> USDC
   try {
     const p1 = await fetch1InchQuotePrice(addr, decimals);
     if (p1 && Number.isFinite(p1) && p1 > 0) { priceCache.set(addr, {price:p1, ts:nowTs()}); return p1; }
   } catch(_) {}
 
-  // 2) CoinGecko contract endpoint
   try {
     const cg = await fetchCoingeckoContractPrice(addr);
     if (cg && cg.price && Number.isFinite(cg.price) && cg.price > 0) { priceCache.set(addr, {price:cg.price, ts:nowTs()}); return cg.price; }
   } catch(_) {}
 
-  // 3) CoinGecko simple token price endpoint
   try {
     const v = await fetchCoingeckoSimple(addr);
     if (v && Number.isFinite(v) && v > 0) { priceCache.set(addr, {price:v, ts:nowTs()}); return v; }
   } catch(_) {}
 
-  // 4) Try CoinGecko markets cache by symbol/name
   try {
     const t = tokenMap.get(addr);
     if (t && t.symbol){
@@ -492,24 +412,21 @@ async function getTokenPriceUSD(address, decimals=18){
     }
   } catch(_) {}
 
-  // 5) Dexscreener
   try {
     const d = await fetchDexscreenerPrice(addr);
     if (d && Number.isFinite(d) && d > 0) { priceCache.set(addr, {price:d, ts:nowTs()}); return d; }
   } catch(_) {}
 
-  // 6) Try derived via WETH route
   try {
     const derived = await derivePriceViaWeth(addr, decimals);
     if (derived && Number.isFinite(derived) && derived > 0) { priceCache.set(addr, {price:derived, ts:nowTs()}); return derived; }
   } catch(_) {}
 
-  // final fallback: mark null and return
   priceCache.set(addr, {price:null, ts:nowTs()});
   return null;
 }
 
-/* ================= SUGGESTION UI & PRIORITIZATION (CG 24h/12h first) */
+/* ================= SUGGESTION UI & PRIORITIZATION */
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
@@ -554,6 +471,7 @@ function showDefaultList(side){
   })();
 }
 
+/* AUTOCOMPLETE SETUP */
 function setupAutocomplete(inputEl, boxEl, side){
   let timer = null;
   inputEl.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(inputEl.value.trim().toLowerCase()), 140); });
@@ -654,8 +572,10 @@ function applyTokenSelection(side, tokenObj){
   const imgUrl = tokenObj.logoURI ? `url('${tokenObj.logoURI}')` : 'none';
   box.style.setProperty('--token-icon-bg', imgUrl);
   ACTIVE_PRICE_ADDRS.add(low(tokenObj.address));
+  // show small chip inside icon
   chip.textContent = tokenObj.symbol || tokenObj.name || '';
   chip.style.display = 'inline-flex';
+  // ensure caret at end for fast typing
   focusAndPlaceCaretAtEnd(input);
   fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 }
@@ -796,12 +716,24 @@ function resolveTokenInputsIfNeeded(){
     if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
     if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
     if (!found) found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
-    if (found){ inputEl.dataset.address = found.address; inputEl.dataset.decimals = found.decimals || 18; const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo; const chip = (inputEl.id === 'fromToken')? fromChip : toChip; if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; } const box = (inputEl.id === 'fromToken')? fromBox : toBox; box.classList.add('has-token'); box.style.setProperty('--token-icon-bg', found.logoURI ? `url('${found.logoURI}')` : 'none'); ACTIVE_PRICE_ADDRS.add(found.address); chip.textContent = found.symbol || found.name || ''; chip.style.display = 'inline-flex'; }
+    if (found){
+      inputEl.dataset.address = found.address;
+      inputEl.dataset.decimals = found.decimals || 18;
+      const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo;
+      const chip = (inputEl.id === 'fromToken')? fromChip : toChip;
+      if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+      const box = (inputEl.id === 'fromToken')? fromBox : toBox;
+      box.classList.add('has-token');
+      box.style.setProperty('--token-icon-bg', found.logoURI ? `url('${found.logoURI}')` : 'none');
+      ACTIVE_PRICE_ADDRS.add(found.address);
+      chip.textContent = found.symbol || found.name || '';
+      chip.style.display = 'inline-flex';
+    }
   };
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
 }
 
-/* ================= SWAP ICON BEHAVIOR (inside) */
+/* ================= SWAP ICON BEHAVIOR (outside) */
 swapOutside.addEventListener('click', ()=>{
   swapOutside.classList.add('pressed');
   setTimeout(()=> swapOutside.classList.remove('pressed'), 300);
@@ -826,7 +758,7 @@ swapOutside.addEventListener('click', ()=>{
   try{ typeof updateEstimate === 'function' && updateEstimate(); }catch(e){}
 });
 
-/* SWAP BUTTON: simple placeholder */
+/* SWAP BUTTON: simple placeholder kept (id preserved) */
 swapBtn.addEventListener('click', ()=> {
   alert('To run a swap: connect wallet via the Connect Wallet button (top-right).');
 });
@@ -924,13 +856,40 @@ function updateUsdVisibility(){
 
 /* ================= SUGGESTIONS HIDE OUTSIDE CLICK & ESC */
 document.addEventListener('click', (ev)=>{
-  const inInputOrSuggest = ev.target.closest('.input-box') || ev.target.closest('.suggestions') || ev.target.closest('#fromToken') || ev.target.closest('#toToken') || ev.target.closest('.slippage-wrap');
+  const inInputOrSuggest = ev.target.closest('.input-box') || ev.target.closest('.suggestions') || ev.target.closest('#fromToken') || ev.target.closest('#toToken');
   if (!inInputOrSuggest){
     fromSuggestions.style.display = 'none';
     toSuggestions.style.display = 'none';
   }
 });
 document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSuggestions.style.display='none'; toSuggestions.style.display='none'; } });
+
+/* ================= CARET HELPERS: focus + place caret at end for faster typing */
+function placeCaretAtEnd(inputEl){
+  try{
+    const len = (inputEl.value || '').length;
+    inputEl.setSelectionRange(len, len);
+  }catch(e){}
+}
+function focusAndPlaceCaretAtEnd(inputEl){
+  try{
+    inputEl.focus();
+    placeCaretAtEnd(inputEl);
+  }catch(e){}
+}
+
+/* Make whole left area clickable to focus the input and position caret at end for faster editing */
+fromBox.querySelector('.left').addEventListener('click', (e)=>{
+  // if clicking suggestion or amount, ignore; else focus input at end
+  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
+  focusAndPlaceCaretAtEnd(fromTokenInput);
+  showDefaultList('from');
+});
+toBox.querySelector('.left').addEventListener('click', (e)=>{
+  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
+  focusAndPlaceCaretAtEnd(toTokenInput);
+  showDefaultList('to');
+});
 
 /* ================= INIT */
 (async function init(){
@@ -943,8 +902,7 @@ document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSugge
     fromTokenInput.dataset.decimals = usdc.decimals || 6;
     if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
-    fromChip.textContent = usdc.symbol || 'USDC';
-    fromChip.style.display = 'inline-flex';
+    fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token'); fromBox.style.setProperty('--token-icon-bg', usdc.logoURI ? `url('${usdc.logoURI}')` : 'none');
   }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
@@ -954,8 +912,7 @@ document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSugge
     toTokenInput.dataset.decimals = top.decimals || 18;
     if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(top.address));
-    toChip.textContent = top.symbol || top.name;
-    toChip.style.display = 'inline-flex';
+    toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
     toBox.classList.add('has-token'); toBox.style.setProperty('--token-icon-bg', top.logoURI ? `url('${top.logoURI}')` : 'none');
   }
   updateUsdVisibility();
@@ -964,30 +921,13 @@ document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSugge
   scheduleActivePriceRefresh();
 
   // animate swapOutside entrance
-  setTimeout(()=> { swapOutside.classList.add('entered'); }, 200);
+  setTimeout(()=> { swapOutsideElem.classList.add('enter'); }, 200);
 })();
 
 /* SLIPPAGE UI */
 slippageSel.addEventListener('change', ()=>{
   if(slippageSel.value === 'custom'){ customSlippage.style.display = 'inline-block'; customSlippage.focus(); }
   else customSlippage.style.display = 'none';
-});
-
-/* caret helpers and click-to-focus */
-function placeCaretAtEnd(inputEl){
-  try{ const len = (inputEl.value || '').length; inputEl.setSelectionRange(len, len); }catch(e){}
-}
-function focusAndPlaceCaretAtEnd(inputEl){ try{ inputEl.focus(); placeCaretAtEnd(inputEl); }catch(e){} }
-
-fromBox.querySelector('.left').addEventListener('click', (e)=>{
-  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
-  focusAndPlaceCaretAtEnd(fromTokenInput);
-  showDefaultList('from');
-});
-toBox.querySelector('.left').addEventListener('click', (e)=>{
-  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
-  focusAndPlaceCaretAtEnd(toTokenInput);
-  showDefaultList('to');
 });
 
 /* expose some functions globally for debugging or external calls */
