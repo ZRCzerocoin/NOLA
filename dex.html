@@ -1,589 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>NOLA DEX — Live Prices</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NOLA DEX</title>
 <style>
-/* Minimal theme preserved and small UX additions (spinner) */
-body {margin:0; padding:20px; font-family: Arial, sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
-.container {max-width:520px; margin:20px auto; background:rgba(255,255,255,0.03); padding:20px; border-radius:16px; box-shadow:0 8px 30px rgba(0,0,0,0.6);}
-h2 {text-align:center; color:#e0b3ff; margin:6px 0 18px;}
-.row {display:flex; align-items:center; gap:12px; margin:12px 0;}
-.input-box {flex:1; background:rgba(255,255,255,0.02); padding:12px; border-radius:10px; font-size:18px; color:#fff; border:none; outline:none;}
-.token-btn {display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); padding:8px 10px; border-radius:10px; cursor:pointer;}
-.token-btn img {width:34px; height:34px; border-radius:8px; object-fit:cover; display:block;}
-.meta {font-size:13px; color:#bfb3ff;}
+    body { background:#0b0b0b; color:white; font-family:Arial; padding:20px; }
+    .card { background:#111; padding:20px; border-radius:16px;
+        max-width:420px; margin:auto; box-shadow:0 0 20px #000; }
+    .row { display:flex; justify-content:space-between; align-items:center; margin:10px 0; }
+    .token-btn { background:#1c1c1c; padding:10px 14px; border-radius:12px;
+        display:flex; align-items:center; gap:8px; cursor:pointer; }
+    .token-btn img { width:26px; height:26px; border-radius:50%; background:#333; }
+    .input-box { background:#1c1c1c; padding:12px; border-radius:12px; width:100%;
+        color:white; font-size:18px; border:none; }
+    #modal { position:fixed; top:0; left:0; width:100%; height:100%;
+        background:rgba(0,0,0,0.85); display:none; padding:30px; }
+    .token-item { padding:10px; display:flex; align-items:center; gap:10px;
+        border-bottom:1px solid #222; cursor:pointer; }
+    .token-item img { width:32px; height:32px; border-radius:50%; background:#333; }
 
-/* USD + spinner area */
-.usd-wrap {display:flex; align-items:center; gap:8px; min-width:120px; justify-content:flex-end;}
-.usd {font-size:14px; color:#fff; opacity:0.95; min-width:90px; text-align:right;}
-.spinner {width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,0.12); border-top-color: #b445ff; animation:spin 900ms linear infinite; display:none;}
-@keyframes spin {to { transform: rotate(360deg); }}
-
-/* modal token list */
-#modal {position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; padding:24px; overflow:auto;}
-.modal-card {max-width:820px; margin:30px auto; background:#0f0b12; border-radius:12px; padding:16px;}
-.search {width:100%; padding:10px; border-radius:8px; border:none; margin-bottom:12px; background:#121018; color:#fff;}
-.token-item {display:flex; gap:12px; align-items:center; padding:10px 8px; border-bottom:1px solid rgba(255,255,255,0.03); cursor:pointer;}
-.token-item img {width:36px; height:36px; border-radius:8px; object-fit:cover;}
-.token-item small {display:block; color:#aaa;}
-
-/* button */
-.btn {width:100%; padding:12px; margin-top:14px; border:none; border-radius:10px; background:linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:16px; cursor:pointer;}
-.footer {text-align:center; color:#bfb3ff; margin-top:14px; font-size:13px;}
+    /* SPINNER */
+    .spinner {
+        width:16px; height:16px; border:3px solid #444;
+        border-top-color:white; border-radius:50%;
+        animation:spin 0.9s linear infinite; display:inline-block;
+        margin-left:6px; vertical-align:middle;
+    }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div class="container">
-  <h2>NOLA DEX — Live Price Preview</h2>
+<div class="card">
 
-  <div class="row">
-    <input id="fromAmount" class="input-box" placeholder="From amount">
-    <div id="fromTokenBtn" class="token-btn"><img id="fromIcon" src=""><div id="fromSymbol">Select</div></div>
-    <div class="usd-wrap"><div id="fromUsd" class="usd">≈ $—</div><div id="fromSpinner" class="spinner"></div></div>
-  </div>
+    <h2>NOLA DEX Aggregator</h2>
 
-  <div class="row">
-    <input id="toAmount" class="input-box" placeholder="To amount" readonly>
-    <div id="toTokenBtn" class="token-btn"><img id="toIcon" src=""><div id="toSymbol">Select</div></div>
-    <div class="usd-wrap"><div id="toUsd" class="usd">≈ $—</div><div id="toSpinner" class="spinner"></div></div>
-  </div>
+    <!-- FROM -->
+    <div class="row">
+        <input id="fromAmount" class="input-box" placeholder="0.0" />
+        <div id="fromTokenBtn" class="token-btn">
+            <img id="fromIcon" src="">
+            <span id="fromSymbol">Select</span>
+        </div>
+    </div>
+    <div id="fromUsd" style="color:#777; font-size:14px;">$0.00</div>
 
-  <div style="display:flex; gap:8px; margin-top:10px;">
-    <select id="slippage" style="flex:1; padding:10px; border-radius:10px; border:none; background:rgba(255,255,255,0.02); color:#fff;">
-      <option value="0.1">0.1%</option>
-      <option value="0.5">0.5%</option>
-      <option value="1" selected>1%</option>
-      <option value="2">2%</option>
-    </select>
-    <button id="swapBtn" class="btn" style="flex:1;">Swap</button>
-  </div>
+    <!-- TO -->
+    <div class="row">
+        <input id="toAmount" class="input-box" placeholder="0.0" />
+        <div id="toTokenBtn" class="token-btn">
+            <img id="toIcon" src="">
+            <span id="toSymbol">Select</span>
+        </div>
+    </div>
+    <div id="toUsd" style="color:#777; font-size:14px;">$0.00</div>
 
-  <div class="footer">Live prices updated every 3s from 1inch routes with intelligent multi-fallbacks.</div>
+    <button id="swapBtn" style="width:100%; margin-top:20px; padding:14px;
+        font-size:18px; border:none; border-radius:12px; background:#4a00ff; color:white;">
+        Swap Now
+    </button>
 </div>
 
-<!-- modal -->
+<!-- Token Modal -->
 <div id="modal">
-  <div class="modal-card">
-    <input id="modalSearch" class="search" placeholder="Search token symbol, name or paste contract (Polygon)">
+    <input id="modalSearch" class="input-box" placeholder="Search name or contract..." style="margin-bottom:20px;">
     <div id="tokenList"></div>
-    <button id="closeModal" class="btn">Close</button>
-  </div>
 </div>
 
 <script>
-/* CONFIG and state */
-const CHAIN_ID = 137;                    // Polygon
-const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
-const COINGECKO_CHAIN = 'polygon-pos';
-const FALLBACK_RPC = "https://polygon-rpc.com";
+const CHAIN = "137"; // Polygon
+let selecting = null;
+let tokensCache = {};
 
-// Common stable/bridge tokens on Polygon sorted by preference
-const PREFERRED_TARGETS = [
-  { addr: '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174', decimals:6 }, // USDC
-  { addr: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619', decimals:18 }, // WETH (wrapped)
-  { addr: '0x0000000000000000000000000000000000001010', decimals:18 }, // MATIC pseudo
-  { addr: '0xc2132D05D31c914a87C6611C10748AEb04B58e8F', decimals:6 }  // USDT
-];
+document.getElementById("fromTokenBtn").onclick = () => openModal("from");
+document.getElementById("toTokenBtn").onclick = () => openModal("to");
+document.getElementById("modalSearch").oninput = searchToken;
+document.getElementById("fromAmount").oninput = () => updateConversion("from");
+document.getElementById("toAmount").oninput = () => updateConversion("to");
 
-const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-const PRICE_ROUTE_TIMEOUT = 3500; // ms per route attempt
-const POLL_INTERVAL = 3000;       // ms polling for live prices
-
-let tokensCache = { from:null, to:null }; // token metadata objects
-let priceCache = new Map();               // address -> { price, ts }
-let ongoingFetchControllers = { from:null, to:null }; // AbortControllers for cancellation
-
-/* DOM */
-const fromAmountEl = document.getElementById('fromAmount');
-const toAmountEl   = document.getElementById('toAmount');
-const fromBtn      = document.getElementById('fromTokenBtn');
-const toBtn        = document.getElementById('toTokenBtn');
-const modal        = document.getElementById('modal');
-const modalSearch  = document.getElementById('modalSearch');
-const tokenListEl  = document.getElementById('tokenList');
-const fromSymbolEl = document.getElementById('fromSymbol');
-const toSymbolEl   = document.getElementById('toSymbol');
-const fromIconEl   = document.getElementById('fromIcon');
-const toIconEl     = document.getElementById('toIcon');
-const fromUsdEl    = document.getElementById('fromUsd');
-const toUsdEl      = document.getElementById('toUsd');
-const fromSpinner  = document.getElementById('fromSpinner');
-const toSpinner    = document.getElementById('toSpinner');
-
-const swapBtn = document.getElementById('swapBtn');
-
-/* Helpers */
-const $ = id => document.getElementById(id);
-const low = s => (s||'').toLowerCase();
-const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
-const now = ()=> Date.now();
-const wait = ms => new Promise(r => setTimeout(r, ms));
-
-/* Small SVG dark placeholder for missing icons */
-const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" fill="#151225"/></svg>`
-);
-
-/* ------------ NETWORK + TIMEOUT UTIL ------------ */
-/* fetch with AbortController timeout wrapper */
-async function fetchWithTimeout(url, opts={}, timeout=PRICE_ROUTE_TIMEOUT) {
-  const controller = new AbortController();
-  const timer = setTimeout(()=> controller.abort(), timeout);
-  try {
-    const res = await fetch(url, {...opts, signal: controller.signal});
-    clearTimeout(timer);
-    return res;
-  } catch (e) {
-    clearTimeout(timer);
-    throw e;
-  }
+/* OPEN TOKEN MODAL */
+async function openModal(side) {
+    selecting = side;
+    document.getElementById("modal").style.display = "block";
+    document.getElementById("modalSearch").value = "";
+    document.getElementById("tokenList").innerHTML = "";
 }
 
-/* Promise wrapper to try function but return null on throw */
-async function tryOrNull(promise) {
-  try { return await promise; } catch(e) { return null; }
+/* TOKEN SEARCH (1INCH) */
+async function searchToken() {
+    const q = document.getElementById("modalSearch").value.trim();
+
+    if (q.length < 2) return;
+
+    try {
+        const res = await fetch(`https://api.1inch.dev/token/v1.2/${CHAIN}/search?query=${q}`, {
+            headers: { "Authorization": "Bearer public" }
+        });
+        const data = await res.json();
+        showTokenList(Object.values(data.tokens));
+    } catch (e) {}
 }
 
-/* ------------ TOKEN METADATA helpers ------------ */
-/* merge token lists from coinGecko tokens.coingecko and 1inch tokens (non-fatal) */
-let mergedTokenMap = new Map(); // address -> token obj {address,symbol,name,decimals,logoURI}
-
-async function warmTokenLists() {
-  // 1) coinGecko polygon listing (logos/decimals)
-  try {
-    const r = await fetchWithTimeout('https://tokens.coingecko.com/polygon-pos/all.json', {}, 5000);
-    const j = await r.json();
-    (j.tokens || []).forEach(t => {
-      const addr = low(t.address);
-      mergedTokenMap.set(addr, { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' });
+function showTokenList(list) {
+    const box = document.getElementById("tokenList");
+    box.innerHTML = "";
+    list.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "token-item";
+        div.innerHTML = `
+            <img src="${t.logoURI || ""}">
+            <div><b>${t.symbol}</b><br><small>${t.name}</small></div>
+        `;
+        div.onclick = () => selectToken(t);
+        box.appendChild(div);
     });
-  } catch(e){ /* ignore */ }
-
-  // 2) try 1inch tokens list and merge
-  try {
-    const r = await fetchWithTimeout(`${ONEINCH_BASE}/tokens`, {}, 5000);
-    const j = await r.json();
-    if (j && j.tokens) {
-      Object.values(j.tokens).forEach(t => {
-        const addr = low(t.address);
-        if (!mergedTokenMap.has(addr)) mergedTokenMap.set(addr, { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' });
-      });
-    }
-  } catch(e){ /* ignore */ }
-}
-warmTokenLists();
-
-/* on-chain metadata fallback for unknown contract */
-async function fetchOnchainTokenInfo(address) {
-  try {
-    const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
-    const abi = ["function symbol() view returns (string)", "function name() view returns (string)", "function decimals() view returns (uint8)"];
-    const c = new ethers.Contract(address, abi, rpcProvider);
-    const [symbol, name, decimals] = await Promise.all([
-      c.symbol().catch(()=>null),
-      c.name().catch(()=>null),
-      c.decimals().catch(()=>18)
-    ]);
-    const info = { address: low(address), symbol: symbol||address.slice(0,6), name: name||symbol||address.slice(0,8), decimals: decimals||18, logoURI: '' };
-    mergedTokenMap.set(low(address), info);
-    return info;
-  } catch(e){
-    return { address: low(address), symbol: address.slice(0,6), name: 'Token', decimals: 18, logoURI: '' };
-  }
 }
 
-/* unified getter for token metadata (checks cache, merged maps, onchain) */
-async function getTokenMetadata(query) {
-  if (!query) return null;
-  // if looks like address
-  if (isAddress(query)) {
-    const a = low(query);
-    let m = mergedTokenMap.get(a);
-    if (m) return m;
-    m = await fetchOnchainTokenInfo(a);
-    return m;
-  }
-  // otherwise search symbol/name in mergedTokenMap (simple substring)
-  const q = low(query);
-  for (let v of mergedTokenMap.values()) {
-    if ((v.symbol && low(v.symbol).includes(q)) || (v.name && low(v.name).includes(q))) return v;
-  }
-  // else try query 1inch token search endpoint (fast)
-  try {
-    const res = await fetchWithTimeout(`${ONEINCH_BASE}/tokens`, {}, 4000);
-    const j = await res.json();
-    if (j && j.tokens) {
-      for (let t of Object.values(j.tokens)) {
-        if ((t.symbol && low(t.symbol).includes(q)) || (t.name && low(t.name).includes(q))) {
-          const obj = { address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
-          mergedTokenMap.set(obj.address, obj);
-          return obj;
-        }
-      }
-    }
-  } catch(e) {}
-  return null;
+function selectToken(t) {
+    tokensCache[selecting] = t;
+    document.getElementById(selecting + "Symbol").innerText = t.symbol;
+    document.getElementById(selecting + "Icon").src = t.logoURI || "";
+    document.getElementById("modal").style.display = "none";
+    updateUSD(selecting);
 }
 
-/* ------------ PRICE ROUTES (multi-layer, per-route timeout) ------------ */
+/* PRICE FETCHER WITH MULTI-LAYER FALLBACK */
+async function fetchPriceUSD(addr) {
+    let price;
 
-/* Attempt price via 1inch quote to a target (target must be token address) */
-async function quoteAmount(fromAddr, toAddr, fromDecimals, amountRawStr, timeoutMs=PRICE_ROUTE_TIMEOUT) {
-  // amountRawStr is integer string (wei of token)
-  try {
-    const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amountRawStr}`;
-    const r = await fetchWithTimeout(url, {}, timeoutMs);
-    const j = await r.json();
-    return j; // may contain toTokenAmount
-  } catch(e) {
-    // timed out or failed
+    // ---------- 1) 1INCH ----------
+    price = await promiseTimeout(3000, fetch1InchPrice(addr));
+    if (price) return price;
+
+    // ---------- 2) COINGECKO ----------
+    price = await promiseTimeout(3000, fetchCoinGecko(addr));
+    if (price) return price;
+
+    // ---------- 3) DEXSCREENER ----------
+    price = await promiseTimeout(3000, fetchDexScreener(addr));
+    if (price) return price;
+
+    return 0;
+}
+
+/* Timeout wrapper */
+function promiseTimeout(ms, promise) {
+    let timeout = new Promise(res => {
+        setTimeout(() => res(null), ms);
+    });
+    return Promise.race([promise, timeout]);
+}
+
+/* 1inch → USD via USDC */
+async function fetch1InchPrice(address) {
+    try {
+        const res = await fetch(
+            `https://api.1inch.dev/swap/v6.0/${CHAIN}/quote?src=${address}&dst=0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174&amount=1000000000000000000`,
+            { headers: { "Authorization": "Bearer public" } }
+        );
+        const data = await res.json();
+        if (data.dstAmount) return Number(data.dstAmount) / 1e6;
+    } catch {}
     return null;
-  }
 }
 
-/* convert 1 unit of token (adjusted by decimals) into USD using multi-routes */
-async function getTokenPriceUSD_1inchPrimary(tokenAddr, tokenDecimals) {
-  if (!tokenAddr) return null;
-  const addr = low(tokenAddr);
-
-  // caching short TTL (30s)
-  const cached = priceCache.get(addr);
-  if (cached && (now() - cached.ts) < 30000) return cached.price;
-
-  // attempt routes in order, each route has timeout; we return first good numeric price
-  // route 1: token -> USDC
-  try {
-    const oneTokenRaw = ethers.BigNumber.from('1').mul(ethers.BigNumber.from('10').pow(tokenDecimals)).toString();
-    for (let target of PREFERRED_TARGETS) {
-      // try quote to target token
-      const q = await quoteAmount(addr, target.addr, tokenDecimals, oneTokenRaw, PRICE_ROUTE_TIMEOUT);
-      if (q && q.toTokenAmount) {
-        // compute decimal-correct amount
-        const raw = ethers.BigNumber.from(q.toTokenAmount).toString();
-        const amountTarget = Number(raw) / (10 ** target.decimals);
-        if (!Number.isNaN(amountTarget) && amountTarget > 0) {
-          // if target is USDC/USDT (decimals 6), then amountTarget is USD-ish already
-          if (target.decimals === 6) {
-            priceCache.set(addr, { price: amountTarget, ts: now() });
-            return amountTarget;
-          } else {
-            // target is WETH/MATIC — we need to get USD value for target (try CoinGecko for MATIC/WETH)
-            const usdOfTarget = await getNativeOrTokenUsdPriceByCoinGecko(target.addr);
-            if (usdOfTarget != null) {
-              const computed = amountTarget * usdOfTarget;
-              priceCache.set(addr, { price: computed, ts: now() });
-              return computed;
-            }
-            // if we can't get USD for target quickly, continue to next target
-          }
-        }
-      }
-    }
-  } catch(e) {
-    // ignore and continue to fallback
-  }
-
-  // final fallback: try CoinGecko simple/token_price (best-effort)
-  try {
-    // if token is MATIC pseudo address, use matic-network
-    if (addr === low(MATIC_ADDR)) {
-      const r = await fetchWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd', {}, PRICE_ROUTE_TIMEOUT);
-      const j = await r.json();
-      const p = j?.['matic-network']?.usd ?? null;
-      priceCache.set(addr, { price: p, ts: now() });
-      return p;
-    } else {
-      const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${addr}&vs_currencies=usd`;
-      const r = await fetchWithTimeout(url, {}, PRICE_ROUTE_TIMEOUT);
-      const j = await r.json();
-      const p = j[addr]?.usd ?? null;
-      priceCache.set(addr, { price: p, ts: now() });
-      return p;
-    }
-  } catch(e) {
-    priceCache.set(addr, { price: null, ts: now() });
+/* COINGECKO fallback */
+async function fetchCoinGecko(address) {
+    try {
+        const res = await fetch(`https://api.coingecko.com/api/v3/simple/token_price/polygon-pos?contract_addresses=${address}&vs_currencies=usd`);
+        const data = await res.json();
+        const key = Object.keys(data)[0];
+        return data[key]?.usd || null;
+    } catch {}
     return null;
-  }
 }
 
-/* helper: get USD for "native" tokens like WETH/MATIC via coinGecko quickly */
-async function getNativeOrTokenUsdPriceByCoinGecko(tokenAddr) {
-  try {
-    // detect MATIC pseudo
-    if (low(tokenAddr) === low(MATIC_ADDR)) {
-      const r = await fetchWithTimeout('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd', {}, PRICE_ROUTE_TIMEOUT);
-      const j = await r.json();
-      return j?.['matic-network']?.usd ?? null;
-    }
-    // try known mapping: WETH on polygon -> use coinGecko by contract
-    const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${low(tokenAddr)}&vs_currencies=usd`;
-    const r = await fetchWithTimeout(url, {}, PRICE_ROUTE_TIMEOUT);
-    const j = await r.json();
-    return j[low(tokenAddr)]?.usd ?? null;
-  } catch(e) {
+/* DEXSCREENER fallback */
+async function fetchDexScreener(address) {
+    try {
+        const res = await fetch(`https://api.dexscreener.io/latest/dex/tokens/${address}`);
+        const data = await res.json();
+        return data.pairs?.[0]?.priceUsd || null;
+    } catch {}
     return null;
-  }
 }
 
-/* ------------ UI + polling + orchestration ------------ */
+/* UPDATE USD VALUE */
+async function updateUSD(side) {
+    const t = tokensCache[side];
+    if (!t) return;
 
-/* set spinner visible for a side */
-function showSpinner(side, show=true) {
-  const sp = (side === 'from') ? fromSpinner : toSpinner;
-  sp.style.display = show ? 'block' : 'none';
-}
+    const el = document.getElementById(side + "Usd");
+    el.innerHTML = `<span class="spinner"></span>`; // loading
 
-/* update USD display text for a side (uses priceCache if available, otherwise shows —) */
-async function updateUsdDisplay(side) {
-  const token = tokensCache[side];
-  const amount = Number((side === 'from') ? fromAmountEl.value || 0 : toAmountEl.value || 0);
-  if (!token || !token.address || amount <= 0) {
-    if (side === 'from') fromUsdEl.textContent = '≈ $—';
-    else toUsdEl.textContent = '≈ $—';
-    return;
-  }
-
-  showSpinner(side, true);
-
-  // Cancel previous ongoing fetch for this side (so only latest matters)
-  if (ongoingFetchControllers[side]) {
-    try { ongoingFetchControllers[side].abort(); } catch(e){}
-    ongoingFetchControllers[side] = null;
-  }
-
-  // we don't need explicit AbortController here because our internal timeouts use fetchWithTimeout,
-  // but we keep ability to short-circuit the whole operation if a newer fetch starts by checking token address.
-
-  const addr = low(token.address), dec = token.decimals || 18;
-
-  // try getTokenPriceUSD_1inchPrimary (this is multi-route & cached)
-  const price = await getTokenPriceUSD_1inchPrimary(addr, dec);
-
-  // If we got price, update display, else show dash
-  if (price != null) {
-    const total = (Number(price) * amount);
-    const txt = (Number.isFinite(total) && !Number.isNaN(total)) ? `≈ $${Number(total).toFixed(4)}` : '≈ $—';
-    if (side === 'from') fromUsdEl.textContent = txt; else toUsdEl.textContent = txt;
-  } else {
-    if (side === 'from') fromUsdEl.textContent = '≈ $—'; else toUsdEl.textContent = '≈ $—';
-  }
-
-  showSpinner(side, false);
-}
-
-/* fetch both prices concurrently (used by polling) */
-async function fetchBothPricesNow() {
-  // run both updates in parallel
-  await Promise.all([ updateUsdDisplay('from'), updateUsdDisplay('to') ]);
-}
-
-/* live poller */
-let pricePoller = null;
-function startPricePolling() {
-  if (pricePoller) clearInterval(pricePoller);
-  pricePoller = setInterval(() => {
-    // only poll if tokens selected
-    if (tokensCache.from || tokensCache.to) fetchBothPricesNow();
-  }, POLL_INTERVAL);
-}
-startPricePolling();
-
-/* When user selects a token (or pastes), update display & trigger immediate fetch */
-function setTokenForSide(side, tokenObj) {
-  tokensCache[side] = tokenObj;
-  const symEl = (side === 'from') ? fromSymbolEl : toSymbolEl;
-  const iconEl = (side === 'from') ? fromIconEl : toIconEl;
-  symEl.textContent = tokenObj.symbol || tokenObj.address.slice(0,6);
-  iconEl.src = tokenObj.logoURI || DARK_SVG_PLACEHOLDER;
-  iconEl.style.display = 'block';
-  // immediate price fetch for that token
-  updateUsdDisplay(side);
-  // update quote if both exist
-  updateQuoteDebounced();
-}
-
-/* Simple UI modal logic for token selection (search by symbol/name or paste contract) */
-fromBtn.addEventListener('click', ()=> openModal('from'));
-toBtn.addEventListener('click', ()=> openModal('to'));
-document.getElementById('closeModal').addEventListener('click', ()=> modal.style.display='none');
-modalSearch.addEventListener('input', debounce(handleModalSearch, 250));
-
-let modalSelectingSide = 'from';
-function openModal(side) {
-  modalSelectingSide = side;
-  tokenListEl.innerHTML = '<div style="padding:12px;color:#aaa">Search tokens by symbol/name or paste contract and press Enter</div>';
-  modalSearch.value = '';
-  modal.style.display = 'block';
-  modalSearch.focus();
-}
-
-/* modal search handler: if looks like address, fetch onchain or 1inch tokens; otherwise search mergedTokenMap and 1inch */
-async function handleModalSearch() {
-  const q = modalSearch.value.trim();
-  tokenListEl.innerHTML = '<div style="padding:12px;color:#aaa">Searching…</div>';
-
-  // If looks like address, try to get info directly (1inch tokens or onchain)
-  if (isAddress(q)) {
-    const addr = low(q);
-    let info = mergedTokenMap.get(addr);
-    if (!info) {
-      info = await tryOrNull(fetchOnchainTokenInfo(addr));
+    const amount = Number(document.getElementById(side + "Amount").value || 0);
+    if (amount === 0) {
+        el.innerText = "$0.00";
+        return;
     }
-    if (info) {
-      tokenListEl.innerHTML = '';
-      tokenListEl.appendChild(makeTokenRow(info));
-      return;
-    }
-  }
 
-  // try quick 1inch token search by iterating tokens endpoint (fast-ish)
-  try {
-    // 1inch returns a map of tokens in /tokens, so we iterate and do substring match
-    const res = await fetchWithTimeout(`${ONEINCH_BASE}/tokens`, {}, 4000);
-    const j = await res.json();
-    const found = [];
-    if (j && j.tokens) {
-      for (let t of Object.values(j.tokens)) {
-        if (!q || low(t.symbol).includes(low(q)) || low(t.name).includes(low(q))) {
-          found.push({ address: low(t.address), symbol: t.symbol, name: t.name, decimals: t.decimals, logoURI: t.logoURI || '' });
-          if (found.length >= 50) break;
+    const p = await fetchPriceUSD(t.address);
+    const total = (p * amount).toFixed(2);
+    el.innerText = "$" + total;
+}
+
+/* LIVE USD REFRESH EVERY 6 SECONDS */
+setInterval(() => {
+    updateUSD("from");
+    updateUSD("to");
+}, 6000);
+
+/* UPDATE TOKEN → TOKEN CONVERSION (1INCH) */
+async function updateConversion(src) {
+    const from = tokensCache.from;
+    const to = tokensCache.to;
+    if (!from || !to) return;
+
+    const amount = Number(document.getElementById(src + "Amount").value || 0);
+
+    try {
+        const res = await fetch(
+            `https://api.1inch.dev/swap/v6.0/${CHAIN}/quote?src=${from.address}&dst=${to.address}&amount=${amount * (10 ** from.decimals)}`,
+            { headers: { "Authorization": "Bearer public" } }
+        );
+        const data = await res.json();
+
+        if (data.dstAmount) {
+            const recv = data.dstAmount / (10 ** to.decimals);
+            if (src === "from") document.getElementById("toAmount").value = recv;
+            else document.getElementById("fromAmount").value = recv;
+
+            updateUSD("from");
+            updateUSD("to");
         }
-      }
-    }
-    // render found
-    tokenListEl.innerHTML = '';
-    if (!found.length) tokenListEl.innerHTML = '<div style="padding:12px;color:#aaa">No tokens found</div>';
-    for (let token of found) tokenListEl.appendChild(makeTokenRow(token));
-    return;
-  } catch(e) {
-    // fallback to scanning mergedTokenMap
-    const found = [];
-    const ql = low(q);
-    for (let v of mergedTokenMap.values()) {
-      if (!q || (v.symbol && low(v.symbol).includes(ql)) || (v.name && low(v.name).includes(ql))) {
-        found.push(v);
-        if (found.length >= 50) break;
-      }
-    }
-    tokenListEl.innerHTML = '';
-    if (!found.length) tokenListEl.innerHTML = '<div style="padding:12px;color:#aaa">No tokens found</div>';
-    for (let token of found) tokenListEl.appendChild(makeTokenRow(token));
-  }
+    } catch {}
 }
-
-/* create token row element for modal list */
-function makeTokenRow(tokenObj) {
-  const row = document.createElement('div');
-  row.className = 'token-item';
-  const img = document.createElement('img');
-  img.src = tokenObj.logoURI || DARK_SVG_PLACEHOLDER;
-  img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
-  const s = document.createElement('div');
-  s.innerHTML = `<strong>${tokenObj.symbol||tokenObj.address.slice(0,6)}</strong><small>${tokenObj.name||tokenObj.address}</small>`;
-  row.appendChild(img); row.appendChild(s);
-  row.onclick = ()=>{
-    modal.style.display = 'none';
-    setTokenForSide(modalSelectingSide, tokenObj);
-  };
-  return row;
-}
-
-/* debounce helper */
-function debounce(fn, ms=200) {
-  let t;
-  return function(...args){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,args), ms); };
-}
-
-/* QUOTE (1inch) logic for computing toAmount from fromAmount and vice versa */
-let quoteTimer = null;
-function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 120); }
-
-async function updateQuote() {
-  const from = tokensCache.from;
-  const to = tokensCache.to;
-  if (!from || !to) return;
-
-  const fromValStr = fromAmountEl.value;
-  const fromVal = Number(fromValStr || 0);
-  if (!fromVal) { toAmountEl.value = ''; await fetchBothPricesNow(); return; }
-
-  try {
-    // prepare amount in integer units
-    const fromRaw = ethers.BigNumber.from(String(Math.floor(fromVal * (10 ** (from.decimals || 18)) )));
-    const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${low(from.address)}&toTokenAddress=${low(to.address)}&amount=${fromRaw.toString()}`;
-    // quick fetch with timeout
-    const res = await fetchWithTimeout(quoteUrl, {}, 4000);
-    const j = await res.json();
-    if (j && j.toTokenAmount) {
-      const toDecimals = to.decimals || 18;
-      const formatted = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
-      toAmountEl.value = formatted;
-    } else {
-      toAmountEl.value = '';
-    }
-  } catch(e) {
-    // on fail, clear toAmount
-    toAmountEl.value = '';
-  } finally {
-    // always update USD displays (they will use multi-route and polling)
-    fetchBothPricesNow();
-  }
-}
-
-/* user typing in fromAmount triggers immediate conversion */
-fromAmountEl.addEventListener('input', ()=> {
-  updateQuoteDebounced();
-  updateUsdDisplay('from'); // show local from USD while waiting
-});
-
-/* also allow typing into toAmount for reverse calc (if you want) */
-toAmountEl.addEventListener('input', debounce(async ()=> {
-  // reverse quote: try to compute required from amount (this is more complex, so we simply clear or try 1inch route invert)
-  // For now we will set fromAmount to empty and let user use from input for swaps.
-  // (You can implement reverse quote by querying 1inch /quote swapping tokens reversed.)
-}, 300));
-
-/* Swap tokens UI action: swap token metadata + amounts */
-function swapTokensUI(){
-  const f = tokensCache.from, t = tokensCache.to;
-  tokensCache.from = t; tokensCache.to = f;
-
-  // swap UI text
-  const tmpSym = fromSymbolEl.textContent; fromSymbolEl.textContent = toSymbolEl.textContent; toSymbolEl.textContent = tmpSym;
-  const tmpIcon = fromIconEl.src; fromIconEl.src = toIconEl.src; toIconEl.src = tmpIcon;
-
-  // swap amounts
-  const tmpAmount = fromAmountEl.value; fromAmountEl.value = toAmountEl.value; toAmountEl.value = tmpAmount;
-
-  // refresh
-  fetchBothPricesNow();
-  updateQuoteDebounced();
-}
-document.getElementById('swapBtn').addEventListener('click', swapTokensUI);
-
-/* POLLING start: refresh both prices every POLL_INTERVAL while tokens selected */
-function startPollingIfNeeded() {
-  if (window.__nola_price_polling_started) return;
-  window.__nola_price_polling_started = true;
-  setInterval(()=> {
-    if (tokensCache.from || tokensCache.to) fetchBothPricesNow();
-  }, POLL_INTERVAL);
-}
-startPollingIfNeeded();
-
-/* INIT: small warm-up */
-(async function init(){
-  try {
-    // warm lists
-    await warmTokenLists();
-  } catch(e){}
-})();
 </script>
 
-<!-- ethers library used for formatting/parsing units -->
-<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 </body>
 </html>
