@@ -1,248 +1,471 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOLA Exchange</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOLA — Polygon DEX Aggregator</title>
+<link rel="icon" href="nol.png" />
 <style>
-/* ===== RESET ===== */
-* {margin:0; padding:0; box-sizing:border-box; font-family:'Arial',sans-serif;}
-body {overflow-x:hidden; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff; scroll-behavior:smooth;}
+  /* ---------------- Palette & Reset ---------------- */
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,system-ui,-apple-system;}
+  html,body{height:100%;background:#070308;color:#fff;overflow-y:auto;-webkit-font-smoothing:antialiased}
+  :root{
+    --bg:#070308;--glass:rgba(255,255,255,0.03);
+    --neon1:#6A00FF;--neon2:#A243FF;--accent:#C77DFF;
+    --card-radius:18px;
+  }
 
-/* ===== PARTICLES ===== */
-body::before { content:''; position:fixed; width:200%; height:200%; background: radial-gradient(circle, rgba(150,0,255,0.2), transparent 60%); animation: nebulaMove 20s infinite alternate ease-in-out; z-index:-2;}
-@keyframes nebulaMove {0% {transform: translate(-10%,-10%);} 100% {transform: translate(5%,5%);} }
-.particle { position:absolute; width:2px; height:2px; background:#b445ff; border-radius:50%; opacity:0.8; animation: floatParticle linear infinite;}
-@keyframes floatParticle {0%{transform:translateY(0) translateX(0);opacity:0.8;}50%{transform:translateY(-50px) translateX(20px);opacity:0.4;}100%{transform:translateY(0) translateX(0);opacity:0.8;}}
+  /* ------------- Background & Nebula ------------- */
+  body::before{
+    content:"";position:fixed;inset:-20% -20% auto -20%;height:140%;z-index:-3;
+    background:
+      radial-gradient(800px 500px at 10% 10%, rgba(106,0,255,0.12), transparent 8%),
+      radial-gradient(900px 500px at 90% 85%, rgba(162,67,255,0.09), transparent 6%),
+      linear-gradient(180deg,#050205 0%, #0b0310 100%);
+    filter:blur(14px) saturate(1.05);
+  }
 
-/* ===== LOGO ===== */
-.logo { width:150px; display:block; margin:25px auto; animation: logoGlow 5s ease-in-out infinite alternate, logoRotate 30s linear infinite;}
-@keyframes logoGlow {0%{filter:drop-shadow(0 0 15px #9c00ff);}50%{filter:drop-shadow(0 0 35px #d15fff);}100%{filter:drop-shadow(0 0 15px #9c00ff);}}
-@keyframes logoRotate {0%{transform:rotateY(0deg);}100%{transform:rotateY(360deg);}}
+  /* particles */
+  .particle{position:fixed; border-radius:50%; pointer-events:none; mix-blend-mode:screen; z-index:-2;}
 
-/* ===== CARD ===== */
-.container { width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3); animation:cardIn 1s ease; perspective:1000px;}
-@keyframes cardIn {from{opacity:0; transform:translateY(30px);}to{opacity:1; transform:translateY(0);}}
-h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
+  /* ---------------- Header & Logo ---------------- */
+  header{width:100%;display:flex;align-items:center;justify-content:center;padding:26px 18px 6px;gap:12px;position:relative}
+  .logo{width:120px;height:120px;border-radius:20px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+        background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow:0 10px 40px rgba(106,0,255,0.12);}
+  .logo img{width:72%;height:72%;object-fit:contain}
+  .logo-aura{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;
+            background:radial-gradient(circle at 40% 40%, rgba(162,67,255,0.14), transparent 40%);filter:blur(20px);z-index:-1;}
 
-/* ===== INPUT ===== */
-.input-box { margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:16px; box-shadow:0 0 15px rgba(150,0,255,0.15); transition:0.3s; position:relative; }
-.input-box:hover{box-shadow:0 0 30px rgba(180,0,255,0.35); transform:translateY(-3px);}
-.input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
-.input-box p{font-size:14px; opacity:0.8; margin-bottom:8px;}
+  /* -------- Top right connect -------- */
+  .top-right{position:absolute;right:18px;top:20px;display:flex;gap:12px;align-items:center}
+  .btn {
+    background:linear-gradient(90deg,var(--neon1),var(--neon2));
+    color:#fff;border:none;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;
+    box-shadow:0 10px 30px rgba(106,0,255,0.12);
+  }
+  .addr-chip{background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:12px;font-weight:600;font-size:13px}
 
-/* ===== TOKEN SUGGESTIONS ===== */
-.suggestions { position:absolute; top:65px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
-.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; transition:0.2s; }
-.suggestion-item:hover { background:rgba(120,0,255,0.3); }
-.suggestion-item img { width:24px; height:24px; margin-right:10px; border-radius:12px; }
+  /* ---------------- Main layout ---------------- */
+  .wrap{width:100%;max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:1fr 360px;gap:24px;}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr;} .chat-panel{position:static;order:3}}
 
-/* ===== BUTTON ===== */
-.btn { width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 0 15px rgba(180,0,255,0.35); transition:0.3s; position:relative; overflow:hidden;}
-.btn::after { content:''; position:absolute; left:50%; top:50%; width:300%; height:300%; background:rgba(255,255,255,0.1); transform:translate(-50%,-50%) scale(0); border-radius:50%; transition:0.5s; }
-.btn:hover::after { transform:translate(-50%,-50%) scale(1); }
-.btn:hover { transform:scale(1.05); box-shadow:0 0 25px rgba(200,0,255,0.55); }
+  /* ---------------- Left Column - Exchange + Chart ---------------- */
+  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px;border:1px solid rgba(162,67,255,0.06);backdrop-filter:blur(12px)}
+  .title{font-size:18px;color:#EED9FF;font-weight:700;letter-spacing:0.6px;margin-bottom:12px}
 
-/* ===== PORTFOLIO ===== */
-.portfolio { margin-top:30px; background:rgba(255,255,255,0.05); border-radius:20px; padding:15px; box-shadow:0 0 15px rgba(150,0,255,0.15);}
-.portfolio-item{display:flex; align-items:center; margin-bottom:10px;}
-.portfolio-item img{width:28px; height:28px; margin-right:10px; border-radius:14px;}
-.portfolio-item span{flex:1;}
+  /* Exchange box */
+  .swap-box{border-radius:16px;padding:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+  .search-row{display:flex;gap:12px;align-items:stretch}
+  .search {
+    flex:1;display:flex;flex-direction:column;gap:6px;position:relative;
+  }
+  .search input{
+    width:100%;padding:14px 12px;border-radius:12px;border:none;background:rgba(2,1,6,0.6);color:#fff;font-size:16px;
+    outline:none;box-shadow:0 10px 30px rgba(106,0,255,0.04) inset;
+  }
+  .suggestions{position:absolute;left:0;right:0;top:56px;background:linear-gradient(180deg, rgba(6,2,10,0.98), rgba(12,3,20,0.98));border-radius:12px;padding:8px;border:1px solid rgba(162,67,255,0.06);max-height:260px;overflow:auto;z-index:40;box-shadow:0 10px 40px rgba(6,0,20,0.6)}
+  .s-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer}
+  .s-item:hover{background:linear-gradient(90deg, rgba(106,0,255,0.06), rgba(162,67,255,0.04))}
+  .s-item img{width:32px;height:32px;border-radius:10px;flex:0 0 32px}
+  .s-meta{display:flex;flex-direction:column}
+  .s-symbol{font-weight:800;color:#fff}
+  .s-name{font-size:12px;color:rgba(255,255,255,0.6)}
 
-/* ===== LAUNCH TOOLS ===== */
-.launch-tools {margin-top:30px; padding:15px; border-radius:20px; background:rgba(255,255,255,0.05); box-shadow:0 0 15px rgba(150,0,255,0.15);}
+  .controls{display:flex;gap:12px;margin-top:12px;align-items:center}
+  .small{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;font-weight:700}
 
-/* ===== CHAT SIDEBAR ===== */
-.chat-toggle { position:fixed; right:20px; bottom:20px; background:#b445ff; padding:10px 14px; border-radius:20px; cursor:pointer; box-shadow:0 0 15px rgba(180,0,255,0.35); }
-.chat-sidebar { position:fixed; right:20px; bottom:60px; width:320px; max-height:500px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); border-radius:20px; padding:15px; overflow-y:auto; display:none; flex-direction:column;}
-.chat-msg { margin-bottom:10px; padding:8px; border-radius:12px; font-size:14px; word-break:break-word; }
-.chat-input { display:flex; margin-top:10px; }
-.chat-input input{flex:1; padding:8px 10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;}
-.chat-input button{margin-left:5px; padding:8px 12px; border-radius:12px; border:none; background:#b445ff; cursor:pointer;}
+  .quote-area{margin-top:14px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+  .cta-row{display:flex;gap:12px;margin-top:12px}
 
-/* ===== USERNAME MODAL ===== */
-#usernameModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index:2000; }
-#usernameModal .modal-content { background:rgba(255,255,255,0.05); padding:25px; border-radius:20px; text-align:center; backdrop-filter:blur(15px); animation:modalIn 0.5s ease; }
-#usernameModal input{padding:10px 12px; border-radius:12px; border:none; width:80%; margin-top:15px; background:rgba(255,255,255,0.05); color:#fff;}
-#usernameModal button{margin-top:15px; padding:10px 20px; border:none; border-radius:12px; background:linear-gradient(135deg,#b445ff,#7013ff); color:#fff; cursor:pointer;}
-@keyframes modalIn {from{opacity:0; transform:scale(0.8);}to{opacity:1; transform:scale(1);}}
+  /* Chart iframe */
+  .chart-wrap{margin-top:18px;height:400px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+  .chart-wrap iframe{width:100%;height:100%;border:0;background:#08020b}
+
+  /* ---------------- Right Column - Chat & Portfolio ---------------- */
+  .chat-panel{display:flex;flex-direction:column;gap:12px}
+  .chat-panel .panel{padding:12px}
+  .chat-header{display:flex;align-items:center;justify-content:space-between}
+  .chat-list{height:300px;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
+  .msg{padding:10px;border-radius:10px;background:rgba(106,0,255,0.08);font-size:14px}
+  .msg .user{font-weight:800;margin-bottom:6px}
+  .chat-input{display:flex;gap:8px;margin-top:8px}
+  .chat-input input{flex:1;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.02);color:#fff}
+  .chat-hide{position:fixed;right:16px;bottom:18px;background:linear-gradient(90deg,var(--neon1),var(--neon2));padding:10px;border-radius:12px;cursor:pointer;z-index:60}
+
+  /* small responsive */
+  @media(max-width:640px){
+    .wrap{padding:12px;grid-template-columns:1fr}
+    .chart-wrap{height:260px}
+  }
 </style>
 </head>
 <body>
 
-<!-- PARTICLES -->
-<script>
-for(let i=0;i<60;i++){
-    let particle=document.createElement('div');
-    particle.className='particle';
-    particle.style.top=Math.random()*100+'%';
-    particle.style.left=Math.random()*100+'%';
-    particle.style.width=(Math.random()*3+1)+'px';
-    particle.style.height=(Math.random()*3+1)+'px';
-    particle.style.animationDuration=(Math.random()*10+5)+'s';
-    document.body.appendChild(particle);
-}
-</script>
+<!-- Purple aura / logo -->
+<header>
+  <div class="logo-aura"></div>
+  <div class="logo"><img src="nol.png" alt="NOLA logo"></div>
 
-<!-- LOGO -->
-<img src="nol.png" class="logo">
+  <div class="top-right">
+    <div id="addrChip" class="addr-chip" style="display:none"></div>
+    <button id="connectBtn" class="btn">Connect Wallet</button>
+  </div>
+</header>
 
-<!-- MAIN CARD -->
-<div class="container">
-    <h2>NOLA Exchange</h2>
+<div class="wrap">
+  <!-- LEFT: Exchange + Chart -->
+  <div>
+    <div class="panel">
+      <div class="title">NOLA — Polygon DEX Aggregator</div>
 
-    <div class="input-box">
-        <p>From Token</p>
-        <input type="text" id="fromToken" placeholder="Type token name...">
-        <div class="suggestions" id="fromSuggestions"></div>
+      <div class="swap-box" id="swapBox">
+        <!-- Search row -->
+        <div class="search-row">
+          <div class="search" style="margin-right:12px">
+            <label style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">From</label>
+            <input id="fromSearch" placeholder="Type token name, symbol or paste address (e.g. MATIC, USDC, pol...)" autocomplete="off">
+            <div class="suggestions" id="fromSuggestions" style="display:none"></div>
+          </div>
+
+          <div class="search" style="width:160px">
+            <label style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">Amount</label>
+            <input id="fromAmount" placeholder="Amount" inputmode="decimal">
+          </div>
+        </div>
+
+        <div class="search-row" style="margin-top:12px">
+          <div class="search">
+            <label style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">To</label>
+            <input id="toSearch" placeholder="Type token name, symbol or paste address" autocomplete="off">
+            <div class="suggestions" id="toSuggestions" style="display:none"></div>
+          </div>
+
+          <div class="small" id="networkChip">Polygon</div>
+        </div>
+
+        <div class="controls">
+          <div class="small" id="selectedPair">—</div>
+          <div style="flex:1"></div>
+          <button id="quoteBtn" class="btn" style="padding:10px 12px;background:linear-gradient(90deg,#ff8adf,#7a22ff)">Get Quote</button>
+          <button id="swapBtn" class="btn" style="display:none;padding:10px 12px">Swap</button>
+        </div>
+
+        <div class="quote-area" id="quoteArea" style="display:none">
+          <div id="quoteText">Quote will appear here</div>
+        </div>
+      </div>
+
+      <!-- Chart opens here -->
+      <div class="chart-wrap" id="chartWrap" style="display:none">
+        <iframe id="chartIframe" src="" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Chat + Portfolio (side) -->
+  <div class="chat-panel">
+    <div class="panel">
+      <div class="chat-header">
+        <div style="font-weight:800">Public Chat</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Live • Global</div>
+      </div>
+
+      <div id="chatList" class="chat-list"></div>
+
+      <div class="chat-input">
+        <input id="chatInput" placeholder="Say something to the community...">
+        <button id="sendMsg" class="btn">Send</button>
+      </div>
     </div>
 
-    <div class="input-box">
-        <p>To Token</p>
-        <input type="text" id="toToken" placeholder="Type token name...">
-        <div class="suggestions" id="toSuggestions"></div>
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="font-weight:800">Portfolio (Preview)</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Connect to see balances</div>
+      </div>
+      <div id="portfolioList" style="margin-top:12px"></div>
     </div>
-
-    <button class="btn" id="connectWalletBtn">Connect Wallet</button>
-
-    <div class="portfolio" id="portfolio">
-        <h3 style="text-align:center; margin-bottom:10px;">Portfolio</h3>
-    </div>
-
-    <div class="launch-tools">
-        <h3>Launch Tools</h3>
-        <p>Manage your tokens & liquidity pools here.</p>
-    </div>
+  </div>
 </div>
 
-<!-- CHAT TOGGLE -->
-<div class="chat-toggle" id="chatToggle">💬 Chat</div>
+<!-- small chat hide button on mobile/overlay -->
+<div id="chatToggleMobile" class="chat-hide" style="display:none">Chat</div>
 
-<!-- CHAT SIDEBAR -->
-<div class="chat-sidebar" id="chatSidebar">
-    <h3 style="text-align:center;">Public Chat</h3>
-    <div id="chatMessages" style="flex:1; overflow-y:auto;"></div>
-    <div class="chat-input">
-        <input type="text" id="chatInput" placeholder="Type message...">
-        <button id="sendChat">Send</button>
-    </div>
-</div>
-
-<!-- USERNAME MODAL -->
-<div id="usernameModal">
-    <div class="modal-content">
-        <h3>Choose Your NOLA Username 🌌</h3>
-        <input type="text" id="modalUsername" placeholder="Type your username">
-        <button id="confirmUsername">Enter Chat</button>
-    </div>
-</div>
-
+<!-- libs: ethers + gun + web3modal + walletconnect -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
+
 <script>
-/* ===== PARTICLES DONE ABOVE ===== */
+/* ================== CONFIG ================== */
+const CHAIN_ID = 137; // Polygon
+const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
+const WALLETCONNECT_PROJECT_ID = "WALLETCONNECT_PROJECT_ID"; // <<--- paste your WalletConnect v2 Project ID here for WalletConnect support
 
-/* ===== TOKEN LIST ===== */
-let tokenList=[];
-fetch('https://api.1inch.io/v5.0/137/tokens')
-.then(res=>res.json())
-.then(data=>{ tokenList = Object.values(data.tokens); });
+/* ================== Utilities ================== */
+const $ = (id)=>document.getElementById(id);
+function short(addr){ return addr ? addr.slice(0,6)+'…'+addr.slice(-4) : ''; }
+function safeLog(){ try{ console.log.apply(console,arguments) }catch(e){} }
 
-function setupAutocomplete(inputId, suggestionsId){
-    const input = document.getElementById(inputId);
-    const suggestionsBox = document.getElementById(suggestionsId);
-    input.addEventListener('input',()=>{
-        const val = input.value.toLowerCase();
-        suggestionsBox.innerHTML='';
-        if(!val) { suggestionsBox.style.display='none'; return; }
-        const filtered = tokenList.filter(t => t.symbol.toLowerCase().includes(val) || t.name.toLowerCase().includes(val)).slice(0,6);
-        filtered.forEach(token=>{
-            const div=document.createElement('div');
-            div.className='suggestion-item';
-            div.innerHTML=`<img src="${token.logoURI}" alt="${token.symbol}"><span>${token.symbol} - ${token.name}</span>`;
-            div.onclick=()=>{ input.value=token.symbol; suggestionsBox.style.display='none'; updatePortfolio(); };
-            suggestionsBox.appendChild(div);
-        });
-        suggestionsBox.style.display = filtered.length?'block':'none';
+/* ================== Particles (decorative) ================== */
+(function(){
+  for(let i=0;i<30;i++){
+    const d=document.createElement('div');
+    d.className='particle';
+    const s= (Math.random()*24+6) + 'px';
+    d.style.width=s; d.style.height=s;
+    d.style.left=(Math.random()*100)+'%'; d.style.top=(Math.random()*100)+'%';
+    d.style.background = `radial-gradient(circle, rgba(162,67,255,0.6), rgba(106,0,255,0.3))`;
+    d.style.opacity = (Math.random()*0.6+0.15);
+    d.style.transform = `translateZ(0)`;
+    document.body.appendChild(d);
+  }
+})();
+
+/* ================== Token list (1inch) ================== */
+let tokenList = [];
+async function fetchTokenList(){
+  try{
+    const res = await fetch(`${ONEINCH_BASE}/tokens`);
+    const data = await res.json();
+    tokenList = Object.values(data.tokens || {});
+  }catch(e){
+    console.error("Token list error", e);
+  }
+}
+fetchTokenList();
+
+/* ================== Autocomplete logic ================== */
+function createSuggestionItem(token){
+  const el = document.createElement('div'); el.className='s-item';
+  el.innerHTML = `<img src="${token.logoURI||''}" onerror="this.style.display='none'"><div class="s-meta"><div class="s-symbol">${token.symbol}</div><div class="s-name">${token.name}</div></div>`;
+  return el;
+}
+function attachAutocomplete(inputEl, suggestionsEl, onSelect){
+  inputEl.addEventListener('input',()=>{
+    const q = inputEl.value.trim().toLowerCase();
+    suggestionsEl.innerHTML = '';
+    if(!q){ suggestionsEl.style.display='none'; return; }
+    const bySym = tokenList.filter(t => t.symbol && t.symbol.toLowerCase().includes(q));
+    const byName = tokenList.filter(t => t.name && t.name.toLowerCase().includes(q) && !bySym.includes(t));
+    const result = [...bySym, ...byName].slice(0,8);
+    result.forEach(token=>{
+      const item = createSuggestionItem(token);
+      item.onclick = ()=>{ suggestionsEl.style.display='none'; inputEl.value = token.symbol; onSelect(token); }
+      suggestionsEl.appendChild(item);
     });
-}
-setupAutocomplete('fromToken','fromSuggestions');
-setupAutocomplete('toToken','toSuggestions');
+    suggestionsEl.style.display = result.length ? 'block' : 'none';
+  });
 
-/* ===== WALLET + PORTFOLIO ===== */
-let provider;
-document.getElementById('connectWalletBtn').onclick = async ()=>{
-    if(window.ethereum){
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        updatePortfolio();
-    } else { alert('Please install MetaMask!'); }
-}
-
-async function updatePortfolio(){
-    if(!provider) return;
-    const signer = provider.getSigner();
-    const address = await signer.getAddress();
-    const portfolioDiv = document.getElementById('portfolio');
-    portfolioDiv.innerHTML='<h3 style="text-align:center; margin-bottom:10px;">Portfolio</h3>';
-    tokenList.slice(0,10).forEach(async token=>{
-        try{
-            const tokenContract = new ethers.Contract(token.address, ["function balanceOf(address) view returns(uint256)","function decimals() view returns(uint8)"], provider);
-            const balance = await tokenContract.balanceOf(address);
-            const decimals = await tokenContract.decimals();
-            const usdValue = (balance / Math.pow(10,decimals) * 1).toFixed(2);
-            const div = document.createElement('div');
-            div.className='portfolio-item';
-            div.innerHTML=`<img src="${token.logoURI}"><span>${(balance / Math.pow(10,decimals)).toFixed(4)} ${token.symbol}</span><span>$${usdValue}</span>`;
-            portfolioDiv.appendChild(div);
-        }catch(e){ }
-    });
+  inputEl.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      const q = inputEl.value.trim().toLowerCase();
+      if(!q) return;
+      // try exact match
+      const found = tokenList.find(t => t.symbol.toLowerCase()===q || t.name.toLowerCase()===q || t.address.toLowerCase()===q);
+      if(found){ suggestionsEl.style.display='none'; inputEl.value = found.symbol; onSelect(found); return; }
+      // otherwise pick first fuzzy
+      const fuzzy = tokenList.find(t => (t.symbol||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q));
+      if(fuzzy){ suggestionsEl.style.display='none'; inputEl.value = fuzzy.symbol; onSelect(fuzzy); }
+    }
+  });
 }
 
-/* ===== CHAT ===== */
-const chatToggle = document.getElementById('chatToggle');
-const chatSidebar = document.getElementById('chatSidebar');
-chatToggle.onclick = ()=>{ chatSidebar.style.display = (chatSidebar.style.display==='flex')?'none':'flex'; }
-
-/* ===== GLOBAL GUN CHAT ===== */
-const gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun'] });
-let username;
-const userColors = {};
-function getColor(name){ if(userColors[name]) return userColors[name]; let color = '#'+Math.floor(Math.random()*16777215).toString(16); userColors[name]=color; return color; }
-
-/* ===== USERNAME MODAL ===== */
-const usernameModal = document.getElementById('usernameModal');
-const modalInput = document.getElementById('modalUsername');
-document.getElementById('sendChat').onclick = ()=>{
-    if(!username){
-        usernameModal.style.display='flex';
-    } else sendMsg();
-}
-document.getElementById('confirmUsername').onclick = ()=>{
-    username = modalInput.value.trim() || 'Anon';
-    usernameModal.style.display='none';
-    sendMsg();
-}
-function sendMsg(){
-    const msgInput = document.getElementById('chatInput');
-    if(!msgInput.value) return;
-    const msgObj = {user:username, text:msgInput.value, color:getColor(username)};
-    gun.get('nolaChat').set(msgObj);
-    msgInput.value='';
+/* ================== Selected tokens & chart ================== */
+let selectedFrom = null, selectedTo = null;
+function openChartForToken(token){
+  // Prefer GeckoTerminal embed path for polygon token: /polygon/tokens/<address>?embed=1
+  const addr = token.address;
+  const geckoUrl = `https://www.geckoterminal.com/polygon/tokens/${addr}?embed=1`;
+  const dexUrl = `https://www.dexscreener.com/polygon/${addr}?embed=1`;
+  const iframe = $('chartIframe');
+  // Try GeckoTerminal first (most professional). If blocked by CORS or not found, use Dexscreener fallback.
+  iframe.src = geckoUrl;
+  $('chartWrap').style.display = 'block';
 }
 
-/* ===== LISTEN MESSAGES ===== */
-gun.get('nolaChat').map().on(msg=>{
-    if(!msg.user || !msg.text) return;
-    const chatMessages = document.getElementById('chatMessages');
-    const div = document.createElement('div');
-    div.className='chat-msg';
-    div.style.background = msg.color+'33';
-    div.innerHTML=`<b style="color:${msg.color}">${msg.user}:</b> ${msg.text}`;
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+/* ================== autocomplete attach ================== */
+attachAutocomplete($('fromSearch'), $('fromSuggestions'), (token)=>{
+  selectedFrom = token;
+  $('selectedPair').textContent = `${token.symbol} → —`;
+  if(selectedTo) $('selectedPair').textContent = `${token.symbol} → ${selectedTo.symbol}`;
+  openChartForToken(token);
 });
-</script>
+attachAutocomplete($('toSearch'), $('toSuggestions'), (token)=>{
+  selectedTo = token;
+  if(selectedFrom) $('selectedPair').textContent = `${selectedFrom.symbol} → ${token.symbol}`;
+  openChartForToken(token);
+});
 
+/* ============== 1inch quote & swap ============== */
+$('quoteBtn').addEventListener('click', async ()=>{
+  if(!selectedFrom || !selectedTo) return alert('Choose From and To tokens first');
+  const amount = parseFloat($('fromAmount').value || '0');
+  if(!amount || amount<=0) return alert('Enter amount to swap');
+  // convert to token decimals
+  const decimalsFrom = selectedFrom.decimals || 18;
+  const amountInt = BigInt(Math.floor(amount * (10**decimalsFrom)));
+  const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt.toString()}`;
+  try{
+    $('quoteArea').style.display='block';
+    $('quoteText').textContent = 'Fetching best price...';
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Quote failed');
+    const q = await res.json();
+    // q.toTokenAmount is integer; show readable
+    const toAmount = Number(q.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
+    $('quoteText').innerHTML = `Estimated: <strong>${toAmount.toLocaleString(undefined,{maximumFractionDigits:6})} ${selectedTo.symbol}</strong>`;
+    $('swapBtn').style.display = 'inline-block';
+  }catch(err){
+    console.error(err);
+    $('quoteText').textContent = 'Quote failed. Try different amount or tokens.';
+  }
+});
+
+let provider = null; let signer = null; let userAddress = null;
+
+/* ============== Wallet connection (MetaMask + WalletConnect v2 via Web3Modal) ============== */
+async function connectWalletUI(){
+  // Try MetaMask first
+  if(window.ethereum && window.ethereum.isMetaMask){
+    provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    signer = provider.getSigner();
+    userAddress = await signer.getAddress();
+    $('addrChip').style.display = 'inline-block';
+    $('addrChip').textContent = short(userAddress);
+    return provider;
+  }
+
+  // If WalletConnect Project ID provided, try Web3Modal (WalletConnect v2)
+  if(WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
+    try{
+      const w3m = new window.Web3ModalHTML.default({
+        projectId: WALLETCONNECT_PROJECT_ID,
+        // theme options can be set here
+      });
+      await w3m.openModal(); // opens wallet modal
+      const wcProvider = await w3m.connect();
+      provider = new ethers.providers.Web3Provider(wcProvider);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      $('addrChip').style.display = 'inline-block';
+      $('addrChip').textContent = short(userAddress);
+      return provider;
+    }catch(e){
+      console.error('WalletConnect failed', e);
+    }
+  }
+
+  alert('No wallet found. Install MetaMask or paste a WalletConnect Project ID in the code.');
+  return null;
+}
+
+$('connectBtn').addEventListener('click', async ()=>{
+  await connectWalletUI();
+});
+
+/* ============== Swap execution via 1inch/swap endpoint ============== */
+$('swapBtn').addEventListener('click', async ()=>{
+  if(!provider){
+    // only trigger connect when attempting a transaction
+    const ok = confirm('You need to connect a wallet to perform swaps. Connect now?');
+    if(!ok) return;
+    await connectWalletUI();
+    if(!provider) return;
+  }
+  if(!selectedFrom || !selectedTo) return alert('Pick tokens first');
+  const fromAmount = parseFloat($('fromAmount').value || '0');
+  if(!fromAmount || fromAmount<=0) return alert('Enter amount');
+  const amountInt = (BigInt(Math.floor(fromAmount * (10**(selectedFrom.decimals||18)))));
+  // Build swap URL
+  const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt.toString()}&fromAddress=${userAddress}&slippage=1`;
+  try{
+    const res = await fetch(swapUrl);
+    const data = await res.json();
+    if(data && data.tx){
+      // send transaction via signer
+      const txParams = data.tx;
+      // some providers expect hex values for gas etc; ethers supports this via signer.sendTransaction
+      const tx = await signer.sendTransaction({
+        to: txParams.to,
+        data: txParams.data,
+        value: txParams.value ? BigInt(txParams.value) : undefined,
+        gasLimit: txParams.gas ? BigInt(txParams.gas) : undefined,
+        gasPrice: txParams.gasPrice ? BigInt(txParams.gasPrice) : undefined
+      });
+      alert('Swap tx sent: ' + tx.hash);
+    } else {
+      console.error('Swap response', data);
+      alert('Swap failed to build. See console.');
+    }
+  }catch(err){
+    console.error('swap error',err);
+    alert('Swap execution failed: '+ (err?.message || err));
+  }
+});
+
+/* ============== Portfolio preview (read-only without connect) ============== */
+async function updatePortfolioPreview(){
+  // show top tokens example (MATIC, USDC, WETH)
+  const top = tokenList.filter(t=>['MATIC','USDC','WETH','USDT'].includes(t.symbol)).slice(0,6);
+  const node = $('portfolioList');
+  node.innerHTML = '';
+  top.forEach(t=>{
+    const div = document.createElement('div'); div.style.display='flex'; div.style.alignItems='center'; div.style.gap='10px'; div.style.marginBottom='10px';
+    div.innerHTML = `<img src="${t.logoURI||''}" style="width:28px;height:28px;border-radius:8px"><div style="flex:1"><div style="font-weight:700">${t.symbol}</div><div style="font-size:12px;color:rgba(255,255,255,0.6)">${t.name}</div></div><div style="font-weight:800">$0.00</div>`;
+    node.appendChild(div);
+  });
+}
+setTimeout(updatePortfolioPreview,1200);
+
+/* ================== Chat (Gun) - global peers ================== */
+const gun = Gun({
+  peers: [
+    'https://relay.peer.ooo/gun',
+    'https://gun-us.herokuapp.com/gun',
+    'https://gun-manhattan.herokuapp.com/gun'
+  ]
+});
+const chatNode = gun.get('nola_global_chat_v1'); // unique key
+const chatList = $('chatList');
+const userColors = {};
+function colorFor(name){
+  if(userColors[name]) return userColors[name];
+  const c = '#'+Math.floor(Math.random()*16777215).toString(16);
+  userColors[name]=c; return c;
+}
+let chatUsername = null;
+$('sendMsg').addEventListener('click', ()=>{
+  const txt = $('chatInput').value.trim();
+  if(!txt) return;
+  if(!chatUsername){
+    chatUsername = prompt('Choose a username for chat 🌌') || ('anon'+Math.floor(Math.random()*999));
+  }
+  const item = { user: chatUsername, text: txt, color: colorFor(chatUsername), t: Date.now() };
+  chatNode.set(item);
+  $('chatInput').value='';
+});
+
+// listen
+chatNode.map().on((msg)=>{
+  if(!msg || !msg.user || !msg.text) return;
+  const el = document.createElement('div'); el.className='msg';
+  el.style.background = (msg.color || '#8a2be233');
+  el.innerHTML = `<div style="font-weight:800;color:${msg.color||'#fff'}">${msg.user}</div><div style="margin-top:6px">${escapeHtml(msg.text)}</div>`;
+  chatList.appendChild(el);
+  chatList.scrollTop = chatList.scrollHeight;
+});
+
+/* ================== Helpers ================== */
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ============== Initial small UI tweaks ============== */
+$('chartWrap').style.display = 'none';
+$('swapBtn').style.display = 'none';
+
+</script>
 </body>
 </html>
