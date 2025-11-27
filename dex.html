@@ -146,18 +146,18 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <a href="#" id="telegramLink">Telegram</a>
 </footer>
 
-<!-- ethers + WalletConnect v1 (kept as you had it for backwards compatibility) -->
+<!-- ethers + WalletConnect v1 -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 
 <script>
 /* CONFIG */
-const CHAIN_ID = 137; // Polygon only
+const CHAIN_ID = 137; // Polygon
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPC = "https://polygon-rpc.com";
-const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'; // USDC on Polygon
-const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'; // 1inch native placeholder
+const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
+const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 
 /* STATE */
 let tokenList = [];
@@ -165,7 +165,7 @@ let tokenMap = new Map();
 let volumeMap = new Map();
 let cgStatsMap = new Map();
 let provider = null, signer = null, signerAddress = null, walletConnected = false;
-const priceCache = new Map(); // address -> { price, ts }
+const priceCache = new Map();
 
 /* HELPERS */
 const $ = id => document.getElementById(id);
@@ -178,7 +178,7 @@ const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(
   `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`
 );
 
-/* format USD professionally */
+/* format USD */
 function formatUSD(value) {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
   const n = Number(value);
@@ -188,26 +188,15 @@ function formatUSD(value) {
   return new Intl.NumberFormat('en-US', opts).format(n);
 }
 
-/* UTILS: throttle */
-function throttle(fn, wait) {
-  let last = 0, timeout = null;
-  return function(...args) {
-    const now = Date.now();
-    const remaining = wait - (now - last);
-    if (remaining <= 0) {
-      if (timeout) { clearTimeout(timeout); timeout = null; }
-      last = now;
-      fn.apply(this, args);
-    } else if (!timeout) {
-      timeout = setTimeout(() => { last = Date.now(); timeout = null; fn.apply(this, args); }, remaining);
-    }
-  };
+/* fetchWithTimeout */
+function fetchWithTimeout(url, opts = {}, ms = 3000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), ms);
+  const init = Object.assign({}, opts, { signal: controller.signal });
+  return fetch(url, init).finally(() => clearTimeout(id));
 }
 
-/* LOAD token lists (CoinGecko polygon tokens + CoinGecko markets + 1inch merge)
-   - CoinGecko primary (polygon tokens)
-   - 1inch tokens merged only for autocomplete fallback (deduped; CG wins)
-*/
+/* LOAD tokens & markets */
 async function loadTokensAndVolumes(){
   try {
     const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
@@ -220,15 +209,13 @@ async function loadTokensAndVolumes(){
       logoURI: t.logoURI || t.logo || ''
     }));
     tokenList.forEach(t => tokenMap.set(t.address, t));
-
-    // ensure MATIC placeholder
     if (!tokenMap.has(MATIC_ADDR)) {
       const m = { address: MATIC_ADDR, symbol: 'MATIC', name: 'Polygon', decimals: 18, logoURI: '' };
       tokenMap.set(MATIC_ADDR, m);
       tokenList.unshift(m);
     }
 
-    // CoinGecko markets to enrich tokens
+    // CoinGecko markets for 24h volumes/prices
     try {
       const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
       const rm = await fetch(marketsUrl);
@@ -244,7 +231,7 @@ async function loadTokensAndVolumes(){
       });
     } catch(e){ console.warn('coingecko markets failed', e); }
 
-    // merge 1inch tokens for fallback/autocomplete (chain-specific)
+    // Merge 1inch tokens for fallback autocomplete (dedupe with CG polygons)
     try {
       const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
       const j1 = await r1.json();
@@ -252,14 +239,14 @@ async function loadTokensAndVolumes(){
         Object.values(j1.tokens).forEach(t => {
           const addr = low(t.address || '');
           if (!addr) return;
-          if (tokenMap.has(addr)) return; // keep CG polygon token if exists
+          if (tokenMap.has(addr)) return;
           const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
           tokenList.push(obj); tokenMap.set(addr, obj);
         });
       }
     } catch(e){ console.warn('1inch tokens merge failed', e); }
 
-    // ensure uniqueness
+    // uniq
     const seen = new Set();
     tokenList = tokenList.filter(t => {
       if (!t || !t.address) return false;
@@ -268,46 +255,17 @@ async function loadTokensAndVolumes(){
       return true;
     });
 
-  } catch (e) {
-    console.error('loadTokensAndVolumes error', e);
-  }
+  } catch (e) { console.error('loadTokensAndVolumes error', e); }
 }
+let tokensLoadedPromise = loadTokensAndVolumes();
 
-// ensure tokens are loaded before trying to quote
+/* ensure tokens loaded */
 async function ensureTokensLoaded() {
-  if (tokenList && tokenList.length > 10) return;
-  // attempt to load (if previous load failed or still running)
-  await loadTokensAndVolumes();
+  if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndVolumes();
+  await tokensLoadedPromise;
 }
 
-/* ON-CHAIN metadata fallback */
-async function fetchOnchainTokenInfo(address){
-  try {
-    const addrL = low(address);
-    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
-    const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
-    const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
-    const c = new ethers.Contract(address, abi, rpcProvider);
-    const [symbol, name, decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
-    const info = { address: addrL, symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals||18, logoURI: '' };
-    tokenMap.set(info.address, info);
-    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
-    return info;
-  } catch (e) {
-    console.warn('fetchOnchainTokenInfo failed', e);
-    return null;
-  }
-}
-
-/* fetch wrappers */
-function fetchWithTimeout(url, opts = {}, ms = 3000) {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), ms);
-  const init = Object.assign({}, opts, { signal: controller.signal });
-  return fetch(url, init).finally(() => clearTimeout(id));
-}
-
-/* 1inch quote for price */
+/* price helpers */
 async function fetch1InchQuotePrice(addr, decimals) {
   try {
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
@@ -323,7 +281,6 @@ async function fetch1InchQuotePrice(addr, decimals) {
   } catch (e) { throw e; }
 }
 
-/* CoinGecko contract price (if listed on polygon) */
 async function fetchCoingeckoContractPrice(addr) {
   try {
     const platform = COINGECKO_CHAIN;
@@ -338,7 +295,6 @@ async function fetchCoingeckoContractPrice(addr) {
   } catch (e) { throw e; }
 }
 
-/* Dexscreener fallback */
 async function fetchDexscreenerPrice(addr) {
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
@@ -360,13 +316,11 @@ async function fetchDexscreenerPrice(addr) {
   } catch (e) { throw e; }
 }
 
-/* price orchestrator: try coingecko contract -> 1inch -> dexscreener */
 async function getTokenPriceUSD(address, decimals = 18) {
   if (!address) return null;
   const addr = low(address);
   const c = priceCache.get(addr);
   if (c && (nowTs() - c.ts) < 30000) return c.price;
-
   try {
     const cg = await fetchCoingeckoContractPrice(addr);
     if (cg && cg.price) { priceCache.set(addr, { price: cg.price, ts: nowTs() }); return cg.price; }
@@ -383,7 +337,7 @@ async function getTokenPriceUSD(address, decimals = 18) {
   return null;
 }
 
-/* suggestion item builder */
+/* suggestions builder (unchanged visual) */
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className = 'suggestion-item';
   const left = document.createElement('div'); left.className = 'suggestion-left';
@@ -412,7 +366,7 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   return row;
 }
 
-/* show default CoinGecko top list (polygon tokens only) */
+/* show default list (CoinGecko top by 24h volume) */
 function showDefaultList(side) {
   const box = (side === 'from') ? $('fromSuggestions') : $('toSuggestions');
   box.innerHTML = '';
@@ -441,7 +395,7 @@ function showDefaultList(side) {
   })();
 }
 
-/* AUTOCOMPLETE setup */
+/* autocomplete (same logic as earlier) */
 function setupAutocomplete(inputId, suggestionsId, side){
   const input = $(inputId), box = $(suggestionsId);
   let timer = null;
@@ -469,7 +423,6 @@ function setupAutocomplete(inputId, suggestionsId, side){
       return;
     }
 
-    // CG matches first
     const cgMatches = tokenList.filter(t => {
       const s = t.symbol || '', n = t.name || '';
       const symHasStat = cgStatsMap.has(low(s));
@@ -483,7 +436,6 @@ function setupAutocomplete(inputId, suggestionsId, side){
       return { t, stats, score: (stats.volume24h || 0) + startBonus };
     });
 
-    // 1inch fallback matches
     const inchMatches = tokenList.filter(t => {
       const s = t.symbol || '', n = t.name || '';
       const alreadyCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
@@ -508,11 +460,10 @@ function setupAutocomplete(inputId, suggestionsId, side){
     box.style.display='block';
   }
 }
-
 setupAutocomplete('fromToken','fromSuggestions','from');
 setupAutocomplete('toToken','toSuggestions','to');
 
-/* Apply selected token (normalizes address, sets logo, decimals) */
+/* apply selection */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? $('fromToken') : $('toToken');
@@ -538,7 +489,7 @@ function showSpinner(which, show = true) {
   el.classList.toggle('visible', !!show);
 }
 
-/* fetch price and show USD with improved layout */
+/* fetch price & show usd */
 async function fetchPriceForToken(address, decimals, side){
   try {
     if (!address) {
@@ -564,7 +515,7 @@ async function fetchPriceForToken(address, decimals, side){
   finally { showSpinner(side, false); }
 }
 
-/* fetch both USD displays */
+/* fetch both usd */
 async function fetchBothPrices(){
   const fAddr = low($('fromToken').dataset.address || '');
   const tAddr = low($('toToken').dataset.address || '');
@@ -576,27 +527,17 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* improved resolver: try to resolve typed tokens to tokenList entries (preferring CoinGecko polygon tokens) */
+/* resolve typed values to addresses (improved) */
 function resolveTokenInputsIfNeeded() {
   const tryResolve = (inputEl) => {
     const val = (inputEl.value || '').trim();
     if (!val || inputEl.dataset.address) return;
     const q = val.toLowerCase();
-
-    // prefer exact symbol match among polygon (CoinGecko) tokens
+    // prefer exact symbol among CG polygon tokens
     let found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
-    if (!found) {
-      // exact symbol among all tokens
-      found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
-    }
-    if (!found) {
-      // startsWith symbol
-      found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
-    }
-    if (!found) {
-      // fallback: name contains
-      found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
-    }
+    if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
+    if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
+    if (!found) found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
     if (found) {
       inputEl.dataset.address = found.address;
       inputEl.dataset.decimals = found.decimals || 18;
@@ -609,33 +550,27 @@ function resolveTokenInputsIfNeeded() {
   tryResolve($('toToken'));
 }
 
-/* QUOTE logic: using 1inch to compute toAmount (live)
-   - Wait for tokens to be loaded
-   - Resolve typed symbols if needed
-*/
+/* QUOTE logic: try 1inch quote first, fallback to price-ratio if quote fails */
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 150); }
 
 async function updateQuote(){
   try {
-    // ensure token lists loaded first
     await ensureTokensLoaded();
-
-    // attempt to resolve typed symbols -> addresses before quoting
     resolveTokenInputsIfNeeded();
 
     const fromAddr = low($('fromToken').dataset.address || '');
     const toAddr = low($('toToken').dataset.address || '');
-    const amount = $('fromAmount').value;
-    if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; await fetchBothPrices(); return; }
+    const amountStr = $('fromAmount').value;
+    if (!fromAddr || !toAddr || !amountStr) { $('toAmount').value = ''; await fetchBothPrices(); return; }
 
     const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
     const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
 
-    // safe parseUnits: guard parse errors
+    // parse safely
     let parsed;
     try {
-      parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
+      parsed = ethers.utils.parseUnits(String(amountStr), fromDecimals).toString();
     } catch (pe) {
       console.warn('parseUnits failed', pe);
       $('toAmount').value = '';
@@ -643,19 +578,53 @@ async function updateQuote(){
       return;
     }
 
-    const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
-    const r = await fetchWithTimeout(quoteUrl, {}, 5000);
-    if (!r.ok) { $('toAmount').value = ''; await fetchBothPrices(); return; }
-    const j = await r.json();
-    if (j && j.toTokenAmount) {
-      const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals);
-      $('toAmount').value = formattedTo;
-    } else {
-      $('toAmount').value = '';
+    // TRY 1inch quote first (fast)
+    let quoteSuccess = false;
+    try {
+      const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
+      const res = await fetchWithTimeout(qUrl, {}, 5000);
+      if (res.ok) {
+        const j = await res.json();
+        if (j && j.toTokenAmount) {
+          const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals);
+          $('toAmount').value = formattedTo;
+          quoteSuccess = true;
+        }
+      }
+    } catch (qe) {
+      console.warn('1inch quote failed', qe);
+      quoteSuccess = false;
     }
 
-    // update USD displays for both
+    // FALLBACK: if 1inch quote failed, compute estimate using price ratio (fromPrice / toPrice)
+    if (!quoteSuccess) {
+      try {
+        const amountNum = Number(amountStr);
+        if (isNaN(amountNum)) { $('toAmount').value = ''; await fetchBothPrices(); return; }
+
+        // fetch USD prices for both tokens
+        const [fromPrice, toPrice] = await Promise.all([ getTokenPriceUSD(fromAddr, fromDecimals), getTokenPriceUSD(toAddr, toDecimals) ]);
+        if (fromPrice == null || toPrice == null || toPrice === 0) {
+          // nothing we can do
+          $('toAmount').value = '';
+          await fetchBothPrices();
+          return;
+        }
+        // compute estimate: amount * fromPrice / toPrice
+        const estTo = (Number(amountNum) * Number(fromPrice)) / Number(toPrice);
+        // set toAmount with reasonable precision (toDecimals)
+        // We will display trimmed decimal places to 6 for readability
+        const toAmountDisplay = Number(estTo.toFixed(Math.min(6, Math.max(0, toDecimals))));
+        $('toAmount').value = String(toAmountDisplay);
+      } catch (fe) {
+        console.warn('fallback calc failed', fe);
+        $('toAmount').value = '';
+      }
+    }
+
+    // update USD displays for both tokens (this will show per-unit and total)
     await fetchBothPrices();
+
   } catch (e) {
     console.error('updateQuote error', e);
     $('toAmount').value = '';
@@ -663,10 +632,12 @@ async function updateQuote(){
   }
 }
 
-/* live update when typing amount */
+/* events */
 $('fromAmount').addEventListener('input', updateQuoteDebounced);
+$('fromToken').addEventListener('change', ()=>{ updateQuoteDebounced(); fetchBothPrices(); });
+$('toToken').addEventListener('change', ()=>{ updateQuoteDebounced(); fetchBothPrices(); });
 
-/* paste address behavior (from/to inputs) */
+/* paste behavior (resolves paste address) */
 document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
   inp.addEventListener('paste', (ev)=>{
     const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
@@ -689,7 +660,26 @@ document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
   });
 });
 
-/* SWAP flow (unchanged main behavior) */
+/* on-chain fallback for metadata */
+async function fetchOnchainTokenInfo(address){
+  try {
+    const addrL = low(address);
+    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
+    const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
+    const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
+    const c = new ethers.Contract(address, abi, rpcProvider);
+    const [symbol, name, decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
+    const info = { address: addrL, symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals||18, logoURI: '' };
+    tokenMap.set(info.address, info);
+    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
+    return info;
+  } catch (e) {
+    console.warn('fetchOnchainTokenInfo failed', e);
+    return null;
+  }
+}
+
+/* SWAP flow & WALLET connect simplified (unchanged but included) */
 async function ensureApprovalAndSwap(){
   try {
     await connectWallet();
@@ -734,7 +724,6 @@ async function ensureApprovalAndSwap(){
 }
 $('swapBtn').addEventListener('click', ensureApprovalAndSwap);
 
-/* WALLET connect */
 async function connectWallet(){
   if (walletConnected && signer) return;
   try {
@@ -746,19 +735,15 @@ async function connectWallet(){
       walletConnected = true; $('walletConnectBtn').textContent = signerAddress.slice(0,6) + '...' + signerAddress.slice(-4);
       return;
     }
-
     const WC_global = window.WalletConnectProvider || (window.WalletConnectProvider && window.WalletConnectProvider.default) || null;
     if (!WC_global) { alert('WalletConnect library not loaded. Please open in a browser that allows external scripts or use MetaMask.'); throw new Error('WC library missing'); }
-
     const WcCtor = (typeof WC_global === 'function') ? WC_global : (WC_global.default || WC_global);
     const wcProvider = new WcCtor({ rpc: { [CHAIN_ID]: FALLBACK_RPC }, chainId: CHAIN_ID, qrcode: true });
-
     await wcProvider.enable();
     provider = new ethers.providers.Web3Provider(wcProvider, "any");
     signer = provider.getSigner();
     signerAddress = await signer.getAddress();
     walletConnected = true; $('walletConnectBtn').textContent = signerAddress.slice(0,6) + '...' + signerAddress.slice(-4);
-
     if (wcProvider.on) {
       wcProvider.on("disconnect", ()=> {
         walletConnected = false; provider = null; signer = null; signerAddress = null;
@@ -769,23 +754,20 @@ async function connectWallet(){
 }
 $('walletConnectBtn').addEventListener('click', connectWallet);
 
-/* SWAP tokens UI action */
+/* swap token UI */
 function swapTokenFields(){
   const fToken = $('fromToken'), tToken = $('toToken');
   const fLogo = $('fromLogo'), tLogo = $('toLogo');
   const fAmount = $('fromAmount'), tAmount = $('toAmount');
   const fUsdText = $('fromUsdText'), tUsdText = $('toUsdText');
 
-  // swap values
   const tmpVal = fToken.value; fToken.value = tToken.value; tToken.value = tmpVal;
   const tmpAddr = fToken.dataset.address; fToken.dataset.address = tToken.dataset.address; tToken.dataset.address = tmpAddr;
   const tmpDec = fToken.dataset.decimals; fToken.dataset.decimals = tToken.dataset.decimals; tToken.dataset.decimals = tmpDec;
 
-  // logos
   const tmpSrc = fLogo.src; fLogo.src = tLogo.src; tLogo.src = tmpSrc;
   const tmpDisplay = fLogo.style.display; fLogo.style.display = tLogo.style.display; tLogo.style.display = tmpDisplay;
 
-  // amounts & usd
   const tmpAmt = fAmount.value; fAmount.value = tAmount.value; tAmount.value = tmpAmt;
   const tmpUsd = fUsdText.innerHTML; fUsdText.innerHTML = tUsdText.innerHTML; tUsdText.innerHTML = tmpUsd;
 
@@ -794,9 +776,10 @@ function swapTokenFields(){
 }
 $('swapTokensBtn').addEventListener('click', swapTokenFields);
 
-/* INIT: warm token lists */
+/* INIT */
 (async function init(){
-  await loadTokensAndVolumes();
+  await ensureTokensLoaded();
+  // nothing else
 })();
 </script>
 </body>
