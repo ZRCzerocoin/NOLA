@@ -54,11 +54,18 @@ h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color
 
 /* ===== CHAT SIDEBAR ===== */
 .chat-toggle { position:fixed; right:20px; bottom:20px; background:#b445ff; padding:10px 14px; border-radius:20px; cursor:pointer; box-shadow:0 0 15px rgba(180,0,255,0.35); }
-.chat-sidebar { position:fixed; right:20px; bottom:60px; width:300px; max-height:500px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); border-radius:20px; padding:15px; overflow-y:auto; display:none; flex-direction:column;}
+.chat-sidebar { position:fixed; right:20px; bottom:60px; width:320px; max-height:500px; background:rgba(0,0,0,0.3); backdrop-filter:blur(10px); border-radius:20px; padding:15px; overflow-y:auto; display:none; flex-direction:column;}
 .chat-msg { margin-bottom:10px; padding:8px; border-radius:12px; font-size:14px; word-break:break-word; }
 .chat-input { display:flex; margin-top:10px; }
 .chat-input input{flex:1; padding:8px 10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;}
 .chat-input button{margin-left:5px; padding:8px 12px; border-radius:12px; border:none; background:#b445ff; cursor:pointer;}
+
+/* ===== USERNAME MODAL ===== */
+#usernameModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; justify-content:center; align-items:center; z-index:2000; }
+#usernameModal .modal-content { background:rgba(255,255,255,0.05); padding:25px; border-radius:20px; text-align:center; backdrop-filter:blur(15px); animation:modalIn 0.5s ease; }
+#usernameModal input{padding:10px 12px; border-radius:12px; border:none; width:80%; margin-top:15px; background:rgba(255,255,255,0.05); color:#fff;}
+#usernameModal button{margin-top:15px; padding:10px 20px; border:none; border-radius:12px; background:linear-gradient(135deg,#b445ff,#7013ff); color:#fff; cursor:pointer;}
+@keyframes modalIn {from{opacity:0; transform:scale(0.8);}to{opacity:1; transform:scale(1);}}
 </style>
 </head>
 <body>
@@ -118,6 +125,15 @@ for(let i=0;i<60;i++){
     <div class="chat-input">
         <input type="text" id="chatInput" placeholder="Type message...">
         <button id="sendChat">Send</button>
+    </div>
+</div>
+
+<!-- USERNAME MODAL -->
+<div id="usernameModal">
+    <div class="modal-content">
+        <h3>Choose Your NOLA Username 🌌</h3>
+        <input type="text" id="modalUsername" placeholder="Type your username">
+        <button id="confirmUsername">Enter Chat</button>
     </div>
 </div>
 
@@ -188,13 +204,26 @@ const chatToggle = document.getElementById('chatToggle');
 const chatSidebar = document.getElementById('chatSidebar');
 chatToggle.onclick = ()=>{ chatSidebar.style.display = (chatSidebar.style.display==='flex')?'none':'flex'; }
 
-const gun = Gun(); // public chat
+/* ===== GLOBAL GUN CHAT ===== */
+const gun = Gun({ peers: ['https://gun-manhattan.herokuapp.com/gun'] });
 let username;
 const userColors = {};
 function getColor(name){ if(userColors[name]) return userColors[name]; let color = '#'+Math.floor(Math.random()*16777215).toString(16); userColors[name]=color; return color; }
 
+/* ===== USERNAME MODAL ===== */
+const usernameModal = document.getElementById('usernameModal');
+const modalInput = document.getElementById('modalUsername');
 document.getElementById('sendChat').onclick = ()=>{
-    if(!username) username = prompt("Enter your chat username 🌌") || "Anon";
+    if(!username){
+        usernameModal.style.display='flex';
+    } else sendMsg();
+}
+document.getElementById('confirmUsername').onclick = ()=>{
+    username = modalInput.value.trim() || 'Anon';
+    usernameModal.style.display='none';
+    sendMsg();
+}
+function sendMsg(){
     const msgInput = document.getElementById('chatInput');
     if(!msgInput.value) return;
     const msgObj = {user:username, text:msgInput.value, color:getColor(username)};
@@ -202,7 +231,7 @@ document.getElementById('sendChat').onclick = ()=>{
     msgInput.value='';
 }
 
-// listen for messages
+/* ===== LISTEN MESSAGES ===== */
 gun.get('nolaChat').map().on(msg=>{
     if(!msg.user || !msg.text) return;
     const chatMessages = document.getElementById('chatMessages');
