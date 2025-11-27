@@ -3,259 +3,278 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>NOLA — Polygon DEX Aggregator</title>
+<title>NOLA Exchange — Polygon DEX Aggregator</title>
 <link rel="icon" href="nol.png" />
 <style>
-  /* ---------------- Palette & Reset ---------------- */
-  *{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,system-ui,-apple-system;}
-  html,body{height:100%;background:#070308;color:#fff;overflow-y:auto;-webkit-font-smoothing:antialiased}
-  :root{
-    --bg:#070308;--glass:rgba(255,255,255,0.03);
-    --neon1:#6A00FF;--neon2:#A243FF;--accent:#C77DFF;
-    --card-radius:18px;
-  }
+/* ===== EXACT FIRST THEME (Mystical Purplism) ===== */
+*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,Arial,system-ui,-apple-system;}
+html,body{height:100%;background:radial-gradient(circle at center,#0c0014,#1a002b 80%);color:#fff;overflow-y:auto}
+:root{--neon1:#6A00FF;--neon2:#A243FF;--glass:rgba(255,255,255,0.03);--card-radius:18px}
 
-  /* ------------- Background & Nebula ------------- */
-  body::before{
-    content:"";position:fixed;inset:-20% -20% auto -20%;height:140%;z-index:-3;
-    background:
-      radial-gradient(800px 500px at 10% 10%, rgba(106,0,255,0.12), transparent 8%),
-      radial-gradient(900px 500px at 90% 85%, rgba(162,67,255,0.09), transparent 6%),
-      linear-gradient(180deg,#050205 0%, #0b0310 100%);
-    filter:blur(14px) saturate(1.05);
-  }
+/* Particles + background aura */
+body::before{content:"";position:fixed;inset:-20% -20% auto -20%;height:140%;z-index:-3;
+background:radial-gradient(800px 500px at 10% 10%, rgba(106,0,255,0.12), transparent 8%),
+radial-gradient(900px 500px at 90% 85%, rgba(162,67,255,0.09), transparent 6%),
+linear-gradient(180deg,#050205 0%, #0b0310 100%);
+filter:blur(14px) saturate(1.05);}
 
-  /* particles */
-  .particle{position:fixed; border-radius:50%; pointer-events:none; mix-blend-mode:screen; z-index:-2;}
+/* small decorative particles */
+.particle{position:fixed;border-radius:50%;pointer-events:none;mix-blend-mode:screen;z-index:-2}
 
-  /* ---------------- Header & Logo ---------------- */
-  header{width:100%;display:flex;align-items:center;justify-content:center;padding:26px 18px 6px;gap:12px;position:relative}
-  .logo{width:120px;height:120px;border-radius:20px;display:flex;align-items:center;justify-content:center;overflow:hidden;
-        background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); box-shadow:0 10px 40px rgba(106,0,255,0.12);}
-  .logo img{width:72%;height:72%;object-fit:contain}
-  .logo-aura{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;
-            background:radial-gradient(circle at 40% 40%, rgba(162,67,255,0.14), transparent 40%);filter:blur(20px);z-index:-1;}
+/* Logo center */
+header{width:100%;display:flex;align-items:center;justify-content:center;padding:24px 18px 6px;position:relative}
+.logo{width:120px;height:120px;border-radius:20px;display:flex;align-items:center;justify-content:center;overflow:hidden;
+ background:linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 10px 40px rgba(106,0,255,0.12)}
+.logo img{width:72%;height:72%;object-fit:contain}
+.logo-aura{position:absolute;top:8px;left:50%;transform:translateX(-50%);width:180px;height:180px;border-radius:50%;
+ background:radial-gradient(circle at 40% 40%, rgba(162,67,255,0.14), transparent 40%);filter:blur(20px);z-index:-1}
+@keyframes logoRotate{0%{transform:rotateY(0deg)}100%{transform:rotateY(360deg)}}
+.logo{animation:logoRotate 30s linear infinite}
 
-  /* -------- Top right connect -------- */
-  .top-right{position:absolute;right:18px;top:20px;display:flex;gap:12px;align-items:center}
-  .btn {
-    background:linear-gradient(90deg,var(--neon1),var(--neon2));
-    color:#fff;border:none;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;
-    box-shadow:0 10px 30px rgba(106,0,255,0.12);
-  }
-  .addr-chip{background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:12px;font-weight:600;font-size:13px}
+/* Top-right connect (floating) */
+.top-right{position:fixed;right:18px;top:18px;display:flex;gap:12px;align-items:center;z-index:60}
+.connect-btn{background:linear-gradient(90deg,var(--neon1),var(--neon2));color:#fff;border:none;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(106,0,255,0.12)}
+.addr-chip{background:rgba(255,255,255,0.03);padding:8px 12px;border-radius:12px;font-weight:700;font-size:13px}
 
-  /* ---------------- Main layout ---------------- */
-  .wrap{width:100%;max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:1fr 360px;gap:24px;}
-  @media(max-width:980px){.wrap{grid-template-columns:1fr;} .chat-panel{position:static;order:3}}
+/* Layout */
+.wrap{width:100%;max-width:1100px;margin:18px auto;padding:18px;display:grid;grid-template-columns:1fr 360px;gap:24px}
+@media(max-width:980px){.wrap{grid-template-columns:1fr;padding:12px}}
 
-  /* ---------------- Left Column - Exchange + Chart ---------------- */
-  .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px;border:1px solid rgba(162,67,255,0.06);backdrop-filter:blur(12px)}
-  .title{font-size:18px;color:#EED9FF;font-weight:700;letter-spacing:0.6px;margin-bottom:12px}
+/* Left panel (exchange) */
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px;border:1px solid rgba(162,67,255,0.06);backdrop-filter:blur(12px)}
+.title{font-size:18px;color:#EED9FF;font-weight:700;letter-spacing:0.6px;margin-bottom:12px;text-align:center;text-shadow:0 0 8px #b445ff}
 
-  /* Exchange box */
-  .swap-box{border-radius:16px;padding:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
-  .search-row{display:flex;gap:12px;align-items:stretch}
-  .search {
-    flex:1;display:flex;flex-direction:column;gap:6px;position:relative;
-  }
-  .search input{
-    width:100%;padding:14px 12px;border-radius:12px;border:none;background:rgba(2,1,6,0.6);color:#fff;font-size:16px;
-    outline:none;box-shadow:0 10px 30px rgba(106,0,255,0.04) inset;
-  }
-  .suggestions{position:absolute;left:0;right:0;top:56px;background:linear-gradient(180deg, rgba(6,2,10,0.98), rgba(12,3,20,0.98));border-radius:12px;padding:8px;border:1px solid rgba(162,67,255,0.06);max-height:260px;overflow:auto;z-index:40;box-shadow:0 10px 40px rgba(6,0,20,0.6)}
-  .s-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer}
-  .s-item:hover{background:linear-gradient(90deg, rgba(106,0,255,0.06), rgba(162,67,255,0.04))}
-  .s-item img{width:32px;height:32px;border-radius:10px;flex:0 0 32px}
-  .s-meta{display:flex;flex-direction:column}
-  .s-symbol{font-weight:800;color:#fff}
-  .s-name{font-size:12px;color:rgba(255,255,255,0.6)}
+/* Swap box */
+.swap-box{border-radius:16px;padding:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+.row{display:flex;gap:12px;align-items:center}
+.col{display:flex;flex-direction:column;gap:8px}
+.input{position:relative}
+.input input{width:100%;padding:12px;border-radius:12px;border:none;background:rgba(2,1,6,0.6);color:#fff;font-size:16px;outline:none}
+.small{width:140px}
+.suggestions{position:absolute;left:0;right:0;top:56px;background:linear-gradient(180deg, rgba(6,2,10,0.98), rgba(12,3,20,0.98));border-radius:12px;padding:8px;border:1px solid rgba(162,67,255,0.06);max-height:260px;overflow:auto;display:none;z-index:80}
+.s-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer}
+.s-item img{width:32px;height:32px;border-radius:8px;object-fit:cover}
+.meta{display:flex;flex-direction:column}
+.sym{font-weight:800}
+.nm{font-size:12px;color:rgba(255,255,255,0.6)}
+.controls{display:flex;gap:12px;margin-top:12px;align-items:center;justify-content:space-between}
+.quote{margin-top:14px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
+.cta{display:flex;gap:8px}
 
-  .controls{display:flex;gap:12px;margin-top:12px;align-items:center}
-  .small{background:rgba(255,255,255,0.02);padding:8px 10px;border-radius:10px;font-weight:700}
+/* chart */
+.chart-wrap{margin-top:18px;height:420px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);display:none}
+.chart-wrap iframe{width:100%;height:100%;border:0;background:#08020b}
 
-  .quote-area{margin-top:14px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
-  .cta-row{display:flex;gap:12px;margin-top:12px}
+/* Right panel (chat) */
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.side-card{padding:14px;border-radius:16px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(8px)}
+.chat-header{display:flex;align-items:center;justify-content:space-between}
+.chat-list{height:360px;overflow:auto;display:flex;flex-direction:column;gap:8px;padding-right:8px}
+.chat-msg{padding:10px;border-radius:12px;background:rgba(106,0,255,0.06)}
+.chat-who{font-weight:800;margin-bottom:6px}
 
-  /* Chart iframe */
-  .chart-wrap{margin-top:18px;height:400px;border-radius:14px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-  .chart-wrap iframe{width:100%;height:100%;border:0;background:#08020b}
+/* username modal */
+#usernameModal{position:fixed;inset:0;display:none;justify-content:center;align-items:center;background:rgba(0,0,0,0.7);z-index:9999}
+.modal{background:rgba(255,255,255,0.03);padding:20px;border-radius:14px;width:320px;text-align:center;border:1px solid rgba(162,67,255,0.06);box-shadow:0 20px 60px rgba(106,0,255,0.12)}
+.modal input{width:100%;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.02);color:#fff;margin-top:12px}
 
-  /* ---------------- Right Column - Chat & Portfolio ---------------- */
-  .chat-panel{display:flex;flex-direction:column;gap:12px}
-  .chat-panel .panel{padding:12px}
-  .chat-header{display:flex;align-items:center;justify-content:space-between}
-  .chat-list{height:300px;overflow:auto;padding:8px;display:flex;flex-direction:column;gap:8px}
-  .msg{padding:10px;border-radius:10px;background:rgba(106,0,255,0.08);font-size:14px}
-  .msg .user{font-weight:800;margin-bottom:6px}
-  .chat-input{display:flex;gap:8px;margin-top:8px}
-  .chat-input input{flex:1;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.02);color:#fff}
-  .chat-hide{position:fixed;right:16px;bottom:18px;background:linear-gradient(90deg,var(--neon1),var(--neon2));padding:10px;border-radius:12px;cursor:pointer;z-index:60}
-
-  /* small responsive */
-  @media(max-width:640px){
-    .wrap{padding:12px;grid-template-columns:1fr}
-    .chart-wrap{height:260px}
-  }
+/* small helpers */
+.hidden{display:none!important}
+.addr-top{position:absolute;left:18px;top:18px}
 </style>
 </head>
 <body>
 
-<!-- Purple aura / logo -->
+<!-- particles -->
+<script>
+for(let i=0;i<60;i++){
+  const d=document.createElement('div');
+  d.className='particle';
+  const s=(Math.random()*24+6)+'px';
+  d.style.width=s; d.style.height=s;
+  d.style.left=(Math.random()*100)+'%'; d.style.top=(Math.random()*100)+'%';
+  d.style.background=`radial-gradient(circle, rgba(162,67,255,0.6), rgba(106,0,255,0.3))`;
+  d.style.opacity=(Math.random()*0.6+0.15);
+  d.style.animationDuration=(Math.random()*10+5)+'s';
+  document.body.appendChild(d);
+}
+</script>
+
 <header>
   <div class="logo-aura"></div>
-  <div class="logo"><img src="nol.png" alt="NOLA logo"></div>
+  <div class="logo"><img src="nol.png" alt="NOLA"></div>
 
   <div class="top-right">
     <div id="addrChip" class="addr-chip" style="display:none"></div>
-    <button id="connectBtn" class="btn">Connect Wallet</button>
+    <button id="connectWalletFloating" class="connect-btn">Connect Wallet</button>
   </div>
 </header>
 
 <div class="wrap">
-  <!-- LEFT: Exchange + Chart -->
-  <div>
-    <div class="panel">
-      <div class="title">NOLA — Polygon DEX Aggregator</div>
+  <!-- LEFT: Exchange -->
+  <div class="panel">
+    <div class="title">NOLA — Polygon DEX Aggregator</div>
 
-      <div class="swap-box" id="swapBox">
-        <!-- Search row -->
-        <div class="search-row">
-          <div class="search" style="margin-right:12px">
-            <label style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">From</label>
-            <input id="fromSearch" placeholder="Type token name, symbol or paste address (e.g. MATIC, USDC, pol...)" autocomplete="off">
-            <div class="suggestions" id="fromSuggestions" style="display:none"></div>
+    <div class="swap-box">
+      <div class="col">
+        <div class="label">From</div>
+        <div class="row" style="align-items:stretch">
+          <div class="input" style="flex:1">
+            <input id="fromInput" placeholder="Token symbol, name or paste address — e.g. MATIC, USDC, pol...">
+            <div class="suggestions" id="fromSuggest"></div>
           </div>
-
-          <div class="search" style="width:160px">
-            <label style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">Amount</label>
+          <div class="input small">
             <input id="fromAmount" placeholder="Amount" inputmode="decimal">
           </div>
         </div>
+      </div>
 
-        <div class="search-row" style="margin-top:12px">
-          <div class="search">
-            <label style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:6px">To</label>
-            <input id="toSearch" placeholder="Type token name, symbol or paste address" autocomplete="off">
-            <div class="suggestions" id="toSuggestions" style="display:none"></div>
+      <div class="col" style="margin-top:12px">
+        <div class="label">To</div>
+        <div class="row">
+          <div class="input" style="flex:1">
+            <input id="toInput" placeholder="Token symbol, name or paste address">
+            <div class="suggestions" id="toSuggest"></div>
           </div>
-
-          <div class="small" id="networkChip">Polygon</div>
-        </div>
-
-        <div class="controls">
-          <div class="small" id="selectedPair">—</div>
-          <div style="flex:1"></div>
-          <button id="quoteBtn" class="btn" style="padding:10px 12px;background:linear-gradient(90deg,#ff8adf,#7a22ff)">Get Quote</button>
-          <button id="swapBtn" class="btn" style="display:none;padding:10px 12px">Swap</button>
-        </div>
-
-        <div class="quote-area" id="quoteArea" style="display:none">
-          <div id="quoteText">Quote will appear here</div>
         </div>
       </div>
 
-      <!-- Chart opens here -->
-      <div class="chart-wrap" id="chartWrap" style="display:none">
-        <iframe id="chartIframe" src="" allowfullscreen></iframe>
+      <div class="controls">
+        <div class="quote" id="quoteText">Select tokens and click Get Quote</div>
+        <div class="cta">
+          <button id="quoteBtn" class="btn small">Get Quote</button>
+          <button id="swapBtn" class="btn small" disabled>Swap</button>
+        </div>
+      </div>
+
+      <div class="chart-wrap" id="chartWrap">
+        <iframe id="chartFrame" src=""></iframe>
       </div>
     </div>
   </div>
 
-  <!-- RIGHT: Chat + Portfolio (side) -->
-  <div class="chat-panel">
-    <div class="panel">
+  <!-- RIGHT: Chat only -->
+  <div class="sidebar">
+    <div class="side-card">
       <div class="chat-header">
         <div style="font-weight:800">Public Chat</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Live • Global</div>
+        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Live · Global</div>
       </div>
 
-      <div id="chatList" class="chat-list"></div>
+      <div id="chatMessages" class="chat-list"></div>
 
-      <div class="chat-input">
-        <input id="chatInput" placeholder="Say something to the community...">
-        <button id="sendMsg" class="btn">Send</button>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="chatInput" placeholder="Message..." style="flex:1;padding:10px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff">
+        <button id="sendChat" class="btn small">Send</button>
       </div>
-    </div>
-
-    <div class="panel">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="font-weight:800">Portfolio (Preview)</div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.6)">Connect to see balances</div>
-      </div>
-      <div id="portfolioList" style="margin-top:12px"></div>
     </div>
   </div>
 </div>
 
-<!-- small chat hide button on mobile/overlay -->
-<div id="chatToggleMobile" class="chat-hide" style="display:none">Chat</div>
+<!-- username modal (themed) -->
+<div id="usernameModal">
+  <div class="modal">
+    <div style="font-weight:800;font-size:18px;color:#e7ccff">Choose your NOLA username</div>
+    <input id="modalName" placeholder="e.g. LunaTrader">
+    <div style="margin-top:12px;display:flex;gap:8px;justify-content:center">
+      <button id="confirmName" class="btn small">Enter Chat</button>
+      <button id="cancelName" class="btn small" style="background:rgba(255,255,255,0.04)">Cancel</button>
+    </div>
+  </div>
+</div>
 
-<!-- libs: ethers + gun + web3modal + walletconnect -->
+<!-- libs -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
 <script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
 
 <script>
-/* ================== CONFIG ================== */
+/* ================= CONFIG ================= */
 const CHAIN_ID = 137; // Polygon
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
-const WALLETCONNECT_PROJECT_ID = "WALLETCONNECT_PROJECT_ID"; // <<--- paste your WalletConnect v2 Project ID here for WalletConnect support
+const COINGECKO_TOKEN_PRICE = (addr)=>`https://api.coingecko.com/api/v3/simple/token_price/polygon-pos?contract_addresses=${addr}&vs_currencies=usd`;
+const WALLETCONNECT_PROJECT_ID = "WALLETCONNECT_PROJECT_ID"; // <-- paste your WalletConnect v2 Project ID here
+const GUN_PEERS = [
+  'https://relay.peer.ooo/gun',
+  'https://gun-us.herokuapp.com/gun',
+  'https://gun-manhattan.herokuapp.com/gun'
+];
+const INITIAL_NOLA_TOKEN = '0x1515546B052151D5eb8CCB1bcf2857E0C6f51451'; // your NOLA token chart on startup
 
-/* ================== Utilities ================== */
-const $ = (id)=>document.getElementById(id);
-function short(addr){ return addr ? addr.slice(0,6)+'…'+addr.slice(-4) : ''; }
-function safeLog(){ try{ console.log.apply(console,arguments) }catch(e){} }
+/* ================= UI refs ================= */
+const fromInput = document.getElementById('fromInput');
+const toInput = document.getElementById('toInput');
+const fromSuggest = document.getElementById('fromSuggest');
+const toSuggest = document.getElementById('toSuggest');
+const fromAmount = document.getElementById('fromAmount');
+const quoteBtn = document.getElementById('quoteBtn');
+const swapBtn = document.getElementById('swapBtn');
+const quoteText = document.getElementById('quoteText');
+const chartWrap = document.getElementById('chartWrap');
+const chartFrame = document.getElementById('chartFrame');
+const connectWalletFloating = document.getElementById('connectWalletFloating');
+const addrChip = document.getElementById('addrChip');
 
-/* ================== Particles (decorative) ================== */
-(function(){
-  for(let i=0;i<30;i++){
-    const d=document.createElement('div');
-    d.className='particle';
-    const s= (Math.random()*24+6) + 'px';
-    d.style.width=s; d.style.height=s;
-    d.style.left=(Math.random()*100)+'%'; d.style.top=(Math.random()*100)+'%';
-    d.style.background = `radial-gradient(circle, rgba(162,67,255,0.6), rgba(106,0,255,0.3))`;
-    d.style.opacity = (Math.random()*0.6+0.15);
-    d.style.transform = `translateZ(0)`;
-    document.body.appendChild(d);
-  }
-})();
+const chatMessages = document.getElementById('chatMessages');
+const chatInput = document.getElementById('chatInput');
+const sendChatBtn = document.getElementById('sendChat');
 
-/* ================== Token list (1inch) ================== */
+const usernameModal = document.getElementById('usernameModal');
+const modalName = document.getElementById('modalName');
+const confirmName = document.getElementById('confirmName');
+const cancelName = document.getElementById('cancelName');
+
+/* ================= state ================= */
 let tokenList = [];
-async function fetchTokenList(){
-  try{
-    const res = await fetch(`${ONEINCH_BASE}/tokens`);
-    const data = await res.json();
-    tokenList = Object.values(data.tokens || {});
-  }catch(e){
-    console.error("Token list error", e);
-  }
-}
-fetchTokenList();
+let selectedFrom = null;
+let selectedTo = null;
+let provider = null, signer = null, userAddress = null;
 
-/* ================== Autocomplete logic ================== */
-function createSuggestionItem(token){
-  const el = document.createElement('div'); el.className='s-item';
-  el.innerHTML = `<img src="${token.logoURI||''}" onerror="this.style.display='none'"><div class="s-meta"><div class="s-symbol">${token.symbol}</div><div class="s-name">${token.name}</div></div>`;
-  return el;
+/* ================= fetch tokens (1inch) ================= */
+async function loadTokens(){
+  try{
+    const r = await fetch(`${ONEINCH_BASE}/tokens`);
+    const d = await r.json();
+    tokenList = Object.values(d.tokens || {});
+    console.log('tokens loaded', tokenList.length);
+  }catch(e){ console.error('token list error', e); }
 }
-function attachAutocomplete(inputEl, suggestionsEl, onSelect){
-  inputEl.addEventListener('input',()=>{
+loadTokens();
+
+/* ================= autocomplete ================= */
+function makeItem(t){
+  const div = document.createElement('div'); div.className='s-item';
+  div.innerHTML = `<img src="${t.logoURI||''}" onerror="this.style.display='none'"><div class="meta"><div class="sym">${t.symbol}</div><div class="nm">${t.name}</div></div>`;
+  return div;
+}
+function attachAuto(inputEl, suggestEl, onSelect){
+  inputEl.addEventListener('input', async ()=>{
     const q = inputEl.value.trim().toLowerCase();
-    suggestionsEl.innerHTML = '';
-    if(!q){ suggestionsEl.style.display='none'; return; }
-    const bySym = tokenList.filter(t => t.symbol && t.symbol.toLowerCase().includes(q));
-    const byName = tokenList.filter(t => t.name && t.name.toLowerCase().includes(q) && !bySym.includes(t));
-    const result = [...bySym, ...byName].slice(0,8);
-    result.forEach(token=>{
-      const item = createSuggestionItem(token);
-      item.onclick = ()=>{ suggestionsEl.style.display='none'; inputEl.value = token.symbol; onSelect(token); }
-      suggestionsEl.appendChild(item);
-    });
-    suggestionsEl.style.display = result.length ? 'block' : 'none';
+    suggestEl.innerHTML='';
+    if(!q){ suggestEl.style.display='none'; return; }
+    const bySym = tokenList.filter(t=>t.symbol && t.symbol.toLowerCase().includes(q));
+    const byName = tokenList.filter(t=>t.name && t.name.toLowerCase().includes(q) && !bySym.includes(t));
+    const res = [...bySym, ...byName].slice(0,8);
+    for(const tok of res){
+      const item = makeItem(tok);
+      // add USD price small fetch
+      (async ()=>{
+        try{
+          const priceResp = await fetch(COINGECKO_TOKEN_PRICE(tok.address));
+          const priceData = await priceResp.json();
+          const addr = tok.address.toLowerCase();
+          const usd = (priceData[addr] && priceData[addr].usd) ? priceData[addr].usd : null;
+          if(usd !== null){
+            const priceEl = document.createElement('div'); priceEl.style.marginLeft='auto'; priceEl.style.fontWeight='800'; priceEl.style.fontSize='13px'; priceEl.textContent = '$' + Number(usd).toFixed(4);
+            item.appendChild(priceEl);
+          }
+        }catch(e){}
+      })();
+      item.onclick = ()=>{ inputEl.value = tok.symbol; suggestEl.style.display='none'; onSelect(tok); };
+      suggestEl.appendChild(item);
+    }
+    suggestEl.style.display = res.length ? 'block' : 'none';
   });
 
   inputEl.addEventListener('keydown', (e)=>{
@@ -263,208 +282,217 @@ function attachAutocomplete(inputEl, suggestionsEl, onSelect){
       e.preventDefault();
       const q = inputEl.value.trim().toLowerCase();
       if(!q) return;
-      // try exact match
-      const found = tokenList.find(t => t.symbol.toLowerCase()===q || t.name.toLowerCase()===q || t.address.toLowerCase()===q);
-      if(found){ suggestionsEl.style.display='none'; inputEl.value = found.symbol; onSelect(found); return; }
-      // otherwise pick first fuzzy
+      const found = tokenList.find(t=>(t.symbol||'').toLowerCase()===q || (t.name||'').toLowerCase()===q || (t.address||'').toLowerCase()===q);
+      if(found){ inputEl.value = found.symbol; suggestEl.style.display='none'; onSelect(found); return; }
       const fuzzy = tokenList.find(t => (t.symbol||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q));
-      if(fuzzy){ suggestionsEl.style.display='none'; inputEl.value = fuzzy.symbol; onSelect(fuzzy); }
+      if(fuzzy){ inputEl.value = fuzzy.symbol; suggestEl.style.display='none'; onSelect(fuzzy); return; }
+      suggestEl.style.display='none';
     }
   });
 }
 
-/* ================== Selected tokens & chart ================== */
-let selectedFrom = null, selectedTo = null;
-function openChartForToken(token){
-  // Prefer GeckoTerminal embed path for polygon token: /polygon/tokens/<address>?embed=1
-  const addr = token.address;
-  const geckoUrl = `https://www.geckoterminal.com/polygon/tokens/${addr}?embed=1`;
-  const dexUrl = `https://www.dexscreener.com/polygon/${addr}?embed=1`;
-  const iframe = $('chartIframe');
-  // Try GeckoTerminal first (most professional). If blocked by CORS or not found, use Dexscreener fallback.
-  iframe.src = geckoUrl;
-  $('chartWrap').style.display = 'block';
+attachAuto(fromInput, fromSuggest, tok=>{
+  selectedFrom = tok; openChart(tok.address); updateQuotePreview();
+});
+attachAuto(toInput, toSuggest, tok=>{
+  selectedTo = tok; openChart(tok.address); updateQuotePreview();
+});
+
+/* ================= chart open logic (Gecko first, Dexscreener fallback) ================= */
+function openChart(address){
+  if(!address) return;
+  // ensure address normalized
+  const a = address.toLowerCase();
+  // GeckoTerminal embed (preferred)
+  const gecko = `https://www.geckoterminal.com/polygon/tokens/${a}?embed=1`;
+  const dexs = `https://www.dexscreener.com/polygon/${a}?embed=1`;
+  chartFrame.src = gecko;
+  chartWrap.style.display = 'block';
+  // if gecko fails to load after timeout, fallback to dexscreener
+  // Listen for load event and error fallback
+  let fallbackTimer = setTimeout(()=>{ /* if still not loaded, switch */ chartFrame.src = dexs; }, 3500);
+  chartFrame.onload = ()=>{ clearTimeout(fallbackTimer); /* success */ };
+  chartFrame.onerror = ()=>{ clearTimeout(fallbackTimer); chartFrame.src = dexs; };
 }
 
-/* ================== autocomplete attach ================== */
-attachAutocomplete($('fromSearch'), $('fromSuggestions'), (token)=>{
-  selectedFrom = token;
-  $('selectedPair').textContent = `${token.symbol} → —`;
-  if(selectedTo) $('selectedPair').textContent = `${token.symbol} → ${selectedTo.symbol}`;
-  openChartForToken(token);
-});
-attachAutocomplete($('toSearch'), $('toSuggestions'), (token)=>{
-  selectedTo = token;
-  if(selectedFrom) $('selectedPair').textContent = `${selectedFrom.symbol} → ${token.symbol}`;
-  openChartForToken(token);
-});
+/* open NOLA chart on start */
+openChart(INITIAL_NOLA_TOKEN);
 
-/* ============== 1inch quote & swap ============== */
-$('quoteBtn').addEventListener('click', async ()=>{
-  if(!selectedFrom || !selectedTo) return alert('Choose From and To tokens first');
-  const amount = parseFloat($('fromAmount').value || '0');
-  if(!amount || amount<=0) return alert('Enter amount to swap');
-  // convert to token decimals
-  const decimalsFrom = selectedFrom.decimals || 18;
-  const amountInt = BigInt(Math.floor(amount * (10**decimalsFrom)));
-  const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt.toString()}`;
+/* ================= CoinGecko USD price function ================= */
+async function fetchUsdPrice(address){
   try{
-    $('quoteArea').style.display='block';
-    $('quoteText').textContent = 'Fetching best price...';
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('Quote failed');
-    const q = await res.json();
-    // q.toTokenAmount is integer; show readable
-    const toAmount = Number(q.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
-    $('quoteText').innerHTML = `Estimated: <strong>${toAmount.toLocaleString(undefined,{maximumFractionDigits:6})} ${selectedTo.symbol}</strong>`;
-    $('swapBtn').style.display = 'inline-block';
-  }catch(err){
-    console.error(err);
-    $('quoteText').textContent = 'Quote failed. Try different amount or tokens.';
+    const resp = await fetch(COINGECKO_TOKEN_PRICE(address));
+    const json = await resp.json();
+    const v = json[address.toLowerCase()]?.usd ?? null;
+    return v;
+  }catch(e){ return null; }
+}
+
+/* ================= Quote & Swap (1inch) ================= */
+function toDecimalBigInt(valueStr, decimals){
+  const decimalsNum = decimals || 18;
+  const [intPart, decPart=''] = String(valueStr).split('.');
+  const intBig = BigInt(intPart || '0') * (BigInt(10) ** BigInt(decimalsNum));
+  const decNormalized = (decPart + '0'.repeat(decimalsNum)).slice(0, decimalsNum).slice(0, decimalsNum);
+  const decBig = BigInt(decNormalized || '0') * (BigInt(10) ** BigInt(0)) / (BigInt(10) ** BigInt(decPart.length || 0));
+  // Simpler approach:
+  const combined = BigInt((intPart || '0')) * (BigInt(10) ** BigInt(decimalsNum)) + BigInt((decPart + '0'.repeat(decimalsNum)).slice(0,decimalsNum));
+  return combined;
+}
+
+function toBigIntAmount(value, decimals){
+  const d = decimals || 18;
+  const parts = String(value).split('.');
+  if(parts.length === 1) return BigInt(parts[0]) * (BigInt(10)**BigInt(d));
+  const intPart = parts[0] || '0';
+  const decPart = (parts[1] || '').slice(0,d).padEnd(d,'0');
+  return BigInt(intPart) * (BigInt(10)**BigInt(d)) + BigInt(decPart);
+}
+
+quoteBtn.addEventListener('click', async ()=>{
+  if(!selectedFrom || !selectedTo) return alert('Select From and To tokens first');
+  const amount = (fromAmount.value||'').trim();
+  if(!amount) return alert('Enter amount');
+  quoteText.textContent = 'Fetching best price...';
+  try{
+    const amountInt = toBigIntAmount(amount, selectedFrom.decimals || 18).toString();
+    const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('quote failed');
+    const data = await r.json();
+    const out = Number(data.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
+    // fetch USD price of toToken for display
+    const usd = await fetchUsdPrice(selectedTo.address);
+    quoteText.innerHTML = `Estimated: <strong>${out.toLocaleString(undefined,{maximumFractionDigits:6})} ${selectedTo.symbol}</strong>${usd?(' • ~$'+(out*(usd)).toFixed(2)) : ''}`;
+    swapBtn.disabled = false;
+  }catch(e){
+    console.error(e);
+    quoteText.textContent = 'Quote failed. Try again.';
+    swapBtn.disabled = true;
   }
 });
 
-let provider = null; let signer = null; let userAddress = null;
+/* ================ Wallet connection (MetaMask + WalletConnect v2 via Web3Modal) ================ */
+let web3modalInstance = null;
+let wcProvider = null;
 
-/* ============== Wallet connection (MetaMask + WalletConnect v2 via Web3Modal) ============== */
-async function connectWalletUI(){
-  // Try MetaMask first
+async function initWeb3Modal(){
+  try{
+    const client = new window.WalletConnectWeb3Modal.default({
+      projectId: WALLETCONNECT_PROJECT_ID,
+      themeMode: 'dark'
+    });
+    web3modalInstance = client;
+  }catch(e){
+    console.warn('Web3Modal init failed', e);
+  }
+}
+initWeb3Modal();
+
+async function connectWallet(){
+  // MetaMask preferred
   if(window.ethereum && window.ethereum.isMetaMask){
     provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
+    await provider.send('eth_requestAccounts', []);
     signer = provider.getSigner();
     userAddress = await signer.getAddress();
-    $('addrChip').style.display = 'inline-block';
-    $('addrChip').textContent = short(userAddress);
-    return provider;
+    addrChip.style.display = 'inline-block';
+    addrChip.textContent = userAddress.slice(0,6)+'…'+userAddress.slice(-4);
+    return true;
   }
-
-  // If WalletConnect Project ID provided, try Web3Modal (WalletConnect v2)
-  if(WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
+  // fallback to WalletConnect modal (requires project id)
+  if(web3modalInstance && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
     try{
-      const w3m = new window.Web3ModalHTML.default({
-        projectId: WALLETCONNECT_PROJECT_ID,
-        // theme options can be set here
-      });
-      await w3m.openModal(); // opens wallet modal
-      const wcProvider = await w3m.connect();
+      wcProvider = await web3modalInstance.openModal(); // opens modal/QR/links
       provider = new ethers.providers.Web3Provider(wcProvider);
       signer = provider.getSigner();
       userAddress = await signer.getAddress();
-      $('addrChip').style.display = 'inline-block';
-      $('addrChip').textContent = short(userAddress);
-      return provider;
-    }catch(e){
-      console.error('WalletConnect failed', e);
+      addrChip.style.display = 'inline-block';
+      addrChip.textContent = userAddress.slice(0,6)+'…'+userAddress.slice(-4);
+      return true;
+    }catch(err){
+      console.error('WalletConnect connect failed', err);
+      return false;
     }
   }
-
-  alert('No wallet found. Install MetaMask or paste a WalletConnect Project ID in the code.');
-  return null;
+  alert('No wallet found. Install MetaMask or set WalletConnect project ID in code.');
+  return false;
 }
 
-$('connectBtn').addEventListener('click', async ()=>{
-  await connectWalletUI();
-});
+connectWalletFloating.addEventListener('click', connectWallet);
 
-/* ============== Swap execution via 1inch/swap endpoint ============== */
-$('swapBtn').addEventListener('click', async ()=>{
-  if(!provider){
-    // only trigger connect when attempting a transaction
-    const ok = confirm('You need to connect a wallet to perform swaps. Connect now?');
+/* ================ Swap execution (1inch swap endpoint) ================ */
+swapBtn.addEventListener('click', async ()=>{
+  if(!provider || !signer){
+    const ok = confirm('You need to connect wallet to swap. Connect now?');
     if(!ok) return;
-    await connectWalletUI();
-    if(!provider) return;
+    const ok2 = await connectWallet();
+    if(!ok2) return;
   }
-  if(!selectedFrom || !selectedTo) return alert('Pick tokens first');
-  const fromAmount = parseFloat($('fromAmount').value || '0');
-  if(!fromAmount || fromAmount<=0) return alert('Enter amount');
-  const amountInt = (BigInt(Math.floor(fromAmount * (10**(selectedFrom.decimals||18)))));
-  // Build swap URL
-  const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt.toString()}&fromAddress=${userAddress}&slippage=1`;
+  if(!selectedFrom || !selectedTo) return alert('Select tokens first');
+  const amount = (fromAmount.value||'').trim();
+  if(!amount) return alert('Enter amount');
   try{
+    const amountInt = toBigIntAmount(amount, selectedFrom.decimals || 18).toString();
+    const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}&fromAddress=${userAddress}&slippage=1`;
     const res = await fetch(swapUrl);
     const data = await res.json();
-    if(data && data.tx){
-      // send transaction via signer
-      const txParams = data.tx;
-      // some providers expect hex values for gas etc; ethers supports this via signer.sendTransaction
-      const tx = await signer.sendTransaction({
-        to: txParams.to,
-        data: txParams.data,
-        value: txParams.value ? BigInt(txParams.value) : undefined,
-        gasLimit: txParams.gas ? BigInt(txParams.gas) : undefined,
-        gasPrice: txParams.gasPrice ? BigInt(txParams.gasPrice) : undefined
-      });
-      alert('Swap tx sent: ' + tx.hash);
-    } else {
-      console.error('Swap response', data);
-      alert('Swap failed to build. See console.');
-    }
-  }catch(err){
-    console.error('swap error',err);
-    alert('Swap execution failed: '+ (err?.message || err));
+    if(!data.tx) throw new Error('swap build failed');
+    const txParams = data.tx;
+    const tx = await signer.sendTransaction({
+      to: txParams.to,
+      data: txParams.data,
+      value: txParams.value ? txParams.value : undefined
+    });
+    alert('Swap tx sent: ' + tx.hash);
+  }catch(e){
+    console.error(e);
+    alert('Swap failed: ' + (e.message || e));
   }
 });
 
-/* ============== Portfolio preview (read-only without connect) ============== */
-async function updatePortfolioPreview(){
-  // show top tokens example (MATIC, USDC, WETH)
-  const top = tokenList.filter(t=>['MATIC','USDC','WETH','USDT'].includes(t.symbol)).slice(0,6);
-  const node = $('portfolioList');
-  node.innerHTML = '';
-  top.forEach(t=>{
-    const div = document.createElement('div'); div.style.display='flex'; div.style.alignItems='center'; div.style.gap='10px'; div.style.marginBottom='10px';
-    div.innerHTML = `<img src="${t.logoURI||''}" style="width:28px;height:28px;border-radius:8px"><div style="flex:1"><div style="font-weight:700">${t.symbol}</div><div style="font-size:12px;color:rgba(255,255,255,0.6)">${t.name}</div></div><div style="font-weight:800">$0.00</div>`;
-    node.appendChild(div);
-  });
-}
-setTimeout(updatePortfolioPreview,1200);
-
-/* ================== Chat (Gun) - global peers ================== */
-const gun = Gun({
-  peers: [
-    'https://relay.peer.ooo/gun',
-    'https://gun-us.herokuapp.com/gun',
-    'https://gun-manhattan.herokuapp.com/gun'
-  ]
-});
-const chatNode = gun.get('nola_global_chat_v1'); // unique key
-const chatList = $('chatList');
+/* ================= Chat (Gun.js) global peers + themed modal ================= */
+const gun = Gun({ peers: GUN_PEERS });
+const chatNode = gun.get('nola_exchange_global_chat_v1');
+let chatUser = null;
 const userColors = {};
-function colorFor(name){
-  if(userColors[name]) return userColors[name];
-  const c = '#'+Math.floor(Math.random()*16777215).toString(16);
-  userColors[name]=c; return c;
-}
-let chatUsername = null;
-$('sendMsg').addEventListener('click', ()=>{
-  const txt = $('chatInput').value.trim();
+function pickColor(name){ if(userColors[name]) return userColors[name]; const c = '#'+Math.floor(Math.random()*16777215).toString(16); userColors[name]=c; return c; }
+
+sendChatBtn.addEventListener('click', ()=>{
+  const txt = (chatInput.value||'').trim();
   if(!txt) return;
-  if(!chatUsername){
-    chatUsername = prompt('Choose a username for chat 🌌') || ('anon'+Math.floor(Math.random()*999));
+  if(!chatUser){
+    usernameModal.style.display = 'flex';
+    return;
   }
-  const item = { user: chatUsername, text: txt, color: colorFor(chatUsername), t: Date.now() };
+  const item = { user: chatUser, text: txt, color: pickColor(chatUser), t: Date.now() };
   chatNode.set(item);
-  $('chatInput').value='';
+  chatInput.value = '';
 });
 
-// listen
-chatNode.map().on((msg)=>{
-  if(!msg || !msg.user || !msg.text) return;
-  const el = document.createElement('div'); el.className='msg';
-  el.style.background = (msg.color || '#8a2be233');
-  el.innerHTML = `<div style="font-weight:800;color:${msg.color||'#fff'}">${msg.user}</div><div style="margin-top:6px">${escapeHtml(msg.text)}</div>`;
-  chatList.appendChild(el);
-  chatList.scrollTop = chatList.scrollHeight;
+confirmName.addEventListener('click', ()=>{
+  const v = (modalName.value||'').trim();
+  chatUser = v || ('Anon'+Math.floor(Math.random()*999));
+  usernameModal.style.display = 'none';
 });
 
-/* ================== Helpers ================== */
-function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+cancelName.addEventListener('click', ()=>{ usernameModal.style.display='none'; });
 
-/* ============== Initial small UI tweaks ============== */
-$('chartWrap').style.display = 'none';
-$('swapBtn').style.display = 'none';
+// listen to chat
+chatNode.map().on(m=>{
+  if(!m || !m.user || !m.text) return;
+  const el = document.createElement('div'); el.className='chat-msg';
+  el.style.background = (m.color || '#8a2be233');
+  el.innerHTML = `<div class="chat-who" style="color:${m.color||'#fff'}">${escapeHtml(m.user)}</div><div>${escapeHtml(m.text)}</div>`;
+  chatMessages.appendChild(el);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+/* ===== Helper ===== */
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ===== On load, open NOLA token chart immediately ===== */
+openChart(INITIAL_NOLA_TOKEN);
 
 </script>
 </body>
