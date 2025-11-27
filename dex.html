@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>NOLA Exchange</title>
 <style>
-/* THEME + THIN BAR APPEARANCE (kept intact + slimmer bars) */
-body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
-.container {width:90%; max-width:480px; margin:56px auto 40px; background:rgba(255,255,255,0.05); border-radius:25px; padding:20px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3); position:relative;}
+/* layout: center page */
+html,body{height:100%; margin:0;}
+body {display:flex; align-items:center; justify-content:center; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
+
+/* container centered */
+.container {width:90%; max-width:480px; background:rgba(255,255,255,0.05); border-radius:25px; padding:20px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3); position:relative; margin:auto;}
 h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff; margin:6px 0 12px 0;}
+
 /* thin professional bars */
 .input-box {margin-top:14px; padding:8px 10px; background:rgba(255,255,255,0.02); border-radius:12px; position:relative;}
 .input-box .token-top {display:flex; align-items:center; justify-content:space-between; gap:8px;}
@@ -16,7 +20,7 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff; margin:6px 0 1
 .token-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; flex-shrink:0; display:none;} /* hidden until token chosen */
 .token-left input[type="text"]{border:none; background:transparent; color:#fff; font-weight:700; font-size:15px; outline:none; width:100%; min-width:60px; padding:6px 0;}
 
-/* amount + USD on the right (appearance kept but slim) */
+/* amount + USD on the right */
 .token-right {display:flex; align-items:center; gap:8px;}
 .token-right .amount{ padding:6px 8px; border-radius:10px; border:none; background:rgba(255,255,255,0.03); color:#fff; font-size:15px; width:110px; text-align:right; }
 .token-right .usd { font-size:13px; opacity:0.9; min-width:110px; text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
@@ -33,12 +37,12 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff; margin:6px 0 1
 .suggestion-name { font-size:12px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .suggestion-price { text-align:right; font-size:13px; opacity:0.95; min-width:100px; }
 
-/* button styles */
+/* buttons */
 .btn {width:100%; padding:14px; margin-top:18px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 14px 30px rgba(180,68,255,0.12);}
 footer {text-align:center; margin:26px 0 10px 0; font-size:14px; opacity:0.8;}
 footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 
-/* small controls - swap button */
+/* swap button */
 #swapTokensBtn {
   position:absolute;
   right:18px;
@@ -67,7 +71,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 /* logo floating upper-middle center */
 #logoFloat {
   position:fixed;
-  top:6px;
+  top:8px;
   left:50%;
   transform:translateX(-50%);
   width:88px;
@@ -77,9 +81,6 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   z-index:998;
 }
 @keyframes float { 0%{ transform:translateX(-50%) translateY(0) } 50%{ transform:translateX(-50%) translateY(-8px) } 100%{ transform:translateX(-50%) translateY(0) } }
-
-/* icon small & hidden until chosen (kept earlier) */
-.token-left img.displayed { display:inline-block; opacity:1; }
 
 /* responsive */
 @media(max-width:420px){
@@ -96,7 +97,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <!-- floating logo centered top -->
 <img id="logoFloat" src="logo.gif" alt="NOLA Logo">
 
-<!-- Wallet iframe slot (you host the small button UI in walletconnect.html) -->
+<!-- Wallet iframe slot -->
 <iframe id="walletFrame" src="walletconnect.html" title="Wallet Connect"></iframe>
 <button id="walletFallback" style="display:none">Connect</button>
 
@@ -111,7 +112,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
             </div>
             <div class="token-right">
                 <input id="fromAmount" class="amount" type="number" placeholder="Amount" min="0" step="any">
-                <div id="fromUsd" class="usd">
+                <div id="fromUsd" class="usd" style="display:none;">
                   <span class="usd-top" id="fromUsdTop">≈ $—</span>
                   <span class="usd-main" id="fromUsdMain">— / unit</span>
                 </div>
@@ -130,7 +131,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
             </div>
             <div class="token-right">
                 <input id="toAmount" class="amount" type="number" placeholder="Estimated" readonly>
-                <div id="toUsd" class="usd">
+                <div id="toUsd" class="usd" style="display:none;">
                   <span class="usd-top" id="toUsdTop">≈ $—</span>
                   <span class="usd-main" id="toUsdMain">per unit</span>
                 </div>
@@ -176,10 +177,11 @@ let tokenMap = new Map();
 let cgStatsMap = new Map();
 const priceCache = new Map();
 
-/* DOM shortcuts */
+/* DOM */
 const $ = id => document.getElementById(id);
 const fromTokenInput = $('fromToken'), toTokenInput = $('toToken');
 const fromAmountEl = $('fromAmount'), toAmountEl = $('toAmount');
+const fromUsd = $('fromUsd'), toUsd = $('toUsd');
 const fromUsdTop = $('fromUsdTop'), fromUsdMain = $('fromUsdMain');
 const toUsdTop = $('toUsdTop'), toUsdMain = $('toUsdMain');
 const fromLogo = $('fromLogo'), toLogo = $('toLogo');
@@ -187,7 +189,6 @@ const swapBtn = $('swapTokensBtn');
 const walletFrame = $('walletFrame');
 const walletFallback = $('walletFallback');
 
-/* helpers */
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
 const low = s => (s||'').toLowerCase();
 const nowTs = ()=> Date.now();
@@ -208,16 +209,16 @@ function fetchWithTimeout(url, opts={}, ms=3000){
   return fetch(url, init).finally(()=> clearTimeout(id));
 }
 
-/* LOAD tokens & CG markets */
+/* LOAD tokens & CoinGecko markets */
 async function loadTokensAndMarkets(){
   try {
     const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
     const j = await r.json();
     tokenList = (j.tokens||[]).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
     tokenList.forEach(t => tokenMap.set(t.address, t));
-    if (!tokenMap.has(MATIC_ADDR)) { tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' }); }
+    if (!tokenMap.has(MATIC_ADDR)) tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
 
-    // CoinGecko markets (top 250) for price/change/volume
+    // CG markets (top 250)
     try {
       const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
       const rm = await fetch(marketsUrl);
@@ -230,7 +231,7 @@ async function loadTokensAndMarkets(){
       });
     } catch(e){ console.warn('CoinGecko markets failed', e); }
 
-    // merge 1inch tokens fallback (non-fatal)
+    // merge 1inch tokens fallback
     try {
       const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
       const j1 = await r1.json();
@@ -254,7 +255,7 @@ async function loadTokensAndMarkets(){
 let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
-/* Price fetchers (priority CG contract -> CG markets -> 1inch -> dexscreener) */
+/* Price fetchers */
 async function fetchCoingeckoContractPrice(addr){
   try {
     const url = `https://api.coingecko.com/api/v3/coins/${COINGECKO_CHAIN}/contract/${addr}`;
@@ -303,12 +304,10 @@ async function getTokenPriceUSD(address, decimals=18){
   const addr = low(address);
   const c = priceCache.get(addr);
   if (c && (nowTs() - c.ts) < 7000) return c.price; // 7s TTL
-  // coinGecko contract
   try {
     const cg = await fetchCoingeckoContractPrice(addr);
     if (cg && cg.price){ priceCache.set(addr,{price:cg.price,ts:nowTs()}); return cg.price; }
   } catch(_) {}
-  // coinGecko markets by symbol
   try {
     const t = tokenMap.get(addr);
     if (t && t.symbol){
@@ -316,12 +315,10 @@ async function getTokenPriceUSD(address, decimals=18){
       if (stat && stat.price){ priceCache.set(addr,{price:stat.price,ts:nowTs()}); return stat.price; }
     }
   } catch(_) {}
-  // 1inch
   try {
     const v = await fetch1InchQuotePrice(addr, decimals);
     if (v){ priceCache.set(addr,{price:v,ts:nowTs()}); return v; }
   } catch(_) {}
-  // dexscreener
   try {
     const v2 = await fetchDexscreenerPrice(addr);
     if (v2){ priceCache.set(addr,{price:v2,ts:nowTs()}); return v2; }
@@ -330,7 +327,7 @@ async function getTokenPriceUSD(address, decimals=18){
   return null;
 }
 
-/* suggestion builder - shows small 24h change if available */
+/* suggestion item */
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
@@ -340,7 +337,6 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   const sym = document.createElement('div'); sym.className='suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address?tokenObj.address.slice(0,6):'');
   const nm = document.createElement('div'); nm.className='suggestion-name'; nm.textContent = tokenObj.name || '';
   main.appendChild(sym); main.appendChild(nm);
-  // add change small under name when available
   if (stats && typeof stats.change24h === 'number') {
     const ch = document.createElement('div'); ch.style.fontSize='11px'; ch.style.marginTop='6px'; ch.style.opacity='0.9'; ch.textContent = (stats.change24h>=0?'+':'')+stats.change24h.toFixed(2)+'% (24h)';
     ch.style.color = stats.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
@@ -354,7 +350,7 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   return row;
 }
 
-/* show default suggestions (top 15 CG by volume) */
+/* default list (top 15 CG by 24h volume) */
 function showDefaultList(side){
   const box = (side === 'from') ? $('fromSuggestions') : $('toSuggestions');
   box.innerHTML = '';
@@ -375,7 +371,7 @@ function showDefaultList(side){
   })();
 }
 
-/* autocomplete (CG priority then 1inch fallback) */
+/* autocomplete — typing: prioritize CG 24h volume */
 function setupAutocomplete(inputId, suggestionsId, side){
   const input = $(inputId), box = $(suggestionsId);
   let timer = null;
@@ -385,15 +381,47 @@ function setupAutocomplete(inputId, suggestionsId, side){
 
   async function handle(q){
     box.innerHTML = ''; if (!q){ box.style.display='none'; return; }
-    if (isAddress(q)){ let info = tokenMap.get(low(q)); if (!info) info = await fetchOnchainTokenInfo(q); if (info){ const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null; const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals); const node = makeSuggestionItem(info, {change24h: stat?.change24h ?? null, image: info.logoURI}, price); node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; updateEstimate(); fetchBothPrices(); }); box.appendChild(node); box.style.display='block'; } return; }
+    if (isAddress(q)){
+      let info = tokenMap.get(low(q));
+      if (!info) info = await fetchOnchainTokenInfo(q);
+      if (info){
+        const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
+        const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
+        const node = makeSuggestionItem(info, {change24h: stat?.change24h ?? null, image: info.logoURI}, price);
+        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; updateEstimate(); fetchBothPrices(); });
+        box.appendChild(node); box.style.display='block';
+      }
+      return;
+    }
 
-    const cgMatches = tokenList.filter(t => { const s=t.symbol||'', n=t.name||''; const hasStat = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n)); return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q)) && hasStat; });
-    const cgScored = cgMatches.map(t => { const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || {volume24h:0,price:null,change24h:null}; const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q))||(t.name && t.name.toLowerCase().startsWith(q))) ? 1e12 : 0; return {t,stats,score:(stats.volume24h||0)+startBonus}; });
+    // CG matches with stats first (sorted by 24h volume)
+    const cgMatches = tokenList.filter(t => {
+      const s = t.symbol || '', n = t.name || '';
+      const hasStat = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
+      return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q)) && hasStat;
+    });
+    let cgScored = cgMatches.map(t => {
+      const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || {volume24h:0,price:null,change24h:null};
+      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e12 : 0;
+      return { t, stats, score: (stats.volume24h||0) + startBonus };
+    });
+    // sort by volume desc (primary), then by startBonus
+    cgScored.sort((a,b)=> {
+      const va = (a.stats.volume24h||0), vb = (b.stats.volume24h||0);
+      if (vb !== va) return vb - va;
+      return b.score - a.score;
+    });
 
-    const inchMatches = tokenList.filter(t => { const s=t.symbol||'', n=t.name||''; const alreadyCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n)); return !alreadyCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q)); });
-    const inchScored = inchMatches.map(t => { const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q))||(t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0; return {t,stats:null,score:startBonus}; });
+    // 1inch fallback matches (no CG stats) — keep them after CG
+    const inchMatches = tokenList.filter(t => {
+      const s = t.symbol || '', n = t.name || '';
+      const alreadyCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
+      return !alreadyCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
+    });
+    const inchScored = inchMatches.map(t => { const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0; return {t,stats:null,score:startBonus}; });
+    inchScored.sort((a,b)=> b.score - a.score);
 
-    const merged = cgScored.sort((a,b)=> b.score - a.score).concat(inchScored.sort((a,b)=> b.score - a.score)).slice(0,18);
+    const merged = cgScored.concat(inchScored).slice(0,18);
     if (!merged.length){ box.style.display='none'; return; }
 
     for (const s of merged){
@@ -410,19 +438,27 @@ function setupAutocomplete(inputId, suggestionsId, side){
 setupAutocomplete('fromToken','fromSuggestions','from');
 setupAutocomplete('toToken','toSuggestions','to');
 
-/* apply token selection: show small icon only when chosen */
+/* apply token selection: show USD block only when token chosen */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? fromTokenInput : toTokenInput;
   const logo = (side === 'from') ? fromLogo : toLogo;
+  const usdBlock = (side === 'from') ? fromUsd : toUsd;
   const addrLower = tokenObj.address ? low(tokenObj.address) : undefined;
   input.value = tokenObj.symbol || tokenObj.name || (addrLower?addrLower.slice(0,8):'');
   if (addrLower) input.dataset.address = addrLower;
   input.dataset.decimals = tokenObj.decimals || 18;
-  if (tokenObj.logoURI){ logo.src = tokenObj.logoURI; logo.style.display = 'inline-block'; }
-  else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
+  if (tokenObj.logoURI){ logo.src = tokenObj.logoURI; logo.style.display = 'inline-block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
   tokenMap.set(tokenObj.address, tokenObj);
+  // show usd area (it will be updated by fetchPriceForToken)
+  usdBlock.style.display = 'flex';
   fetchPriceForToken(tokenObj.address, tokenObj.decimals, side);
+}
+
+/* hide USD blocks if no token selected */
+function updateUsdVisibility(){
+  if (!fromTokenInput.dataset.address) { fromUsd.style.display = 'none'; } else { fromUsd.style.display = 'flex'; }
+  if (!toTokenInput.dataset.address) { toUsd.style.display = 'none'; } else { toUsd.style.display = 'flex'; }
 }
 
 /* on-paste detection */
@@ -439,6 +475,7 @@ document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
           tokenMap.set(info.address, info);
           const logo = (inp.id === 'fromToken') ? fromLogo : toLogo;
           if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'inline-block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
+          updateUsdVisibility();
           fetchBothPrices(); updateQuoteDebounced(); updateEstimate();
         }
       }, 10);
@@ -446,7 +483,7 @@ document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
   });
 });
 
-/* fetch onchain metadata */
+/* fetch onchain metadata fallback */
 async function fetchOnchainTokenInfo(address){
   try {
     const addrL = low(address);
@@ -462,28 +499,29 @@ async function fetchOnchainTokenInfo(address){
   } catch(e){ console.warn('fetchOnchainTokenInfo failed', e); return null; }
 }
 
-/* fetch price for single token & update USD displays */
+/* fetch price for a token and update USD displays */
 async function fetchPriceForToken(address, decimals, side){
   try {
     if (!address) return;
     const price = await getTokenPriceUSD(address, decimals);
-    const usdTop = (side === 'from') ? fromUsdTop : toUsdTop;
-    const usdMain = (side === 'from') ? fromUsdMain : toUsdMain;
+    const usdElTop = (side === 'from') ? fromUsdTop : toUsdTop;
+    const usdElMain = (side === 'from') ? fromUsdMain : toUsdMain;
     const amtEl = (side === 'from') ? fromAmountEl : toAmountEl;
     const amt = Number(amtEl.value || 0);
     if (price != null && !Number.isNaN(amt) && amt>0) {
-      usdTop.textContent = '≈ ' + formatUSD(Number(price) * amt);
-      usdMain.textContent = `${formatUSD(price)} / unit`;
+      usdElTop.textContent = '≈ ' + formatUSD(Number(price) * amt);
+      usdElMain.textContent = `${formatUSD(price)} / unit`;
     } else if (price != null) {
-      usdTop.textContent = '≈ ' + formatUSD(price);
-      usdMain.textContent = `${formatUSD(price)} / unit`;
+      usdElTop.textContent = '≈ ' + formatUSD(price);
+      usdElMain.textContent = `${formatUSD(price)} / unit`;
     } else {
-      usdTop.textContent = '≈ $—';
-      usdMain.textContent = '— / unit';
+      usdElTop.textContent = '≈ $—';
+      usdElMain.textContent = '— / unit';
     }
   } catch(e){ console.warn('fetchPriceForToken error', e); }
 }
 
+/* fetch both prices */
 async function fetchBothPrices(){
   const fAddr = low(fromTokenInput.dataset.address || '');
   const tAddr = low(toTokenInput.dataset.address || '');
@@ -495,7 +533,7 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* QUOTE via 1inch (live) */
+/* QUOTE via 1inch */
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 120); }
 
@@ -504,7 +542,7 @@ async function updateQuote(){
     const fromAddr = low(fromTokenInput.dataset.address || '');
     const toAddr = low(toTokenInput.dataset.address || '');
     const amount = fromAmountEl.value;
-    if (!fromAddr || !toAddr || !amount) { toAmountEl.value = ''; await fetchBothPrices(); return; }
+    if (!fromAddr || !toAddr || !amount) { /* keep existing */ await fetchBothPrices(); return; }
 
     const fromDecimals = Number(fromTokenInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
     const toDecimals = Number(toTokenInput.dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
@@ -515,23 +553,18 @@ async function updateQuote(){
     if (j && j.toTokenAmount) {
       const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals);
       toAmountEl.value = formattedTo;
-    } else {
-      // if 1inch failed, we leave it to the math estimate
-      // toAmountEl.value = '';
     }
-
     await fetchBothPrices();
   } catch (e) {
     console.warn('updateQuote error (1inch)', e);
-    // don't clear estimate — keep math estimate
     await fetchBothPrices();
   }
 }
 
-/* live update on amount user input: run both quote and math estimate */
+/* live update when typing amount */
 fromAmountEl.addEventListener('input', ()=>{ updateQuoteDebounced(); updateEstimate(); });
 
-/* SIMPLE MATH ESTIMATE: FROM_USD = FROM_AMOUNT * FROM_PRICE ; TO_ESTIMATE = FROM_USD / TO_PRICE */
+/* SIMPLE MATH ESTIMATE: FROM_USD -> TO_ESTIMATE */
 async function updateEstimate(){
   try {
     await ensureTokensLoaded();
@@ -540,7 +573,7 @@ async function updateEstimate(){
     const fromAddr = low(fromTokenInput.dataset.address || '');
     const toAddr = low(toTokenInput.dataset.address || '');
     const fromAmount = Number(fromAmountEl.value || 0);
-    if (!fromAddr || !toAddr || !fromAmount || Number.isNaN(fromAmount) || fromAmount <= 0) { /* keep existing toAmount if 1inch set it */ return; }
+    if (!fromAddr || !toAddr || !fromAmount || Number.isNaN(fromAmount) || fromAmount <= 0) return;
 
     const fDec = Number(fromTokenInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
     const tDec = Number(toTokenInput.dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
@@ -551,10 +584,10 @@ async function updateEstimate(){
     const fromUSD = Number(fromAmount) * Number(fromPrice);
     const estimatedTo = fromUSD / Number(toPrice);
     const display = (Number.isFinite(estimatedTo)) ? Number(estimatedTo.toFixed(6)).toString() : '';
-    // only set estimate if 1inch didn't already provide a value or to override with math (we set regardless)
     toAmountEl.value = display;
 
-    // update USD per-unit displays
+    fromUsd.style.display = 'flex';
+    toUsd.style.display = 'flex';
     fromUsdTop.textContent = `≈ ${formatUSD(fromUSD)}`;
     fromUsdMain.textContent = `${formatUSD(fromPrice)} / unit`;
     toUsdTop.textContent = `≈ ${formatUSD(toPrice)}`;
@@ -576,7 +609,7 @@ function resolveTokenInputsIfNeeded(){
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
 }
 
-/* swap UI action */
+/* swap fields action */
 swapBtn.addEventListener('click', ()=>{
   swapBtn.classList.add('pressed');
   setTimeout(()=> swapBtn.classList.remove('pressed'), 400);
@@ -598,20 +631,19 @@ swapBtn.addEventListener('click', ()=>{
 
   fromAmountEl.value = aTo; toAmountEl.value = aFrom;
 
-  updateQuoteDebounced(); fetchBothPrices(); updateEstimate();
+  updateQuoteDebounced(); fetchBothPrices(); updateEstimate(); updateUsdVisibility();
 });
 
-/* swap button (actual swap) - requires wallet connection (handled separately) */
+/* "swap" button behaviour: expects wallet in iframe */
 $('swapBtn').addEventListener('click', ()=> {
-  // open walletconnect iframe in case wallet UI inside it
   try { walletFrame.focus(); } catch(e){}
-  alert('To swap: connect wallet (use the small Wallet widget on the top-right iframe). This page expects wallet UI hosted in walletconnect.html.');
+  alert('To run a swap: connect wallet via the small Wallet UI in the top-right iframe (walletconnect.html).');
 });
 
-/* Attempt fallback if iframe blocked */
+/* iframe fallback */
 walletFrame.addEventListener('error', ()=>{ walletFrame.style.display='none'; walletFallback.style.display='block'; walletFallback.addEventListener('click', ()=> window.open('walletconnect.html','walletconnect','width=420,height=760')); });
 
-/* refresh CoinGecko every 7s and update caches + UI */
+/* refresh CG every 7s and update price cache + UI */
 async function refreshCoinGeckoMarkets(){
   try {
     const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
@@ -623,12 +655,11 @@ async function refreshCoinGeckoMarkets(){
       const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'' };
       if (sym) cgStatsMap.set(sym, stat);
       if (name) cgStatsMap.set(name, stat);
-      // update priceCache for known token addresses with same symbol
       tokenList.forEach(t => { if (t.symbol && low(t.symbol) === sym) priceCache.set(t.address, { price: stat.price, ts: nowTs() }); });
     });
-    // refresh visible UI
     fetchBothPrices();
     updateEstimate();
+    updateUsdVisibility();
   } catch(e){ console.warn('refreshCoinGeckoMarkets error', e); }
 }
 
@@ -642,11 +673,11 @@ function startBackgroundRefresh(){
 /* init */
 (async function init(){
   await ensureTokensLoaded();
-  // default tokens: USDC -> top CG token if available
   const usdc = tokenList.find(t => t.address && t.address.toLowerCase() === USDC_ADDR.toLowerCase());
-  if (usdc) { fromTokenInput.value = usdc.symbol || 'USDC'; fromTokenInput.dataset.address = usdc.address; fromTokenInput.dataset.decimals = usdc.decimals || 6; if (usdc.logoURI) { fromLogo.src = usdc.logoURI; fromLogo.style.display='inline-block'; } }
+  if (usdc) { fromTokenInput.value = usdc.symbol || 'USDC'; fromTokenInput.dataset.address = usdc.address; fromTokenInput.dataset.decimals = usdc.decimals || 6; if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='inline-block'; } }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
-  if (top) { toTokenInput.value = top.symbol || top.name; toTokenInput.dataset.address = top.address; toTokenInput.dataset.decimals = top.decimals || 18; if (top.logoURI) { toLogo.src = top.logoURI; toLogo.style.display='inline-block'; } }
+  if (top) { toTokenInput.value = top.symbol || top.name; toTokenInput.dataset.address = top.address; toTokenInput.dataset.decimals = top.decimals || 18; if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='inline-block'; } }
+  updateUsdVisibility();
   fetchBothPrices();
   startBackgroundRefresh();
 })();
