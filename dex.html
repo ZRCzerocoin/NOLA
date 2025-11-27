@@ -5,24 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOLA Exchange</title>
 <style>
-/* ===== BASIC THEME ===== */
-body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
-.container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}
-h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
-.input-box {margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:16px; position:relative;}
-.input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
+* {margin:0; padding:0; box-sizing:border-box; font-family:'Arial',sans-serif;}
+body {overflow-x:hidden; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff; scroll-behavior:smooth;}
+.logo { width:150px; display:block; margin:25px auto; }
+.container { width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); }
+.input-box { margin-top:20px; padding:12px; background:rgba(255,255,255,0.05); border-radius:16px; position:relative; }
+.input-box input, .input-box label{width:100%; padding:8px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px; margin-top:4px;}
 .suggestions { position:absolute; top:50px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
 .suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; }
 .suggestion-item img { width:24px; height:24px; margin-right:10px; border-radius:12px; }
-.btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}
-footer {text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;}
-footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
+.btn { width:100%; padding:14px; margin-top:15px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer; }
+footer { text-align:center; margin-top:40px; font-size:14px; opacity:0.8; }
+footer a{color:#fff; text-decoration:underline; margin:0 5px;}
 </style>
 </head>
 <body>
 
+<img src="nol.png" class="logo">
+
 <div class="container">
-    <h2>NOLA Exchange</h2>
+    <h2 style="text-align:center;">NOLA Exchange</h2>
 
     <div class="input-box">
         <input type="text" id="fromToken" placeholder="From Token">
@@ -34,107 +36,102 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
         <div class="suggestions" id="toSuggestions"></div>
     </div>
 
+    <div class="input-box">
+        <label for="slippage">Slippage %</label>
+        <input type="number" id="slippage" value="1" min="0" max="10" step="0.1">
+    </div>
+
+    <button class="btn" id="connectWalletBtn">Connect MetaMask</button>
+    <button class="btn" id="connectWalletConnectBtn">Connect WalletConnect</button>
     <button class="btn" id="swapBtn">Swap</button>
 </div>
 
 <footer>
-&copy; 2025 NOLA | <a href="Terms.html">Privacy & Terms</a> | 
-<a href="#" id="nolTokenLink">NOLA Token</a> | 
-<a href="#" id="xLink">X</a> | 
-<a href="#" id="telegramLink">Telegram</a>
+    &copy; NOLA Exchange | <a href="Terms.html">Privacy & Terms</a> | <a href="#">NOLA Token</a> | <a href="#">X</a> | <a href="#">Telegram</a>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 
 <script>
-let tokenList = [];
-let provider;
-let signer;
-let walletConnected = false;
+let tokenList=[];
+fetch('https://api.1inch.io/v5.0/137/tokens')
+.then(res=>res.json())
+.then(data=>{ tokenList = Object.values(data.tokens); });
 
-// Load tokens from Coingecko (Polygon)
-async function loadTokens(){
-    try{
-        const res = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
-        const data = await res.json();
-        tokenList = data.tokens;
-    }catch(e){ console.error('Token list load failed', e); }
-}
-loadTokens();
-
-// Autocomplete setup
 function setupAutocomplete(inputId, suggestionsId){
     const input = document.getElementById(inputId);
-    const box = document.getElementById(suggestionsId);
+    const suggestionsBox = document.getElementById(suggestionsId);
     input.addEventListener('input',()=>{
         const val = input.value.toLowerCase();
-        box.innerHTML = '';
-        if(!val) { box.style.display='none'; return; }
+        suggestionsBox.innerHTML='';
+        if(!val) { suggestionsBox.style.display='none'; return; }
         const filtered = tokenList.filter(t => t.symbol.toLowerCase().startsWith(val) || t.name.toLowerCase().startsWith(val)).slice(0,6);
         filtered.forEach(token=>{
-            const div = document.createElement('div');
+            const div=document.createElement('div');
             div.className='suggestion-item';
-            div.innerHTML = `<img src="${token.logoURI}"><span>${token.symbol} - ${token.name}</span>`;
-            div.onclick = ()=>{
-                input.value = token.symbol;
-                input.dataset.address = token.address;
-                box.style.display='none';
-            };
-            box.appendChild(div);
+            div.innerHTML=`<img src="${token.logoURI}"><span>${token.symbol} - ${token.name}</span>`;
+            div.onclick=()=>{ input.value=token.symbol; input.dataset.address=token.address; suggestionsBox.style.display='none'; };
+            suggestionsBox.appendChild(div);
         });
-        box.style.display = filtered.length?'block':'none';
+        suggestionsBox.style.display = filtered.length?'block':'none';
     });
 }
 setupAutocomplete('fromToken','fromSuggestions');
 setupAutocomplete('toToken','toSuggestions');
 
-// Connect wallet function
-async function connectWallet(){
+let provider, signer, walletConnected=false;
+
+async function connectWallet() {
     if(walletConnected) return;
     if(window.ethereum){
         provider = new ethers.providers.Web3Provider(window.ethereum);
         await provider.send("eth_requestAccounts", []);
         signer = provider.getSigner();
-        walletConnected = true;
-        console.log('MetaMask connected');
-    } else {
-        // WalletConnect v2
-        const wcProvider = new WalletConnectProvider.default({
-            projectId: "YOUR_WC_PROJECT_ID", // placeholder
-            chains: [137],
-        });
-        await wcProvider.enable();
-        provider = new ethers.providers.Web3Provider(wcProvider);
-        signer = provider.getSigner();
-        walletConnected = true;
-        console.log('WalletConnect connected');
+        walletConnected=true;
+        alert('MetaMask connected');
     }
 }
 
-// Swap button
+document.getElementById('connectWalletBtn').onclick = connectWallet;
+
+document.getElementById('connectWalletConnectBtn').onclick = async ()=>{
+    if(walletConnected) return;
+    const wcProvider = new WalletConnectProvider.default({
+        projectId: "YOUR_WC_PROJECT_ID", 
+        chains: [137],
+    });
+    await wcProvider.enable();
+    provider = new ethers.providers.Web3Provider(wcProvider);
+    signer = provider.getSigner();
+    walletConnected = true;
+    alert('WalletConnect connected');
+}
+
 document.getElementById('swapBtn').onclick = async ()=>{
-    const from = document.getElementById('fromToken');
-    const to = document.getElementById('toToken');
-    if(!from.dataset.address || !to.dataset.address){
+    const fromInput = document.getElementById('fromToken');
+    const toInput = document.getElementById('toToken');
+    const slippageInput = document.getElementById('slippage');
+    const slippage = parseFloat(slippageInput.value) || 1;
+
+    if(!fromInput.dataset.address || !toInput.dataset.address){
         alert('Select both tokens!');
         return;
     }
     await connectWallet();
 
-    const fromAddr = from.dataset.address;
-    const toAddr = to.dataset.address;
-    const amount = ethers.utils.parseUnits('1', 18); // Example: 1 token, replace with input if needed
+    const fromAddr = fromInput.dataset.address;
+    const toAddr = toInput.dataset.address;
+    const amount = ethers.utils.parseUnits('1', 18);
 
-    // 1inch swap URL (Polygon)
-    const swapUrl = `https://api.1inch.io/v5.0/137/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount.toString()}&fromAddress=${await signer.getAddress()}&slippage=1`;
-    const res = await fetch(swapUrl);
-    const data = await res.json();
-    if(data.tx){
-        const tx = await signer.sendTransaction(data.tx);
-        console.log('Swap sent', tx.hash);
-        alert('Swap transaction sent: '+tx.hash);
-    } else { alert('Swap failed'); }
+    try{
+        const res = await fetch(`https://api.1inch.io/v5.0/137/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount.toString()}&fromAddress=${await signer.getAddress()}&slippage=${slippage}`);
+        const data = await res.json();
+        if(data.tx){
+            const tx = await signer.sendTransaction(data.tx);
+            alert('Swap sent: '+tx.hash);
+        } else alert('Swap failed: '+JSON.stringify(data));
+    }catch(e){ alert('Swap error: '+e.message); }
 };
 </script>
 </body>
