@@ -1,24 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>NOLA Exchange</title>
 <style>
-/* ===== BASIC THEME ===== */
+/* ===== BASIC THEME (kept UI intact as requested) ===== */
 body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
-.container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}
+.container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3); position:relative;}
 h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
 .input-box {margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:16px; position:relative;}
 .input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
-.suggestions { position:absolute; top:50px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
-.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; }
-.suggestion-item img { width:24px; height:24px; margin-right:10px; border-radius:12px; }
-.swap-button {position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(180,0,255,0.7); border:none; border-radius:50%; width:40px; height:40px; cursor:pointer; font-size:20px;}
+.suggestions { position:absolute; top:56px; left:0; width:100%; background:rgba(25,0,50,0.98); border-radius:12px; max-height:260px; overflow-y:auto; display:none; z-index:100; box-shadow:0 6px 18px rgba(0,0,0,0.6);}
+.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; gap:10px; border-bottom:1px solid rgba(255,255,255,0.02); }
+.suggestion-item:hover { background: rgba(255,255,255,0.02); }
+.suggestion-item img { width:28px; height:28px; border-radius:8px; object-fit:cover; }
+.swap-circle { position:absolute; left:50%; transform:translateX(-50%); top: calc(50% - 20px); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background: rgba(180,0,255,0.85); border:3px solid rgba(255,255,255,0.03); cursor:pointer; z-index:150; font-size:18px; }
 .btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}
 footer {text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;}
 footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
-#walletConnectBtn {position:fixed; top:20px; right:20px; padding:12px 18px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; cursor:pointer; z-index:200;}
+#walletConnectBtn {position:fixed; top:18px; right:18px; padding:10px 14px; border:none; border-radius:18px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; cursor:pointer; z-index:999; font-weight:600;}
+.token-meta { font-size:13px; opacity:0.9; display:block; }
+.small-muted { font-size:12px; opacity:0.7; }
 </style>
 </head>
 <body>
@@ -28,15 +31,15 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <div class="container">
     <h2>NOLA Exchange</h2>
 
-    <div class="input-box" style="position:relative;">
-        <input type="text" id="fromToken" placeholder="From Token">
+    <div class="input-box" id="fromBox">
+        <input type="text" id="fromToken" placeholder="From Token (symbol, name or address)">
         <div class="suggestions" id="fromSuggestions"></div>
     </div>
 
-    <button class="swap-button" id="swapTokensBtn">🔃</button>
+    <div class="swap-circle" id="swapTokensBtn" title="Swap From / To">🔃</div>
 
-    <div class="input-box" style="position:relative; margin-top:60px;">
-        <input type="text" id="toToken" placeholder="To Token">
+    <div class="input-box" id="toBox" style="margin-top:40px;">
+        <input type="text" id="toToken" placeholder="To Token (symbol, name or address)">
         <div class="suggestions" id="toSuggestions"></div>
     </div>
 
@@ -50,120 +53,301 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <a href="#" id="telegramLink">Telegram</a>
 </footer>
 
+<!-- Ethers + WalletConnect (v1) -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 
 <script>
-let tokenList = [];
-let provider;
-let signer;
+/*
+  Features implemented:
+  - Merges token lists from Coingecko (Polygon) + 1inch (Polygon) for broader suggestions
+  - Autocomplete supports symbol/name/address (substring matching)
+  - If user types/pastes a 0x address not in lists, can use it directly
+  - Small circular 🔃 button swaps tokens and their stored addresses
+  - Floating Connect Wallet button (MetaMask if available, WalletConnect fallback)
+  - Uses 1inch swap API for demo swap flow (Polygon chain 137)
+*/
+
+const CHAIN_ID = 137; // Polygon chain id used for API endpoints
+let tokenList = []; // array of token objects: {address, symbol, name, decimals, logoURI}
+let provider = null;
+let signer = null;
 let walletConnected = false;
 
-// Load tokens from Coingecko + Uniswap
-async function loadTokens(){
-    try{
-        // Coingecko Polygon tokens
-        const cg = await fetch('https://tokens.coingecko.com/polygon-pos/all.json').then(r=>r.json());
-        tokenList = cg.tokens;
+// Utility: lowercased address key
+const addrKey = a => (a || '').toLowerCase();
 
-        // Example Uniswap token fetch (replace with real subgraph endpoint if needed)
-        const uniRes = await fetch('https://api.coingecko.com/api/v3/coins/list'); // fallback for demo
-        const uniTokens = await uniRes.json();
-        // merge unique by symbol
-        uniTokens.forEach(t=>{
-            if(!tokenList.find(x=>x.symbol.toLowerCase()===t.symbol.toLowerCase())){
-                tokenList.push({name:t.name,symbol:t.symbol,address:t.id,logoURI:"https://via.placeholder.com/24"});
+// Load and merge tokens from Coingecko (polygon token list) + 1inch token list (polygon)
+async function loadTokens() {
+    try {
+        // Coingecko polygon tokenlist (official hosted list)
+        const cgResp = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
+        const cg = await cgResp.json();
+        const cgTokens = (cg.tokens || []).map(t => ({
+            address: addrKey(t.address || t.contract_address || ''),
+            symbol: t.symbol || '',
+            name: t.name || '',
+            decimals: t.decimals || 18,
+            logoURI: t.logoURI || t.logo || t.logoURI || t.logoURI
+        }));
+
+        // 1inch polygon token list (broader)
+        // Endpoint returns mapping address => {symbol,name,decimals,logoURI}
+        const oneInchResp = await fetch('https://tokens.1inch.io/v1.1/137');
+        const oneInchMap = await oneInchResp.json();
+        const oneInchTokens = Object.keys(oneInchMap || {}).map(a => {
+            const t = oneInchMap[a];
+            return {
+                address: addrKey(a),
+                symbol: t.symbol || '',
+                name: t.name || '',
+                decimals: t.decimals || 18,
+                logoURI: t.logoURI || ''
+            };
+        });
+
+        // Merge unique by address (prefer Coingecko for logo if present)
+        const map = new Map();
+        cgTokens.forEach(t => {
+            if (t.address) map.set(t.address, t);
+        });
+        oneInchTokens.forEach(t => {
+            if (!t.address) return;
+            if (map.has(t.address)) {
+                // ensure logo exists
+                const exist = map.get(t.address);
+                if (!exist.logoURI && t.logoURI) exist.logoURI = t.logoURI;
+            } else {
+                map.set(t.address, t);
             }
         });
 
-    }catch(e){ console.error('Token list load failed', e); }
+        // Also include a native MATIC pseudo-token for convenience
+        const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+        if (!map.has(MATIC_ADDR)) {
+            map.set(MATIC_ADDR, {
+                address: MATIC_ADDR,
+                symbol: 'MATIC',
+                name: 'Polygon (MATIC)',
+                decimals: 18,
+                logoURI: 'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png'
+            });
+        }
+
+        tokenList = Array.from(map.values()).filter(t => t.address);
+        console.log('Loaded tokens:', tokenList.length);
+    } catch (e) {
+        console.error('loadTokens error', e);
+        // fallback: keep tokenList empty, but UI still allows addresses
+    }
 }
 loadTokens();
 
-// Autocomplete setup
-function setupAutocomplete(inputId, suggestionsId){
-    const input = document.getElementById(inputId);
-    const box = document.getElementById(suggestionsId);
-    input.addEventListener('input',()=>{
-        const val = input.value.toLowerCase();
+// DOM helpers
+const $ = id => document.getElementById(id);
+const isAddress = (v) => /^0x[a-fA-F0-9]{40}$/.test(v.trim());
+
+// Autocomplete: substring match on symbol/name/address
+function setupAutocomplete(inputId, suggestionsId) {
+    const input = $(inputId);
+    const box = $(suggestionsId);
+
+    // Show suggestions when typing or focusing
+    input.addEventListener('input', onChange);
+    input.addEventListener('focus', onChange);
+
+    // Hide on blur (with small timeout to allow click)
+    input.addEventListener('blur', () => setTimeout(()=>box.style.display='none', 150));
+
+    function onChange() {
+        const q = input.value.trim().toLowerCase();
         box.innerHTML = '';
-        if(!val) { box.style.display='none'; return; }
-        const filtered = tokenList.filter(t => t.symbol.toLowerCase().startsWith(val) || t.name.toLowerCase().startsWith(val) || (t.address && t.address.toLowerCase()===val)).slice(0,6);
-        filtered.forEach(token=>{
+
+        // If it's an address and exists in list, show it first
+        if (isAddress(q)) {
+            const found = tokenList.find(t => t.address === q);
+            if (found) {
+                appendToken(found);
+                box.style.display = 'block';
+                return;
+            } else {
+                // offer direct-use action for unknown address
+                const div = document.createElement('div');
+                div.className = 'suggestion-item';
+                div.innerHTML = `<div style="display:flex;flex-direction:column;">
+                    <span class="token-meta">Use address <span class="small-muted">${q}</span></span>
+                    <span class="small-muted">Token not in lists — proceed using this address</span>
+                </div>`;
+                div.onclick = ()=>{
+                    // store address and set a user-friendly label
+                    input.dataset.address = q;
+                    input.value = `${q.slice(0,6)}...${q.slice(-4)}`;
+                    box.style.display = 'none';
+                };
+                box.appendChild(div);
+                box.style.display = 'block';
+                return;
+            }
+        }
+
+        if (!q) { box.style.display='none'; return; }
+
+        // substring match on symbol/name/address (case-insensitive)
+        const matched = tokenList.filter(t =>
+            (t.symbol && t.symbol.toLowerCase().includes(q)) ||
+            (t.name && t.name.toLowerCase().includes(q)) ||
+            (t.address && t.address.toLowerCase().includes(q))
+        ).slice(0,12);
+
+        if (!matched.length) {
+            // show no results suggestion
             const div = document.createElement('div');
-            div.className='suggestion-item';
-            div.innerHTML = `<img src="${token.logoURI}"><span>${token.symbol} - ${token.name}</span>`;
+            div.className = 'suggestion-item';
+            div.innerHTML = `<div style="display:flex;flex-direction:column;">
+                <span class="token-meta">No matches</span>
+                <span class="small-muted">Try full address or different spelling</span>
+            </div>`;
+            box.appendChild(div);
+            box.style.display = 'block';
+            return;
+        }
+
+        matched.forEach(appendToken);
+        box.style.display = matched.length ? 'block' : 'none';
+
+        function appendToken(token) {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            const logo = token.logoURI ? `<img src="${token.logoURI}" onerror="this.onerror=null;this.src='https://via.placeholder.com/28/222222/888888?text=?';">` : `<img src="https://via.placeholder.com/28/222222/888888?text=?">`;
+            div.innerHTML = `${logo}<div style="display:flex;flex-direction:column;">
+                <strong style="font-size:15px">${token.symbol || '—' } <span style="opacity:0.8">·</span> <span class="small-muted" style="font-weight:400">${token.name || ''}</span></strong>
+                <span class="small-muted">${token.address}</span>
+            </div>`;
             div.onclick = ()=>{
-                input.value = token.symbol;
+                input.value = token.symbol || token.name || token.address;
                 input.dataset.address = token.address;
-                box.style.display='none';
+                // keep a readable label if address-like (user-friendly)
+                if (isAddress(token.address)) {
+                    // show symbol (keeps symbol visible)
+                    input.value = token.symbol ? `${token.symbol}` : `${token.address.slice(0,6)}...${token.address.slice(-4)}`;
+                }
+                box.style.display = 'none';
             };
             box.appendChild(div);
-        });
-        box.style.display = filtered.length?'block':'none';
-    });
+        }
+    }
 }
-setupAutocomplete('fromToken','fromSuggestions');
-setupAutocomplete('toToken','toSuggestions');
 
-// Swap From/To tokens button
-document.getElementById('swapTokensBtn').onclick = ()=>{
-    const from = document.getElementById('fromToken');
-    const to = document.getElementById('toToken');
-    const tempVal = from.value;
-    const tempAddr = from.dataset.address;
+// initialize autocompletes
+setupAutocomplete('fromToken', 'fromSuggestions');
+setupAutocomplete('toToken', 'toSuggestions');
+
+// Swap small circular button
+$('swapTokensBtn').addEventListener('click', ()=>{
+    const from = $('fromToken');
+    const to = $('toToken');
+
+    const tmpVal = from.value;
+    const tmpAddr = from.dataset.address || '';
     from.value = to.value;
-    from.dataset.address = to.dataset.address;
-    to.value = tempVal;
-    to.dataset.address = tempAddr;
-};
+    from.dataset.address = to.dataset.address || '';
+    to.value = tmpVal;
+    to.dataset.address = tmpAddr;
+});
 
-// Connect wallet
-async function connectWallet(){
-    if(walletConnected) return;
-    if(window.ethereum){
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send("eth_requestAccounts", []);
-        signer = provider.getSigner();
-        walletConnected = true;
-        alert('MetaMask connected');
-    } else {
+// Wallet connection (MetaMask preferred, WalletConnect fallback)
+async function connectWallet() {
+    if (walletConnected && signer) return;
+    try {
+        if (window.ethereum) {
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            walletConnected = true;
+            alert('MetaMask connected');
+            $('walletConnectBtn').textContent = 'Connected';
+            return;
+        }
+        // WalletConnect v1 provider using public Polygon RPC
         const wcProvider = new WalletConnectProvider.default({
-            projectId: "YOUR_WC_PROJECT_ID", // replace
-            chains: [137],
+            rpc: { 137: "https://polygon-rpc.com" },
+            chainId: 137,
         });
         await wcProvider.enable();
         provider = new ethers.providers.Web3Provider(wcProvider);
         signer = provider.getSigner();
         walletConnected = true;
         alert('WalletConnect connected');
+        $('walletConnectBtn').textContent = 'Connected';
+    } catch (e) {
+        console.error('connectWallet error', e);
+        alert('Wallet connect failed: ' + (e.message || e));
     }
 }
-document.getElementById('walletConnectBtn').onclick = connectWallet;
+$('walletConnectBtn').addEventListener('click', connectWallet);
 
-// Swap button
-document.getElementById('swapBtn').onclick = async ()=>{
-    const from = document.getElementById('fromToken');
-    const to = document.getElementById('toToken');
-    if(!from.dataset.address || !to.dataset.address){
-        alert('Select both tokens!');
-        return;
-    }
-    await connectWallet();
-    const fromAddr = from.dataset.address;
-    const toAddr = to.dataset.address;
-    const amount = ethers.utils.parseUnits('1', 18); // example amount
+// Helper: ensure input address is normalized if user pastes address
+document.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('paste', (ev)=>{
+        const text = (ev.clipboardData || window.clipboardData).getData('text').trim();
+        if (isAddress(text)) {
+            // set after a small tick so input receives paste content too
+            setTimeout(()=> {
+                const el = ev.target;
+                el.dataset.address = text.toLowerCase();
+                // keep user-visible value as symbol if known
+                const found = tokenList.find(t => t.address === text.toLowerCase());
+                if (found) el.value = found.symbol || found.name || `${text.slice(0,6)}...${text.slice(-4)}`;
+                else el.value = `${text.slice(0,6)}...${text.slice(-4)}`;
+            }, 10);
+        }
+    });
+});
 
-    try{
-        const swapUrl = `https://api.1inch.io/v5.0/137/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount.toString()}&fromAddress=${await signer.getAddress()}&slippage=1`;
+// Swap (calls 1inch swap API, requires connected wallet)
+$('swapBtn').addEventListener('click', async ()=> {
+    try {
+        const fromEl = $('fromToken');
+        const toEl = $('toToken');
+        const fromAddress = (fromEl.dataset.address || '').toLowerCase();
+        const toAddress = (toEl.dataset.address || '').toLowerCase();
+
+        if (!fromAddress || !toAddress) {
+            alert('Select both tokens (symbol or paste address).');
+            return;
+        }
+        await connectWallet();
+        if (!signer) { alert('Wallet not connected'); return; }
+
+        // For demo: using amount = 1 * 10^decimals of from token (if we can find decimals)
+        const fromToken = tokenList.find(t => t.address === fromAddress);
+        const decimals = (fromToken && fromToken.decimals) ? Number(fromToken.decimals) : 18;
+        const amount = ethers.utils.parseUnits('1', decimals); // swap 1 token
+
+        const userAddress = await signer.getAddress();
+
+        // Build 1inch swap URL (v5)
+        const swapUrl = `https://api.1inch.io/v5.0/${CHAIN_ID}/swap?fromTokenAddress=${fromAddress}&toTokenAddress=${toAddress}&amount=${amount.toString()}&fromAddress=${userAddress}&slippage=1`;
+
         const res = await fetch(swapUrl);
         const data = await res.json();
-        if(data.tx){
-            const tx = await signer.sendTransaction(data.tx);
-            alert('Swap transaction sent: '+tx.hash);
-        } else { alert('Swap failed'); }
-    } catch(e){ alert('Swap error'); console.error(e); }
-};
+
+        if (data && data.tx) {
+            // data.tx is ready-to-send transaction object: {to, data, value, gasPrice, gas}
+            // Some fields may be strings; ethers accepts that.
+            const txResponse = await signer.sendTransaction(data.tx);
+            alert('Swap sent, tx hash: ' + txResponse.hash);
+            console.log('swap tx', txResponse);
+        } else {
+            console.error('1inch swap response', data);
+            alert('Swap quote failed — see console for details.');
+        }
+    } catch (err) {
+        console.error('Swap error', err);
+        alert('Swap error: ' + (err.message || err));
+    }
+});
+
 </script>
 </body>
 </html>
