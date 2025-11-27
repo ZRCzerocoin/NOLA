@@ -5,22 +5,74 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOLA Exchange</title>
 <style>
-body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
-.container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}
-h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
-.input-box {margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:16px; position:relative;}
-.input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
-.suggestions { position:absolute; top:50px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
-.suggestion-item { padding:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
-.suggestion-item img { width:24px; height:24px; margin-right:10px; border-radius:12px; }
-.suggestion-info { display:flex; align-items:center; }
-.suggestion-price { font-size:12px; color:#b0b0ff; }
-.btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}
-footer {text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;}
-footer a {color:#b445ff; text-decoration:none; margin:0 5px;}
-#walletBtn {position:fixed; top:15px; right:15px; padding:10px 15px; border:none; border-radius:12px; background:#7013ff; color:#fff; cursor:pointer; z-index:999;}
-.slippage-select { width:100%; margin-top:10px; border-radius:12px; padding:8px; font-size:14px;}
-#swapTokensBtn {position:absolute; top:50%; right:10px; transform:translateY(-50%); width:35px; height:35px; border-radius:50%; border:none; background:#7013ff; color:#fff; cursor:pointer; font-size:18px; z-index:100;}
+/* ===== BASIC THEME ===== */
+body {
+  margin:0; padding:0; font-family:'Arial',sans-serif;
+  background: radial-gradient(circle at center, #0c0014, #1a002b 80%);
+  color:#fff;
+}
+.container {
+  width:90%; max-width:480px; margin:40px auto;
+  background:rgba(255,255,255,0.05); border-radius:25px;
+  padding:25px; backdrop-filter:blur(18px);
+  box-shadow:0 0 25px rgba(180,0,255,0.3);
+}
+h2 {
+  text-align:center; color:#e0b3ff;
+  text-shadow:0 0 8px #b445ff;
+}
+.input-box {
+  margin-top:20px; padding:15px;
+  background:rgba(255,255,255,0.05); border-radius:16px;
+  position:relative;
+}
+.input-box input {
+  width:100%; padding:12px;
+  border-radius:12px; border:none;
+  background:rgba(255,255,255,0.05);
+  color:#fff; font-size:16px;
+}
+.suggestions {
+  position:absolute; top:50px; left:0;
+  width:100%; background:rgba(25,0,50,0.95);
+  border-radius:12px; max-height:200px;
+  overflow-y:auto; display:none; z-index:100;
+}
+.suggestion-item {
+  padding:10px; display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer;
+}
+.suggestion-item img {
+  width:24px; height:24px; margin-right:10px; border-radius:12px;
+}
+.suggestion-info {
+  display:flex; align-items:center;
+}
+.suggestion-price {
+  font-size:12px; color:#b0b0ff;
+}
+.btn {
+  width:100%; padding:14px; margin-top:20px;
+  border:none; border-radius:20px;
+  background: linear-gradient(135deg,#b445ff,#7013ff);
+  color:#fff; font-size:18px; cursor:pointer;
+}
+footer {
+  text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;
+}
+footer a {
+  color:#b445ff; text-decoration:none; margin:0 5px;
+}
+#walletBtn {
+  position:fixed; top:15px; right:15px;
+  padding:10px 15px; border:none; border-radius:12px;
+  background:#7013ff; color:#fff; cursor:pointer;
+  z-index:999;
+}
+.slippage-select {
+  width:100%; margin-top:10px; border-radius:12px;
+  padding:8px; font-size:14px;
+}
 </style>
 </head>
 <body>
@@ -35,9 +87,8 @@ footer a {color:#b445ff; text-decoration:none; margin:0 5px;}
     <div class="suggestions" id="globalSuggestions"></div>
   </div>
 
-  <div class="input-box" style="position:relative;">
+  <div class="input-box">
     <input type="text" id="fromToken" placeholder="From Token">
-    <button id="swapTokensBtn">&#x21c4;</button>
     <div class="suggestions" id="fromSuggestions"></div>
   </div>
 
@@ -88,38 +139,48 @@ async function loadTokens(){
     const data = await res.json();
     tokenList = data.tokens;
 
+    // Fetch prices in USD
     const ids = tokenList.map(t => t.id).filter(Boolean).join(',');
     if(ids){
       const priceRes = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
       const priceData = await priceRes.json();
-      for(const t of tokenList){ prices[t.address] = priceData[t.id]?.usd || 0; }
+      for(const t of tokenList){
+        prices[t.address] = priceData[t.id]?.usd || 0;
+      }
     }
   }catch(e){ console.error('Token list load failed', e);}
 }
 loadTokens();
 
+// Utility to create suggestion items
 function createSuggestionItem(token){
   const div = document.createElement('div');
   div.className='suggestion-item';
-  div.innerHTML = `<div class="suggestion-info"><img src="${token.logoURI}"/>${token.symbol}</div><div class="suggestion-price">≈ $${prices[token.address]?.toFixed(2)||'0.00'}</div>`;
+  div.innerHTML = `<div class="suggestion-info"><img src="${token.logoURI}" />${token.symbol}</div><div class="suggestion-price">≈ $${prices[token.address]?.toFixed(2)||'0.00'}</div>`;
   div.dataset.address = token.address;
   div.dataset.symbol = token.symbol;
   div.dataset.token = JSON.stringify(token);
   return div;
 }
 
+// Autocomplete setup
 function setupAutocomplete(inputId, suggestionsId){
   const input = document.getElementById(inputId);
   const box = document.getElementById(suggestionsId);
+
   input.addEventListener('input',()=>{
     const val = input.value.toLowerCase();
-    box.innerHTML='';
+    box.innerHTML = '';
     if(!val){ box.style.display='none'; return;}
-    const filtered = tokenList.filter(t=>t.symbol.toLowerCase().includes(val)||t.name.toLowerCase().includes(val))
-      .sort((a,b)=> (b.volume||0)-(a.volume||0)).slice(0,8);
+
+    // Sort by 24h_volume (desc) if available
+    const filtered = tokenList.filter(t => t.symbol.toLowerCase().includes(val)||t.name.toLowerCase().includes(val))
+      .sort((a,b)=> (b.volume||0)-(a.volume||0))
+      .slice(0,8);
+
     filtered.forEach(token=>{
       const item = createSuggestionItem(token);
-      item.onclick=()=>{
+      item.onclick = ()=>{
         input.value = token.symbol;
         input.dataset.address = token.address;
         box.style.display='none';
@@ -136,13 +197,16 @@ const globalSearch = document.getElementById('globalSearch');
 const globalBox = document.getElementById('globalSuggestions');
 globalSearch.addEventListener('input',()=>{
   const val = globalSearch.value.toLowerCase();
-  globalBox.innerHTML='';
+  globalBox.innerHTML = '';
   if(!val){ globalBox.style.display='none'; return;}
-  const filtered = tokenList.filter(t=>t.symbol.toLowerCase().includes(val)||t.name.toLowerCase().includes(val))
-    .sort((a,b)=> (b.volume||0)-(a.volume||0)).slice(0,8);
+
+  const filtered = tokenList.filter(t => t.symbol.toLowerCase().includes(val)||t.name.toLowerCase().includes(val))
+    .sort((a,b)=> (b.volume||0)-(a.volume||0))
+    .slice(0,8);
+
   filtered.forEach(token=>{
     const item = createSuggestionItem(token);
-    item.onclick=()=>{
+    item.onclick = ()=>{
       const toInput = document.getElementById('toToken');
       toInput.value = token.symbol;
       toInput.dataset.address = token.address;
@@ -161,7 +225,10 @@ setupAutocomplete('toToken','toSuggestions');
 // Wallet connect
 async function connectWallet(){
   if(walletConnected) return;
-  const wcProvider = new WalletConnectProvider.default({projectId, chains:[137]});
+  const wcProvider = new WalletConnectProvider.default({
+    projectId,
+    chains:[137]
+  });
   await wcProvider.enable();
   provider = new ethers.providers.Web3Provider(wcProvider);
   signer = provider.getSigner();
@@ -169,29 +236,9 @@ async function connectWallet(){
   console.log('Wallet connected');
 }
 
-document.getElementById('walletBtn').onclick=connectWallet;
+document.getElementById('walletBtn').onclick = connectWallet;
 
-// Swap tokens button
-document.getElementById('swapTokensBtn').onclick=()=>{
-  const fromInput = document.getElementById('fromToken');
-  const toInput = document.getElementById('toToken');
-  const fromAmount = fromAmountInput.value;
-  const toAmount = toAmountInput.value;
-  // Swap addresses
-  const tempAddr = fromInput.dataset.address;
-  fromInput.dataset.address = toInput.dataset.address;
-  toInput.dataset.address = tempAddr;
-  // Swap symbols
-  const tempVal = fromInput.value;
-  fromInput.value = toInput.value;
-  toInput.value = tempVal;
-  // Swap amounts
-  fromAmountInput.value = toAmount;
-  toAmountInput.value = fromAmount;
-  updateEstimate();
-}
-
-// Estimate
+// Swap and estimate
 const fromAmountInput = document.getElementById('fromAmount');
 const toAmountInput = document.getElementById('toAmount');
 
@@ -200,13 +247,18 @@ async function updateEstimate(){
   const toInput = document.getElementById('toToken');
   if(!fromInput.dataset.address || !toInput.dataset.address) return;
   if(!fromAmountInput.value) return;
-  const amount = ethers.utils.parseUnits(fromAmountInput.value||'0',18);
+
+  const amount = ethers.utils.parseUnits(fromAmountInput.value || '0', 18);
+  const fromAddr = fromInput.dataset.address;
+  const toAddr = toInput.dataset.address;
+
   try{
-    const quoteRes = await fetch(`https://api.1inch.io/v5.0/137/quote?fromTokenAddress=${fromInput.dataset.address}&toTokenAddress=${toInput.dataset.address}&amount=${amount.toString()}`);
+    const quoteRes = await fetch(`https://api.1inch.io/v5.0/137/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount.toString()}`);
     const quote = await quoteRes.json();
-    const toToken = tokenList.find(t=>t.address===toInput.dataset.address);
-    const decimals = toToken?.decimals||18;
-    toAmountInput.value = ethers.utils.formatUnits(quote.toTokenAmount,decimals);
+    const toToken = tokenList.find(t=>t.address===toAddr);
+    const decimals = toToken?.decimals || 18;
+    const estimated = ethers.utils.formatUnits(quote.toTokenAmount, decimals);
+    toAmountInput.value = estimated;
   }catch(e){ console.error(e);}
 }
 
@@ -215,26 +267,30 @@ document.getElementById('fromToken').addEventListener('input',updateEstimate);
 document.getElementById('toToken').addEventListener('input',updateEstimate);
 
 // Swap button
-document.getElementById('swapBtn').onclick=async()=>{
+document.getElementById('swapBtn').onclick = async ()=>{
   const fromInput = document.getElementById('fromToken');
   const toInput = document.getElementById('toToken');
   if(!fromInput.dataset.address || !toInput.dataset.address){ alert('Select both tokens!'); return;}
   if(!fromAmountInput.value || Number(fromAmountInput.value)<=0){ alert('Enter amount'); return;}
-  if(!walletConnected) await connectWallet();
 
-  const amount = ethers.utils.parseUnits(fromAmountInput.value,18);
+  if(!walletConnected) await connectWallet();
+  const fromAddr = fromInput.dataset.address;
+  const toAddr = toInput.dataset.address;
+  const amount = ethers.utils.parseUnits(fromAmountInput.value, 18);
   const slippage = document.getElementById('slippage').value;
 
   try{
-    const swapRes = await fetch(`https://api.1inch.io/v5.0/137/swap?fromTokenAddress=${fromInput.dataset.address}&toTokenAddress=${toInput.dataset.address}&amount=${amount.toString()}&fromAddress=${await signer.getAddress()}&slippage=${slippage}`);
+    const swapRes = await fetch(`https://api.1inch.io/v5.0/137/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amount.toString()}&fromAddress=${await signer.getAddress()}&slippage=${slippage}`);
     const swapData = await swapRes.json();
     if(swapData.tx){
       const tx = await signer.sendTransaction(swapData.tx);
-      console.log('Swap sent',tx.hash);
+      console.log('Swap sent', tx.hash);
       alert('Swap transaction sent: '+tx.hash);
-    } else { alert('Swap failed'); }
+    } else {
+      alert('Swap failed');
+    }
   }catch(e){ console.error(e);}
-}
+};
 </script>
 </body>
 </html>
