@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NOLA Exchange</title>
 <style>
-/* ===== BASIC THEME ===== (unchanged) */
+/* ===== BASIC THEME ===== (kept exactly as you provided, with tiny additions for suggestions) */
 body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}
 .container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}
 h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
@@ -13,17 +13,17 @@ h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}
 .input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
 .suggestions { position:absolute; top:50px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
 .suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; }
-.suggestion-left { display:flex; align-items:center; gap:10px; }
+.suggestion-left { display:flex; gap:10px; align-items:center; }
 .suggestion-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; }
 .suggestion-main { display:flex; flex-direction:column; }
 .suggestion-symbol { font-weight:700; font-size:14px; }
 .suggestion-name { font-size:12px; opacity:0.8; }
-.suggestion-price { text-align:right; font-size:13px; opacity:0.9; }
+.suggestion-price { text-align:right; font-size:13px; opacity:0.9; min-width:88px; }
 .btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}
 footer {text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;}
 footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 
-/* Small added UI elements — kept subtle and aligned with theme */
+/* small controls added but conservative so theme remains intact */
 #swapTokensBtn {
   position:absolute;
   left:50%;
@@ -42,7 +42,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   color:#fff;
   z-index:150;
 }
-#walletConnectBtn {
+#walletConnectBtn{
   position:fixed;
   top:16px;
   right:16px;
@@ -55,11 +55,11 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   z-index:999;
   font-weight:600;
 }
-/* global search small and compact */
+/* compact search inside container */
 #globalSearch {
-  width:calc(100% - 30px);
+  width:calc(100% - 10px);
   display:block;
-  margin:10px auto 6px;
+  margin:8px auto 8px;
   padding:8px 10px;
   border-radius:10px;
   border:none;
@@ -68,8 +68,6 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
   font-size:14px;
   outline:none;
 }
-/* small price tag inside suggestion */
-.suggestion-small-price { font-size:12px; opacity:0.85; color:#dcd6ff; }
 </style>
 </head>
 <body>
@@ -79,7 +77,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <div class="container">
     <h2>NOLA Exchange</h2>
 
-    <!-- compact global search placed inside container, above From: small & professional -->
+    <!-- Compact global search inside container -->
     <input id="globalSearch" placeholder="Search contract address or token (fills To)" autocomplete="off">
 
     <div class="input-box">
@@ -94,7 +92,6 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
         <div class="suggestions" id="toSuggestions"></div>
     </div>
 
-    <!-- amount inputs added minimal, placed under UI (no theme changes) -->
     <div style="margin-top:12px; display:flex; gap:8px;">
         <input id="fromAmount" type="number" placeholder="Amount" style="flex:1; padding:10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;">
         <input id="toAmount" type="number" placeholder="Estimated" readonly style="flex:1; padding:10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;">
@@ -119,42 +116,40 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <a href="#" id="telegramLink">Telegram</a>
 </footer>
 
-<!-- libraries -->
+<!-- libraries: ethers + WalletConnect v1 provider (reliable fallback) -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
-<!-- WalletConnect v2 UMD -->
-<script src="https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider/dist/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 
 <script>
-/* ========= Configuration ========= */
-const PROJECT_ID = "6557a92e3698182727669d41cbeb95a1"; // your WC v2 id
+/* ========== CONFIG ========== */
 const CHAIN_ID = 137; // Polygon
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPC = "https://polygon-rpc.com";
 
-/* ========= State ========= */
-let tokenList = []; // from coingecko token list
+/* ========== STATE ========== */
+let tokenList = [];
 let tokenMap = new Map(); // addressLower -> tokenObj
-let symbolVolumeMap = new Map(); // symbolLower -> 24h volume (from Coingecko markets)
+let volumeMap = new Map(); // symbolLower -> 24h volume
 let provider = null;
 let signer = null;
-let userAddress = null;
+let signerAddress = null;
 let walletConnected = false;
 
-/* ========= Helpers ========= */
+/* ========== HELPERS ========== */
 const $ = id => document.getElementById(id);
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
-const lower = s => (s||'').toLowerCase();
+const low = s => (s||'').toLowerCase();
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 
-/* ========= Load tokens and market-volume ranking ========= */
+/* ========== LOAD TOKENS + 24H VOLUME (CoinGecko) ========== */
 async function loadTokensAndVolumes(){
     try {
-        // 1) token list hosted (Coingecko polygon list includes decimals & logo)
-        const r1 = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
-        const j1 = await r1.json();
-        tokenList = (j1.tokens || []).map(t => ({
-            address: lower(t.address),
+        // load polygon token list (includes decimals & logo)
+        const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
+        const j = await r.json();
+        tokenList = (j.tokens || []).map(t=>({
+            address: low(t.address),
             symbol: t.symbol || '',
             name: t.name || '',
             decimals: t.decimals || 18,
@@ -162,17 +157,18 @@ async function loadTokensAndVolumes(){
         }));
         tokenList.forEach(t => tokenMap.set(t.address, t));
 
-        // include pseudo MATIC
+        // add MATIC pseudo-token
         tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol: 'MATIC', name:'Polygon', decimals:18, logoURI:'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png' });
 
-        // 2) fetch top coins by 24h volume (Coingecko markets)
-        // We'll fetch many pages to improve coverage (per_page 250). This returns symbol + total_volume.
+        // fetch top markets by volume (per_page 250)
+        // use markets endpoint to get total_volume (24h)
         const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false`;
-        const r2 = await fetch(marketsUrl);
-        const markets = await r2.json();
-        // build symbol->volume map (lowercase)
-        markets.forEach(c => {
-            if (c.symbol) symbolVolumeMap.set(lower(c.symbol), c.total_volume || 0);
+        const rm = await fetch(marketsUrl);
+        const jm = await rm.json();
+        jm.forEach(c => {
+            if (c && c.symbol) volumeMap.set(low(c.symbol), c.total_volume || 0);
+            // Also map name -> volume to help matching (e.g., 'polygon' name)
+            if (c && c.name) volumeMap.set(low(c.name), c.total_volume || 0);
         });
     } catch (e) {
         console.error('loadTokensAndVolumes error', e);
@@ -180,7 +176,7 @@ async function loadTokensAndVolumes(){
 }
 loadTokensAndVolumes();
 
-/* ========= Utility: fetch token info from chain for unknown tokens ========= */
+/* ========== ON-CHAIN INFO FOR UNKNOWN ADDRESSES ========= */
 async function fetchOnchainTokenInfo(address){
     try {
         const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
@@ -191,18 +187,20 @@ async function fetchOnchainTokenInfo(address){
             c.name().catch(()=>null),
             c.decimals().catch(()=>18)
         ]);
-        return { address: lower(address), symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals || 18, logoURI: 'https://via.placeholder.com/28' };
+        const info = { address: low(address), symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals || 18, logoURI: 'https://via.placeholder.com/28' };
+        tokenMap.set(info.address, info);
+        return info;
     } catch (e) {
         console.warn('fetchOnchainTokenInfo failed', e);
         return null;
     }
 }
 
-/* ========= Price fetch helper (Coingecko simple/token_price polygon-pos) ========= */
+/* ========== PRICE FETCH (Coingecko simple/token_price) ========== */
 async function fetchTokenPriceUSD(address){
     try {
         if (!address) return null;
-        if (lower(address) === MATIC_ADDR) {
+        if (low(address) === MATIC_ADDR) {
             const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');
             const j = await r.json();
             return j['matic-network']?.usd ?? null;
@@ -210,179 +208,152 @@ async function fetchTokenPriceUSD(address){
         const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${address}&vs_currencies=usd`;
         const r = await fetch(url);
         const j = await r.json();
-        const key = lower(address);
-        return j[key]?.usd ?? null;
+        return j[low(address)]?.usd ?? null;
     } catch (e) {
         console.warn('price fetch failed', e);
         return null;
     }
 }
 
-/* ========= Autocomplete rendering (used for from/to and global search) ========= */
-function makeSuggestionItem(tokenObj, approxPriceUSD, extraText){
-    // tokenObj: {address,symbol,name,logoURI,decimals}
+/* ========== SUGGESTION ITEM BUILDER ========= */
+function makeSuggestionItem(tokenObj, priceUSD, extraLabel){
+    const row = document.createElement('div');
+    row.className = 'suggestion-item';
+
     const left = document.createElement('div');
     left.className = 'suggestion-left';
     const img = document.createElement('img');
     img.src = tokenObj.logoURI || 'https://via.placeholder.com/28';
-    img.onerror = ()=>img.src='https://via.placeholder.com/28';
+    img.onerror = ()=> img.src = 'https://via.placeholder.com/28';
     left.appendChild(img);
 
     const main = document.createElement('div');
     main.className = 'suggestion-main';
     const sym = document.createElement('div');
     sym.className = 'suggestion-symbol';
-    sym.textContent = `${tokenObj.symbol || tokenObj.address.slice(0,6)}`;
+    sym.textContent = tokenObj.symbol || tokenObj.address.slice(0,6);
     const nm = document.createElement('div');
     nm.className = 'suggestion-name';
     nm.textContent = tokenObj.name || '';
     main.appendChild(sym);
     main.appendChild(nm);
-
     left.appendChild(main);
 
     const right = document.createElement('div');
     right.className = 'suggestion-price';
-    if (approxPriceUSD != null) {
-        right.innerHTML = `<div>${extraText || ''}</div><div style="margin-top:6px; font-weight:600;">≈ $${Number(approxPriceUSD).toFixed(4)}</div>`;
-    } else {
-        right.innerHTML = `<div>${extraText || ''}</div><div style="margin-top:6px; opacity:0.8">—</div>`;
-    }
+    if (priceUSD != null) right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;font-weight:600;">≈ $${Number(priceUSD).toFixed(4)}</div>`;
+    else right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;opacity:0.8">—</div>`;
 
-    const row = document.createElement('div');
-    row.className = 'suggestion-item';
     row.appendChild(left);
     row.appendChild(right);
     return row;
 }
 
-/* ========= Setup autocomplete for from/to inputs ========= */
+/* ========== AUTOCOMPLETE (FROM / TO) prioritized by 24h volume ========== */
 function setupAutocomplete(inputId, suggestionsId){
     const input = $(inputId);
     const box = $(suggestionsId);
-
     let timer = null;
+
     input.addEventListener('input', ()=> {
         clearTimeout(timer);
-        timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 120);
+        timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 150);
     });
-    input.addEventListener('focus', ()=> {
-        if (input.value.trim()) handle(input.value.trim().toLowerCase());
-    });
+    input.addEventListener('focus', ()=> { if (input.value.trim()) handle(input.value.trim().toLowerCase()); });
     input.addEventListener('blur', ()=> setTimeout(()=> box.style.display='none', 150));
 
     async function handle(q){
         box.innerHTML = '';
         if (!q) { box.style.display='none'; return; }
 
-        // gather matches: find tokens where symbol OR name includes q
-        const matches = tokenList.filter(t => {
-            const sym = t.symbol || '';
-            const name = t.name || '';
-            return sym.toLowerCase().includes(q) || name.toLowerCase().includes(q);
-        });
-
-        // If nothing matched in tokenList and q looks like address -> attempt onchain fetch
-        if (!matches.length && isAddress(q)) {
-            let info = tokenMap.get(lower(q));
-            if (!info) {
-                info = await fetchOnchainTokenInfo(q);
-                if (info) {
-                    tokenMap.set(lower(q), info);
-                }
-            }
+        // if looks like address, attempt fetch onchain & show single suggestion
+        if (isAddress(q)) {
+            let info = tokenMap.get(low(q));
+            if (!info) info = await fetchOnchainTokenInfo(q);
             if (info) {
                 const price = await fetchTokenPriceUSD(info.address);
-                const item = makeSuggestionItem(info, price, '');
-                item.onclick = ()=>{
-                    input.value = info.symbol || info.name;
+                const node = makeSuggestionItem(info, price, `${info.symbol}`);
+                node.onclick = ()=>{
+                    input.value = info.symbol || info.name || info.address;
                     input.dataset.address = info.address;
-                    input.dataset.decimals = info.decimals;
+                    input.dataset.decimals = info.decimals || 18;
                     box.style.display='none';
-                    // trigger live update if from or to changed
-                    if (inputId === 'fromToken' || inputId === 'toToken') updateQuoteDebounced();
+                    updateQuoteDebounced();
                 };
-                box.appendChild(item);
-                box.style.display='block';
+                box.appendChild(node);
+                box.style.display = 'block';
             }
             return;
         }
 
-        // compute volume score for each match using symbolVolumeMap; fallback zero
+        // find matches by symbol/name substring
+        const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
+
+        // score by 24h volume, and give bonus if startsWith
         const scored = matches.map(t => {
-            const vol = symbolVolumeMap.get(lower(t.symbol)) || 0;
-            // bias matches that startWith query
-            const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e12 : 0;
+            const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
+            const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;
             return { t, score: vol + startBonus };
-        });
+        }).sort((a,b)=> b.score - a.score).slice(0,8);
 
-        // sort by score desc
-        scored.sort((a,b)=> b.score - a.score);
+        if (!scored.length) { box.style.display='none'; return; }
 
-        // show top 8
-        const top = scored.slice(0,8);
-        for (const s of top) {
+        for (const s of scored) {
             const tk = s.t;
             const price = await fetchTokenPriceUSD(tk.address);
-            const extraText = `${tk.symbol} | ${tk.name}`;
-            const node = makeSuggestionItem(tk, price, extraText);
+            const label = `${tk.symbol} | ${tk.name}`;
+            const node = makeSuggestionItem(tk, price, label);
             node.onclick = ()=>{
                 input.value = tk.symbol || tk.name;
                 input.dataset.address = tk.address;
                 input.dataset.decimals = tk.decimals || 18;
                 box.style.display='none';
-                // when selecting, update quote if needed
                 updateQuoteDebounced();
             };
             box.appendChild(node);
         }
-        box.style.display = top.length ? 'block' : 'none';
+        box.style.display = 'block';
     }
 }
 
 setupAutocomplete('fromToken','fromSuggestions');
 setupAutocomplete('toToken','toSuggestions');
 
-/* ========= Global search (compact) - shows suggestions same style, fills To ========= */
+/* ========== GLOBAL SEARCH (compact, suggestions same style) ========= */
 const globalSearch = $('globalSearch');
-let globalTimer = null;
-globalSearch.addEventListener('input', ()=> {
-    clearTimeout(globalTimer);
-    globalTimer = setTimeout(()=> handleGlobal(globalSearch.value.trim()), 140);
-});
-
 const globalBox = document.createElement('div');
 globalBox.className = 'suggestions';
 globalBox.style.position = 'absolute';
-globalBox.style.top = (globalSearch.getBoundingClientRect().top + 46) + 'px';
-globalBox.style.left = globalSearch.offsetLeft + 'px';
-globalBox.style.width = (globalSearch.offsetWidth) + 'px';
 globalBox.style.zIndex = 200;
 globalSearch.parentElement.insertBefore(globalBox, globalSearch.nextSibling);
+let gTimer = null;
+globalSearch.addEventListener('input', ()=> {
+    clearTimeout(gTimer);
+    gTimer = setTimeout(()=> handleGlobal(globalSearch.value.trim().toLowerCase()), 140);
+});
 globalSearch.addEventListener('blur', ()=> setTimeout(()=> globalBox.style.display='none', 150));
 
 async function handleGlobal(q){
     globalBox.innerHTML = '';
+    // position it under the globalSearch
+    globalBox.style.left = (globalSearch.offsetLeft) + 'px';
+    globalBox.style.top = (globalSearch.offsetTop + globalSearch.offsetHeight + 8) + 'px';
+    globalBox.style.width = (globalSearch.offsetWidth) + 'px';
+
     if (!q) { globalBox.style.display='none'; return; }
 
-    // If address -> try token info and display single suggestion
     if (isAddress(q)) {
-        let info = tokenMap.get(lower(q));
-        if (!info) {
-            info = await fetchOnchainTokenInfo(q);
-            if (info) tokenMap.set(info.address, info);
-        }
+        let info = tokenMap.get(low(q));
+        if (!info) info = await fetchOnchainTokenInfo(q);
         if (info) {
             const price = await fetchTokenPriceUSD(info.address);
             const node = makeSuggestionItem(info, price, `${info.symbol}`);
             node.onclick = ()=>{
                 // fill To
-                const to = $('toToken');
-                to.value = info.symbol || info.name;
-                to.dataset.address = info.address;
-                to.dataset.decimals = info.decimals || 18;
+                $('toToken').value = info.symbol || info.name;
+                $('toToken').dataset.address = info.address;
+                $('toToken').dataset.decimals = info.decimals || 18;
                 globalBox.style.display='none';
-                // update price & quote
                 updateQuoteDebounced();
             };
             globalBox.appendChild(node);
@@ -391,12 +362,11 @@ async function handleGlobal(q){
         return;
     }
 
-    // Not an address: search tokenList by name/symbol
+    // not an address: search tokenList by symbol/name and score by 24h volume
     const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
-    // score by 24h volume
     const scored = matches.map(t => {
-        const vol = symbolVolumeMap.get(lower(t.symbol)) || 0;
-        const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e12 : 0;
+        const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
+        const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;
         return { t, score: vol + startBonus };
     }).sort((a,b)=> b.score - a.score).slice(0,8);
 
@@ -405,10 +375,9 @@ async function handleGlobal(q){
         const price = await fetchTokenPriceUSD(tk.address);
         const node = makeSuggestionItem(tk, price, `${tk.symbol}`);
         node.onclick = ()=>{
-            const to = $('toToken');
-            to.value = tk.symbol;
-            to.dataset.address = tk.address;
-            to.dataset.decimals = tk.decimals || 18;
+            $('toToken').value = tk.symbol;
+            $('toToken').dataset.address = tk.address;
+            $('toToken').dataset.decimals = tk.decimals || 18;
             globalBox.style.display='none';
             updateQuoteDebounced();
         };
@@ -417,222 +386,167 @@ async function handleGlobal(q){
     globalBox.style.display = scored.length ? 'block' : 'none';
 }
 
-/* ========= Wallet connect v2 (works across browsers/devices) ========= */
+/* reposition globalBox when window resizes */
+window.addEventListener('resize', ()=> {
+    globalBox.style.width = (globalSearch.offsetWidth) + 'px';
+    globalBox.style.left = (globalSearch.offsetLeft) + 'px';
+});
+
+/* ========== Wallet connect: try injected (MetaMask) first, then WalletConnect v1 fallback (UMD) ========= */
 async function connectWallet(){
     if (walletConnected && signer) return;
     try {
-        // prefer injected
         if (window.ethereum && window.ethereum.isMetaMask) {
             provider = new ethers.providers.Web3Provider(window.ethereum, "any");
             await provider.send("eth_requestAccounts", []);
             signer = provider.getSigner();
-            userAddress = await signer.getAddress();
+            signerAddress = await signer.getAddress();
             walletConnected = true;
             $('walletConnectBtn').textContent = 'Connected';
             return;
         }
-
-        // WalletConnect v2 UMD global: window.WalletConnectProvider
-        const WalletConnectProvider = window.WalletConnectProvider;
-        if (!WalletConnectProvider || !WalletConnectProvider.init) {
-            alert('WalletConnect v2 library not loaded');
-            throw new Error('WC v2 lib missing');
+        // fallback to WalletConnect v1 (UMD global: WalletConnectProvider)
+        const WC = window.WalletConnectProvider;
+        if (!WC) {
+            alert('WalletConnect library not loaded. Please allow loading external scripts or use MetaMask.');
+            throw new Error('WC v1 library missing');
         }
-
-        const wcProvider = await WalletConnectProvider.init({
-            projectId: PROJECT_ID,
-            chains: [CHAIN_ID],
-            showQrModal: true,
-            // optional metadata can be added here
+        const wcProvider = new WC.default({
+            rpc: { [CHAIN_ID]: FALLBACK_RPC },
+            chainId: CHAIN_ID,
+            qrcode: true,
         });
-
-        // enable (opens modal / deep link)
-        await wcProvider.enable();
-
+        await wcProvider.enable(); // opens modal / deep link
         provider = new ethers.providers.Web3Provider(wcProvider, "any");
         signer = provider.getSigner();
-        userAddress = await signer.getAddress();
+        signerAddress = await signer.getAddress();
         walletConnected = true;
         $('walletConnectBtn').textContent = 'Connected';
 
-        // handle disconnect event
-        wcProvider.on?.('disconnect', ()=> {
+        // handle disconnect
+        wcProvider.on && wcProvider.on("disconnect", ()=> {
             walletConnected = false;
-            signer = null;
-            provider = null;
-            userAddress = null;
+            provider = null; signer = null; signerAddress = null;
             $('walletConnectBtn').textContent = 'Connect Wallet';
         });
-
     } catch (e) {
         console.error('connectWallet error', e);
         alert('Wallet connect failed: ' + (e.message || e));
         throw e;
     }
 }
-
 $('walletConnectBtn').addEventListener('click', connectWallet);
 
-/* ========= Quote logic (1inch) ========= */
+/* ========== QUOTE LOGIC (1inch) - decimal-aware ========== */
 let quoteTimer = null;
-function updateQuoteDebounced(){
-    clearTimeout(quoteTimer);
-    quoteTimer = setTimeout(()=> updateQuote(), 220);
-}
+function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=>updateQuote(), 200); }
+
 async function updateQuote(){
     try {
-        const fromInput = $('fromToken');
-        const toInput = $('toToken');
-        const fromAmtInput = $('fromAmount');
-        const toAmtInput = $('toAmount');
+        const fromAddr = low($('fromToken').dataset.address || '');
+        const toAddr = low($('toToken').dataset.address || '');
+        const amount = $('fromAmount').value;
+        if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; return; }
 
-        const fromAddr = fromInput.dataset.address;
-        const toAddr = toInput.dataset.address;
-        const amount = fromAmtInput.value;
-        if (!fromAddr || !toAddr || !amount) { toAmtInput.value=''; return; }
-
-        const fromDecimals = Number(fromInput.dataset.decimals || tokenMap.get(lower(fromAddr))?.decimals || 18);
-        const toDecimals = Number(toInput.dataset.decimals || tokenMap.get(lower(toAddr))?.decimals || 18);
+        // determine decimals: from dataset decimals or tokenMap or default 18
+        const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
+        const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
 
         const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
         const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
         const r = await fetch(quoteUrl);
         const j = await r.json();
         if (j && j.toTokenAmount) {
-            toAmtInput.value = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
+            $('toAmount').value = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);
         } else {
-            toAmtInput.value = '';
+            $('toAmount').value = '';
         }
     } catch (e) {
         console.error('updateQuote error', e);
         $('toAmount').value = '';
     }
 }
-
-/* attach inputs to quote updates */
 $('fromAmount').addEventListener('input', updateQuoteDebounced);
 
-/* When user selects token via the from/to autocompletes, updateQuoteDebounced(); handled in selection callbacks */
-
-/* ========= Allowance / approve / swap flow using 1inch ========= */
-async function ensureApprovalAndSwap(){
-    try {
-        // ensure connected
-        await connectWallet();
-
-        const fromInput = $('fromToken');
-        const toInput = $('toToken');
-        const amountInput = $('fromAmount').value;
-        const slippage = $('slippage')?.value || 1;
-
-        if (!fromInput.dataset.address || !toInput.dataset.address || !amountInput) {
-            alert('Please select tokens and amount.');
-            return;
-        }
-
-        const fromAddr = lower(fromInput.dataset.address);
-        const toAddr = lower(toInput.dataset.address);
-        const fromDecimals = Number(fromInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
-        const parsedAmount = ethers.utils.parseUnits(String(amountInput), fromDecimals).toString();
-
-        // if from is not native, check allowance
-        if (fromAddr !== MATIC_ADDR) {
-            // get allowance from 1inch
-            const allowanceUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${userAddress}`;
-            const ar = await fetch(allowanceUrl);
-            const allowanceJ = await ar.json();
-            const allowance = allowanceJ.allowance ? ethers.BigNumber.from(allowanceJ.allowance) : ethers.BigNumber.from('0');
-
-            if (allowance.lt(ethers.BigNumber.from(parsedAmount))) {
-                // request approve tx data
-                const approveTxUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;
-                const apr = await fetch(approveTxUrl);
-                const aprJson = await apr.json();
-                if (!aprJson || !aprJson.data) throw new Error('Approve data not available');
-
-                // send approval transaction
-                const txReq = { to: aprJson.to, data: aprJson.data, value: aprJson.value ? ethers.BigNumber.from(aprJson.value) : undefined };
-                const sent = await signer.sendTransaction(txReq);
-                alert('Approval sent, waiting confirmation: ' + sent.hash);
-                await sent.wait();
-            }
-        }
-
-        // build swap
-        const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsedAmount}&fromAddress=${userAddress}&slippage=${slippage}`;
-        const sr = await fetch(swapUrl);
-        const sJson = await sr.json();
-        if (!sJson || !sJson.tx) {
-            console.error('swap build failed', sJson);
-            alert('Swap build failed (see console).');
-            return;
-        }
-
-        // send swap tx
-        const txObj = sJson.tx; // {to, data, value}
-        const txResponse = await signer.sendTransaction(txObj);
-        alert('Swap sent: ' + txResponse.hash);
-        console.log('swap tx', txResponse);
-
-    } catch (e) {
-        console.error('swap flow error', e);
-        alert('Swap failed: ' + (e.message || e));
-    }
-}
-
-$('swapBtn').addEventListener('click', ensureApprovalAndSwap);
-
-/* ========= Small helpers: when selecting unknown address in global search, fill toToken and decimals ========= */
-async function setToTokenFromAddress(addr){
-    const low = lower(addr);
-    let info = tokenMap.get(low);
-    if (!info) {
-        info = await fetchOnchainTokenInfo(addr);
-        if (info) tokenMap.set(info.address, info);
-    }
-    if (info) {
-        $('toToken').value = info.symbol || info.name;
-        $('toToken').dataset.address = info.address;
-        $('toToken').dataset.decimals = info.decimals || 18;
-        updateQuoteDebounced();
-    } else {
-        // fallback: set raw address
-        $('toToken').value = addr;
-        $('toToken').dataset.address = low;
-        $('toToken').dataset.decimals = 18;
-    }
-}
-
-/* When page loads, wire up quick behaviors: when user pastes an address directly into from/to fields */
-document.querySelectorAll('.input-box input[type="text"]').forEach(inp => {
-    inp.addEventListener('paste', (ev) => {
-        const text = (ev.clipboardData || window.clipboardData).getData('text').trim();
-        if (isAddress(text)) {
-            setTimeout(()=> {
-                // fill dataset.address and fetch decimals
-                const el = ev.target;
-                el.dataset.address = lower(text);
-                fetchOnchainTokenInfo(text).then(info => {
-                    if (info) {
-                        el.dataset.decimals = info.decimals || 18;
-                        el.value = info.symbol || info.name;
-                        tokenMap.set(info.address, info);
-                        updateQuoteDebounced();
-                    }
-                });
+/* When user pastes an address into from/to input, fetch on-chain info and set decimals */
+document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
+    inp.addEventListener('paste', (ev)=>{
+        const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
+        if (isAddress(txt)) {
+            setTimeout(async ()=> {
+                inp.dataset.address = low(txt);
+                const info = tokenMap.get(low(txt)) || await fetchOnchainTokenInfo(txt);
+                if (info) {
+                    inp.dataset.decimals = info.decimals || 18;
+                    inp.value = info.symbol || info.name || txt.slice(0,8);
+                    tokenMap.set(info.address, info);
+                    updateQuoteDebounced();
+                }
             }, 10);
         }
     });
 });
 
-/* When global search submit (enter) attempt to fill To */
-globalSearch.addEventListener('keydown', (e)=> {
+/* ========== Swap flow: allowance -> approve -> swap (1inch) ========== */
+async function ensureApprovalAndSwap(){
+    try {
+        await connectWallet();
+        const fromInput = $('fromToken'), toInput = $('toToken');
+        const amountInput = $('fromAmount').value;
+        const slippage = $('slippage')?.value || 1;
+        if (!fromInput.dataset.address || !toInput.dataset.address || !amountInput) { alert('Fill both tokens and amount'); return; }
+
+        const fromAddr = low(fromInput.dataset.address);
+        const toAddr = low(toInput.dataset.address);
+        const fromDecimals = Number(fromInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
+        const parsedAmount = ethers.utils.parseUnits(String(amountInput), fromDecimals).toString();
+
+        // approval if ERC20 (not native MATIC)
+        if (fromAddr !== MATIC_ADDR) {
+            const allowanceUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${signerAddress}`;
+            const ar = await fetch(allowanceUrl);
+            const aj = await ar.json();
+            const allowance = aj.allowance ? ethers.BigNumber.from(aj.allowance) : ethers.BigNumber.from('0');
+            if (allowance.lt(ethers.BigNumber.from(parsedAmount))) {
+                // fetch approve tx data
+                const aprUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;
+                const aprRes = await fetch(aprUrl);
+                const aprJson = await aprRes.json();
+                if (!aprJson || !aprJson.data) throw new Error('Approve data unavailable');
+                const txReq = { to: aprJson.to, data: aprJson.data, value: aprJson.value ? ethers.BigNumber.from(aprJson.value) : undefined };
+                const sent = await signer.sendTransaction(txReq);
+                alert('Approve sent: ' + sent.hash);
+                await sent.wait();
+            }
+        }
+
+        // build swap
+        const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsedAmount}&fromAddress=${signerAddress}&slippage=${slippage}`;
+        const sr = await fetch(swapUrl);
+        const sj = await sr.json();
+        if (!sj || !sj.tx) { console.error('swap build failed', sj); alert('Swap build failed'); return; }
+
+        // send swap tx
+        const txReq = sj.tx;
+        const sentSwap = await signer.sendTransaction(txReq);
+        alert('Swap sent: ' + sentSwap.hash);
+    } catch (e) {
+        console.error('swap error', e);
+        alert('Swap failed: ' + (e.message || e));
+    }
+}
+$('swapBtn').addEventListener('click', ensureApprovalAndSwap);
+
+/* ========== Small utility: when global search enter pressed, fill To ========== */
+globalSearch.addEventListener('keydown', (e)=>{
     if (e.key === 'Enter') {
         const v = globalSearch.value.trim();
-        if (isAddress(v)) setToTokenFromAddress(v);
-        else {
-            // try to find first matching token by symbol/name
-            const found = tokenList.find(t => t.symbol.toLowerCase().includes(v.toLowerCase()) || t.name.toLowerCase().includes(v.toLowerCase()));
+        if (!v) return;
+        if (isAddress(v)) {
+            setToFromAddress(v);
+        } else {
+            // fallback: try find by symbol or name
+            const found = tokenList.find(t => (t.symbol && low(t.symbol).includes(low(v))) || (t.name && low(t.name).includes(low(v))));
             if (found) {
                 $('toToken').value = found.symbol;
                 $('toToken').dataset.address = found.address;
@@ -640,17 +554,36 @@ globalSearch.addEventListener('keydown', (e)=> {
                 updateQuoteDebounced();
             }
         }
-        globalBox.style.display='none';
+        globalBox.style.display = 'none';
     }
 });
 
-/* Ensure globalBox reposition on resize */
-window.addEventListener('resize', ()=> {
-    globalBox.style.width = (globalSearch.offsetWidth) + 'px';
-    globalBox.style.left = (globalSearch.offsetLeft) + 'px';
-});
+/* helper setToFromAddress */
+async function setToFromAddress(addr){
+    const lowAddr = low(addr);
+    let info = tokenMap.get(lowAddr);
+    if (!info) info = await fetchOnchainTokenInfo(addr);
+    if (info) {
+        $('toToken').value = info.symbol || info.name;
+        $('toToken').dataset.address = info.address;
+        $('toToken').dataset.decimals = info.decimals || 18;
+        updateQuoteDebounced();
+    } else {
+        $('toToken').value = addr;
+        $('toToken').dataset.address = lowAddr;
+        $('toToken').dataset.decimals = 18;
+        updateQuoteDebounced();
+    }
+}
 
-/* Add a small warm-up load of MATIC price and token list already done in loadTokensAndVolumes */
+/* ========== Initialization: ensure token list warm-up and style positions ========== */
+(async function init(){
+    await loadTokensAndVolumes();
+    // position globalBox initial
+    globalBox.style.left = (globalSearch.offsetLeft) + 'px';
+    globalBox.style.top = (globalSearch.offsetTop + globalSearch.offsetHeight + 8) + 'px';
+    globalBox.style.width = (globalSearch.offsetWidth) + 'px';
+})();
 </script>
 </body>
 </html>
