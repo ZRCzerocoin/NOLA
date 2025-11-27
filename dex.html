@@ -34,20 +34,6 @@
         border-bottom:1px solid #222; cursor:pointer;
     }
     .token-item img { width:32px; height:32px; border-radius:50%; background:#333; }
-
-    /* minimal spinner styling (non-intrusive) */
-    .spinner {
-        display:inline-block;
-        width:14px;
-        height:14px;
-        border:2px solid rgba(255,255,255,0.12);
-        border-top-color:#fff;
-        border-radius:50%;
-        animation:spin .7s linear infinite;
-        vertical-align:middle;
-        margin-left:8px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -89,281 +75,139 @@
 </div>
 
 <script>
-/*
-  IMPORTANT: UI unchanged. Only logic added/updated below:
-  - live price polling every 6s
-  - multi-route price fetch: 1inch -> CoinGecko -> DexScreener
-  - per-route timeout 3500ms
-  - spinner shown while fetching per-side
-  - conversion uses 1inch quote
-*/
+const CHAIN = "137"; // Polygon
+const STABLES = [
+    "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", // USDC
+    "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", // WETH
+    "0x0000000000000000000000000000000000001010", // MATIC
+    "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"  // USDT
+];
 
-/* CONFIG */
-const CHAIN = "137"; // Polygon chain id used with 1inch endpoints
-const ONEINCH_USDC = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174'; // USDC on polygon
-const ROUTE_TIMEOUT = 3500; // ms per route attempt
-const POLL_INTERVAL = 6000; // ms live update
-
-/* STATE */
 let selecting = null;
-let tokensCache = { from: null, to: null };
-
-/* DOM refs */
-const fromAmountEl = document.getElementById('fromAmount');
-const toAmountEl   = document.getElementById('toAmount');
-const fromUsdEl    = document.getElementById('fromUsd');
-const toUsdEl      = document.getElementById('toUsd');
-const fromSymbolEl = document.getElementById('fromSymbol');
-const toSymbolEl   = document.getElementById('toSymbol');
-const fromIconEl   = document.getElementById('fromIcon');
-const toIconEl     = document.getElementById('toIcon');
+let tokensCache = {};
 
 document.getElementById("fromTokenBtn").onclick = () => openModal("from");
 document.getElementById("toTokenBtn").onclick = () => openModal("to");
-document.getElementById("modalSearch").oninput = debounce(searchToken, 300);
-fromAmountEl.addEventListener('input', () => { updateConversion("from"); updateUSD("from"); });
-toAmountEl.addEventListener('input', () => { updateConversion("to"); updateUSD("to"); });
+document.getElementById("modalSearch").oninput = searchToken;
+document.getElementById("fromAmount").oninput = () => updateConversion("from");
+document.getElementById("toAmount").oninput = () => updateConversion("to");
 
-/* MODAL open */
-function openModal(side) {
+async function openModal(side) {
     selecting = side;
     document.getElementById("modal").style.display = "block";
     document.getElementById("modalSearch").value = "";
     document.getElementById("tokenList").innerHTML = "";
 }
 
-/* TOKEN SEARCH - uses 1inch token search */
 async function searchToken() {
     const q = document.getElementById("modalSearch").value.trim();
-    if (q.length < 1) return;
 
-    try {
-        const res = await fetch(`https://api.1inch.dev/token/v1.2/${CHAIN}/search?query=${encodeURIComponent(q)}`, {
-            headers: { "Authorization": "Bearer public" }
-        });
-        const data = await res.json();
-        showTokenList(Object.values(data.tokens || {}));
-    } catch (e) {
-        // fail silently
-        document.getElementById("tokenList").innerHTML = '<div style="padding:12px;color:#aaa">Search failed</div>';
+    // 1inch token info endpoint
+    if (q.length >= 5) {
+        try {
+            const res = await fetch(`https://api.1inch.dev/token/v1.2/${CHAIN}/search?query=${q}`, {
+                headers: { "Authorization": "Bearer public" }
+            });
+            const data = await res.json();
+            showTokenList(Object.values(data.tokens));
+        } catch (e) {}
     }
 }
 
 function showTokenList(list) {
     const box = document.getElementById("tokenList");
     box.innerHTML = "";
-    if (!list || !list.length) {
-        box.innerHTML = '<div style="padding:12px;color:#aaa">No tokens found</div>';
-        return;
-    }
     list.forEach(t => {
         const item = document.createElement("div");
         item.className = "token-item";
         item.innerHTML = `
-            <img src="${t.logoURI || ''}">
-            <div><b>${t.symbol || ''}</b><br><small>${t.name || ''}</small></div>
+            <img src="${t.logoURI || ""}">
+            <div>
+                <b>${t.symbol}</b><br>
+                <small>${t.name}</small>
+            </div>
         `;
         item.onclick = () => selectToken(t);
         box.appendChild(item);
     });
 }
 
-/* SELECT TOKEN */
 function selectToken(t) {
-    if (!selecting) return;
-    tokensCache[selecting] = t;
-    const symEl = (selecting === 'from') ? fromSymbolEl : toSymbolEl;
-    const iconEl = (selecting === 'from') ? fromIconEl : toIconEl;
-    symEl.innerText = t.symbol || (t.address ? t.address.slice(0,6) : 'Token');
-    iconEl.src = t.logoURI || '';
+    const side = selecting;
+    tokensCache[side] = t;
+
+    document.getElementById(side + "Symbol").innerText = t.symbol;
+    document.getElementById(side + "Icon").src = t.logoURI || "";
+
     document.getElementById("modal").style.display = "none";
 
-    // immediate updates
-    updateUSD(selecting);
-    if (tokensCache.from && tokensCache.to) updateConversion('from'); // calc estimate
+    updateUSD(side);
 }
 
-/* UTILS: debounce */
-function debounce(fn, ms) {
-    let t;
-    return function(...a){ clearTimeout(t); t = setTimeout(()=> fn.apply(this,a), ms); };
-}
-
-/* fetch with timeout (AbortController) */
-async function fetchWithTimeout(url, opts = {}, timeout = ROUTE_TIMEOUT) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), timeout);
-    try {
-        const res = await fetch(url, {...opts, signal: controller.signal});
-        clearTimeout(id);
-        return res;
-    } catch (e) {
-        clearTimeout(id);
-        throw e;
+async function fetchUSDPrice(tokenAddress) {
+    for (let stable of STABLES) {
+        try {
+            const res = await fetch(
+                `https://api.1inch.dev/swap/v6.0/${CHAIN}/quote?src=${tokenAddress}&dst=${stable}&amount=1000000000000000000`,
+                { headers: { "Authorization": "Bearer public" } }
+            );
+            const data = await res.json();
+            if (data.dstAmount) {
+                const stableDecimals = (stable === STABLES[0]) ? 6 : 18;
+                const stableAmount = Number(data.dstAmount) / (10 ** stableDecimals);
+                return stableAmount;
+            }
+        } catch (e) {}
     }
-}
-
-/* promise timeout wrapper that returns null on timeout/error */
-async function tryRoute(fn, timeout = ROUTE_TIMEOUT) {
-    try {
-        return await Promise.race([ fn(), new Promise(res => setTimeout(()=> res(null), timeout)) ]);
-    } catch (e) {
-        return null;
-    }
-}
-
-/* PRIMARY: 1inch quote to USDC (1 token) */
-async function priceVia1Inch(tokenAddress, tokenDecimals = 18) {
-    try {
-        // quote 1 token => amount in USDC (6 decimals) if possible
-        const oneRaw = BigInt(1) * (BigInt(10) ** BigInt(tokenDecimals));
-        const url = `https://api.1inch.dev/swap/v6.0/${CHAIN}/quote?src=${tokenAddress}&dst=${ONEINCH_USDC}&amount=${oneRaw.toString()}`;
-        const res = await fetchWithTimeout(url, {}, ROUTE_TIMEOUT);
-        const j = await res.json();
-        if (j && j.dstAmount) {
-            const usdcAmount = Number(j.dstAmount) / 1e6;
-            if (usdcAmount > 0) return usdcAmount;
-        }
-    } catch (e) { /* ignore */ }
-    return null;
-}
-
-/* CoinGecko fallback (token_price) */
-async function priceViaCoinGecko(tokenAddress) {
-    try {
-        const url = `https://api.coingecko.com/api/v3/simple/token_price/polygon-pos?contract_addresses=${tokenAddress}&vs_currencies=usd`;
-        const res = await fetchWithTimeout(url, {}, ROUTE_TIMEOUT);
-        const j = await res.json();
-        const key = Object.keys(j)[0];
-        if (key && j[key] && j[key].usd) return Number(j[key].usd);
-    } catch (e) { /* ignore */ }
-    return null;
-}
-
-/* DexScreener fallback */
-async function priceViaDexScreener(tokenAddress) {
-    try {
-        const res = await fetchWithTimeout(`https://api.dexscreener.com/latest/dex/tokens/${tokenAddress}`, {}, ROUTE_TIMEOUT);
-        const j = await res.json();
-        if (j && j.pairs && j.pairs.length) {
-            const p = j.pairs[0].priceUsd;
-            if (p) return Number(p);
-        }
-    } catch (e) { /* ignore */ }
-    return null;
-}
-
-/* Main multi-route price fetch (1inch -> CoinGecko -> DexScreener) */
-async function fetchPriceUSD(tokenAddress, tokenDecimals = 18) {
-    if (!tokenAddress) return 0;
-
-    // 1) try 1inch first with timeout
-    const p1 = await tryRoute(()=> priceVia1Inch(tokenAddress, tokenDecimals), ROUTE_TIMEOUT);
-    if (p1 && p1 > 0) return p1;
-
-    // 2) CoinGecko
-    const p2 = await tryRoute(()=> priceViaCoinGecko(tokenAddress), ROUTE_TIMEOUT);
-    if (p2 && p2 > 0) return p2;
-
-    // 3) DexScreener
-    const p3 = await tryRoute(()=> priceViaDexScreener(tokenAddress), ROUTE_TIMEOUT);
-    if (p3 && p3 > 0) return p3;
-
-    // all failed
     return 0;
 }
 
-/* show spinner inside USD element */
-function showSpinner(el) {
-    el.innerHTML = `<span class="spinner"></span>`;
-}
-
-/* UPDATE USD field for a side (from/to) */
 async function updateUSD(side) {
     const token = tokensCache[side];
-    const el = (side === 'from') ? fromUsdEl : toUsdEl;
-    if (!token) {
-        el.innerText = '$0.00';
-        return;
-    }
-    const amount = Number(document.getElementById(side + 'Amount').value || 0);
-    if (!amount) {
-        el.innerText = '$0.00';
+    if (!token) return;
+
+    const amount = Number(document.getElementById(side + "Amount").value || 0);
+    if (amount === 0) {
+        document.getElementById(side + "Usd").innerText = "$0.00";
         return;
     }
 
-    showSpinner(el);
+    const usd = await fetchUSDPrice(token.address);
+    const total = (usd * amount).toFixed(2);
 
-    // fetch price (multi-route)
-    const price = await fetchPriceUSD(token.address, token.decimals || 18);
-
-    if (price && price > 0) {
-        const total = (price * amount);
-        // show with 4 decimal places if < 1, else 2 decimals
-        el.innerText = `$${(total < 1 ? total.toFixed(4) : total.toFixed(2))}`;
-    } else {
-        el.innerText = '$0.00';
-    }
+    document.getElementById(side + "Usd").innerText = `$${total}`;
 }
 
-/* LIVE polling of both prices while tokens selected */
-let pollId = null;
-function startLivePoll() {
-    if (pollId) clearInterval(pollId);
-    pollId = setInterval(() => {
-        if (tokensCache.from) updateUSD('from');
-        if (tokensCache.to) updateUSD('to');
-    }, POLL_INTERVAL);
-}
-startLivePoll();
-
-/* UPDATE conversion estimate between tokens using 1inch quote */
 async function updateConversion(source) {
     const from = tokensCache.from;
     const to = tokensCache.to;
     if (!from || !to) return;
 
-    const amount = Number(document.getElementById(source + 'Amount').value || 0);
-    if (!amount) {
-        document.getElementById('fromUsd').innerText = '$0.00';
-        document.getElementById('toUsd').innerText = '$0.00';
+    const amount = Number(document.getElementById(source + "Amount").value || 0);
+    if (amount === 0) {
+        document.getElementById("fromUsd").innerText = "$0.00";
+        document.getElementById("toUsd").innerText = "$0.00";
         return;
     }
 
+    // 1inch real route
     try {
-        // use 1inch quote for the conversion
-        const fromDecimals = from.decimals || 18;
-        const toDecimals = to.decimals || 18;
-
-        // amountRaw as integer string; caution with big numbers — keep same approach as original
-        const rawAmount = String(Math.floor(amount * Math.pow(10, fromDecimals)));
-
-        const res = await fetchWithTimeout(
-            `https://api.1inch.dev/swap/v6.0/${CHAIN}/quote?src=${from.address}&dst=${to.address}&amount=${rawAmount}`,
-            { headers: { "Authorization": "Bearer public" } },
-            ROUTE_TIMEOUT
+        const res = await fetch(
+            `https://api.1inch.dev/swap/v6.0/${CHAIN}/quote?src=${from.address}&dst=${to.address}&amount=${amount * (10 ** from.decimals)}`,
+            { headers: { "Authorization": "Bearer public" } }
         );
-        const j = await res.json();
-        if (j && j.dstAmount) {
-            const recv = Number(j.dstAmount) / Math.pow(10, toDecimals);
-            if (source === 'from') document.getElementById('toAmount').value = recv;
-            else document.getElementById('fromAmount').value = recv;
-            // refresh USD for both sides
-            updateUSD('from');
-            updateUSD('to');
+        const data = await res.json();
+
+        if (data.dstAmount) {
+            const recv = Number(data.dstAmount) / (10 ** to.decimals);
+            if (source === "from") document.getElementById("toAmount").value = recv;
+            if (source === "to") document.getElementById("fromAmount").value = recv;
+
+            updateUSD("from");
+            updateUSD("to");
         }
-    } catch (e) {
-        // if quote fails, keep existing values — do not break UI
-    }
+    } catch(e){}
 }
-
-/* initial hook: start polling (already started), and expose modal close on outside click */
-document.addEventListener('click', (e)=> {
-    const modal = document.getElementById('modal');
-    if (modal.style.display === 'block' && e.target === modal) modal.style.display = 'none';
-});
-
-/* keep UI exactly unchanged otherwise */
 </script>
 
 </body>
