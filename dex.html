@@ -144,7 +144,7 @@ footer a{color:#b445ff; text-decoration:none; margin:0 5px;}
 <a href="#" id="telegramLink">Telegram</a>
 </footer>
 
-<!-- ethers + WalletConnect v1 -->
+<!-- ethers + WalletConnect v1 (kept as you had it for backwards compatibility) -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>
 
@@ -183,7 +183,8 @@ async function loadTokensAndVolumes(){
     tokenList = (j.tokens || []).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
     tokenList.forEach(t => tokenMap.set(t.address, t));
     tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol: 'MATIC', name: 'Polygon', decimals: 18, logoURI: ''});
-    tokenList.push(tokenMap.get(MATIC_ADDR));
+    if (!tokenMap.has(MATIC_ADDR)) tokenList.push(tokenMap.get(MATIC_ADDR));
+    else if (!tokenList.find(x => x.address === MATIC_ADDR)) tokenList.push(tokenMap.get(MATIC_ADDR));
 
     // merge 1inch tokens (non-fatal)
     try {
@@ -213,16 +214,18 @@ async function loadTokensAndVolumes(){
 }
 loadTokensAndVolumes();
 
-/* ON-CHAIN metadata fallback */
+/* ON-CHAIN metadata fallback (avoids duplicates) */
 async function fetchOnchainTokenInfo(address){
   try {
+    const addrL = low(address);
+    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
     const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
     const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
     const c = new ethers.Contract(address, abi, rpcProvider);
     const [symbol, name, decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
-    const info = { address: low(address), symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals||18, logoURI: '' };
+    const info = { address: addrL, symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals||18, logoURI: '' };
     tokenMap.set(info.address, info);
-    tokenList.push(info);
+    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
     return info;
   } catch (e) {
     console.warn('fetchOnchainTokenInfo failed', e);
@@ -232,7 +235,7 @@ async function fetchOnchainTokenInfo(address){
 
 /* === PRICE: multi-route stack (1inch -> CoinGecko -> Dexscreener)
    - Each call is wrapped with a 3s timeout (AbortController)
-   - First valid response wins (race-like)
+   - First valid response wins (Promise.any when available)
    - Decimal-accurate using ethers.BigNumber and formatUnits
    - Caching TTL = 30s
 */
@@ -314,65 +317,24 @@ async function getTokenPriceUSD(address, decimals = 18) {
   const c = priceCache.get(addr);
   if (c && (nowTs() - c.ts) < 30000) return c.price;
 
-  // source wrappers each returning Promise<number>
-  const p1 = (async () => {
-    try {
-      return await fetch1InchQuotePrice(addr, decimals);
-    } catch(_) { throw new Error('1inch-failed'); }
-  })();
+  const p1 = (async () => { try { return await fetch1InchQuotePrice(addr, decimals); } catch(_) { throw new Error('1inch-failed'); } })();
+  const p2 = (async () => { try { return await fetchCoingeckoContractPrice(addr); } catch(_) { throw new Error('coingecko-failed'); } })();
+  const p3 = (async () => { try { return await fetchDexscreenerPrice(addr); } catch(_) { throw new Error('dexscreener-failed'); } })();
 
-  const p2 = (async () => {
-    try {
-      return await fetchCoingeckoContractPrice(addr);
-    } catch(_) { throw new Error('coingecko-failed'); }
-  })();
-
-  const p3 = (async () => {
-    try {
-      return await fetchDexscreenerPrice(addr);
-    } catch(_) { throw new Error('dexscreener-failed'); }
-  })();
-
-  // run all with race-like selection for the first fulfilled one.
-  // We create wrapped promises that never reject to Promise.any semantics: when one resolves we take it.
-  const wrapped = [p1, p2, p3].map(p => p.then(v => ({ ok:true, v })).catch(e => ({ ok:false, e })));
-
+  // Prefer Promise.any (first fulfilled). Fallback to sequential checks if unavailable or all fail.
   try {
-    // Promise.race won't work with rejections; use a loop to pick first ok
-    const results = wrapped.map(p => p);
-    // Wait for whichever settles first among them repeatedly
-    while (results.length) {
-      // Promise.race over currently waiting promises
-      const res = await Promise.race(results);
-      // if ok, use it
-      if (res && res.ok && Number.isFinite(res.v) && res.v > 0) {
-        priceCache.set(addr, { price: res.v, ts: nowTs() });
-        return res.v;
+    if (typeof Promise.any === 'function') {
+      const first = await Promise.any([p1, p2, p3]);
+      if (Number.isFinite(first) && first > 0) {
+        priceCache.set(addr, { price: first, ts: nowTs() });
+        return first;
       }
-      // otherwise remove the promise that settled and continue
-      const idx = results.findIndex(pr => pr === Promise.resolve(res) || pr === res);
-      // fallback: rebuild results by filtering promises that are still pending
-      // Simpler: rebuild by awaiting remaining wrapped and filtering resolved ones
-      // But to avoid complexity, just wait a short time for others:
-      // Wait for next one (continue loop)
-      // NOTE: if all fail, we'll eventually get to the catch below via all rejections
-      // To avoid infinite loop, break when all wrapped have settled
-      const settledAll = await Promise.all(wrapped);
-      // check for any ok among them
-      for (const s of settledAll) {
-        if (s.ok && Number.isFinite(s.v) && s.v > 0) {
-          priceCache.set(addr, { price: s.v, ts: nowTs() });
-          return s.v;
-        }
-      }
-      break;
     }
   } catch (e) {
-    // continue to fallback below
-    console.warn('race error', e);
+    // Promise.any may reject if all rejected — we'll fallback below.
   }
 
-  // if we reach here, try sequential fallbacks with timeouts as final attempt
+  // fallback: try sequentially
   try {
     const one = await (async () => { try { return await fetch1InchQuotePrice(addr, decimals); } catch(e){ return null; } })();
     if (one) { priceCache.set(addr, { price: one, ts: nowTs() }); return one; }
@@ -394,11 +356,11 @@ function makeSuggestionItem(tokenObj, priceUSD, extraLabel){
   const img = document.createElement('img'); img.src = tokenObj.logoURI || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
   left.appendChild(img);
   const main = document.createElement('div'); main.className = 'suggestion-main';
-  const sym = document.createElement('div'); sym.className = 'suggestion-symbol'; sym.textContent = tokenObj.symbol || tokenObj.address.slice(0,6);
+  const sym = document.createElement('div'); sym.className = 'suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address ? tokenObj.address.slice(0,6) : '');
   const nm = document.createElement('div'); nm.className = 'suggestion-name'; nm.textContent = tokenObj.name || '';
   main.appendChild(sym); main.appendChild(nm); left.appendChild(main);
   const right = document.createElement('div'); right.className = 'suggestion-price';
-  if (priceUSD != null) right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;font-weight:600;">≈ $${Number(priceUSD).toFixed(4)}</div>`;
+  if (priceUSD != null && Number.isFinite(priceUSD)) right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;font-weight:600;">≈ $${Number(priceUSD).toFixed(4)}</div>`;
   else right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;opacity:0.8">—</div>`;
   row.appendChild(left); row.appendChild(right); return row;
 }
@@ -409,7 +371,8 @@ function setupAutocomplete(inputId, suggestionsId, side){
   let timer = null;
   input.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 160); });
   input.addEventListener('focus', ()=> { if (input.value.trim()) handle(input.value.trim().toLowerCase()); });
-  input.addEventListener('blur', ()=> setTimeout(()=> box.style.display='none', 160));
+  // hide suggestions shortly after blur to allow click to register
+  input.addEventListener('blur', ()=> setTimeout(()=> { if (box) box.style.display='none'; }, 180));
 
   async function handle(q){
     box.innerHTML = ''; if (!q) { box.style.display='none'; return; }
@@ -421,27 +384,29 @@ function setupAutocomplete(inputId, suggestionsId, side){
       if (info) {
         const price = await getTokenPriceUSD(info.address, info.decimals);
         const node = makeSuggestionItem(info, price, `${info.symbol}`);
-        node.onclick = ()=>{ applyTokenSelection(side, info); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); };
+        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); });
         box.appendChild(node); box.style.display='block';
       }
       return;
     }
 
+    // find matches by symbol or name (case-insensitive)
     const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));
+    if (!matches.length) { box.style.display='none'; return; }
+
+    // score by 24h volume (volumeMap) with large prefix bonus
     const scored = matches.map(t => {
       const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;
       const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e15 : 0;
       return { t, score: vol + startBonus };
     }).sort((a,b)=> b.score - a.score).slice(0,8);
 
-    if (!scored.length) { box.style.display='none'; return; }
-
     for (const s of scored) {
       const tk = s.t;
       const price = await getTokenPriceUSD(tk.address, tk.decimals);
       const label = `${tk.symbol} | ${tk.name}`;
       const node = makeSuggestionItem(tk, price, label);
-      node.onclick = ()=>{ applyTokenSelection(side, tk); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); };
+      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; fetchBothPrices(); updateQuoteDebounced(); });
       box.appendChild(node);
     }
     box.style.display = 'block';
@@ -456,14 +421,19 @@ function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
   const input = (side === 'from') ? $('fromToken') : $('toToken');
   const logo = (side === 'from') ? $('fromLogo') : $('toLogo');
-  input.value = tokenObj.symbol || tokenObj.name || tokenObj.address;
-  input.dataset.address = tokenObj.address;
+  // normalize address to lowercase for consistent storage
+  const addrLower = tokenObj.address ? low(tokenObj.address) : undefined;
+  input.value = tokenObj.symbol || tokenObj.name || (addrLower ? addrLower.slice(0,8) : '');
+  if (addrLower) input.dataset.address = addrLower;
   input.dataset.decimals = tokenObj.decimals || 18;
   if (tokenObj.logoURI) { logo.src = tokenObj.logoURI; logo.style.display = 'inline-block'; }
   else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
-  tokenMap.set(tokenObj.address, tokenObj);
+  if (addrLower) {
+    tokenMap.set(addrLower, Object.assign({}, tokenObj, { address: addrLower }));
+    if (!tokenList.find(t => t.address === addrLower)) tokenList.push(Object.assign({}, tokenObj, { address: addrLower }));
+  }
   // fetch price for that token immediately
-  fetchPriceForToken(tokenObj.address, tokenObj.decimals, side);
+  fetchPriceForToken(addrLower || tokenObj.address, tokenObj.decimals, side);
 }
 
 /* show/hide spinner helpers */
@@ -478,11 +448,13 @@ async function fetchPriceForToken(address, decimals, side){
   try {
     if (!address) return;
     showSpinner(side, true);
-    const price = await getTokenPriceUSD(address, decimals);
+    const price = await getTokenPriceUSD(low(address), decimals);
     const usdElText = (side === 'from') ? $('fromUsdText') : $('toUsdText');
     const amtEl = (side === 'from') ? $('fromAmount') : $('toAmount');
-    const amt = Number(amtEl.value || 0);
-    if (price != null && !Number.isNaN(amt)) usdElText.textContent = '≈ $' + (Number(price) * amt).toFixed(4);
+    // show total USD if user typed an amount; otherwise show per-token USD
+    const amtRaw = amtEl ? amtEl.value : '';
+    const amt = (typeof amtRaw === 'string' && amtRaw.trim() === '') ? null : Number(amtRaw);
+    if (price != null && amt !== null && !Number.isNaN(amt)) usdElText.textContent = '≈ $' + (Number(price) * amt).toFixed(4);
     else if (price != null) usdElText.textContent = '≈ $' + Number(price).toFixed(4);
     else usdElText.textContent = '≈ $—';
   } catch(e){ console.warn('fetchPriceForToken error', e); }
@@ -495,7 +467,7 @@ async function fetchBothPrices(){
   const tAddr = low($('toToken').dataset.address || '');
   const fDec = Number($('fromToken').dataset.decimals || 18);
   const tDec = Number($('toToken').dataset.decimals || 18);
-  // do them in parallel
+  // do them in parallel (independent)
   await Promise.all([
     fAddr ? fetchPriceForToken(fAddr, fDec, 'from') : Promise.resolve(),
     tAddr ? fetchPriceForToken(tAddr, tDec, 'to') : Promise.resolve()
@@ -518,6 +490,7 @@ async function updateQuote(){
     const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
     const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
     const r = await fetchWithTimeout(quoteUrl, {}, 3000);
+    if (!r.ok) { $('toAmount').value = ''; await fetchBothPrices(); return; }
     const j = await r.json();
     if (j && j.toTokenAmount) {
       const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals);
@@ -607,26 +580,41 @@ async function ensureApprovalAndSwap(){
 }
 $('swapBtn').addEventListener('click', ensureApprovalAndSwap);
 
-/* WALLET connect (same as before) */
+/* WALLET connect (improved detection) */
 async function connectWallet(){
   if (walletConnected && signer) return;
   try {
+    // MetaMask / injected first
     if (window.ethereum && window.ethereum.isMetaMask) {
       provider = new ethers.providers.Web3Provider(window.ethereum, "any");
       await provider.send("eth_requestAccounts", []);
       signer = provider.getSigner();
       signerAddress = await signer.getAddress();
-      walletConnected = true; $('walletConnectBtn').textContent = 'Connected'; return;
+      walletConnected = true; $('walletConnectBtn').textContent = signerAddress.slice(0,6) + '...' + signerAddress.slice(-4);
+      return;
     }
-    const WC = window.WalletConnectProvider;
-    if (!WC) { alert('WalletConnect library not loaded. Please allow loading external scripts or use MetaMask.'); throw new Error('WC v1 library missing'); }
-    const wcProvider = new WC.default({ rpc: { [CHAIN_ID]: FALLBACK_RPC }, chainId: CHAIN_ID, qrcode: true });
+
+    // Attempt to find WalletConnectProvider in multiple UMD shapes
+    const WC_global = window.WalletConnectProvider || (window.WalletConnectProvider && window.WalletConnectProvider.default) || null;
+    if (!WC_global) { alert('WalletConnect library not loaded. Please open in a browser that allows external scripts or use MetaMask.'); throw new Error('WC library missing'); }
+
+    // instantiate (handle both constructors exported as function/class)
+    const WcCtor = (typeof WC_global === 'function') ? WC_global : (WC_global.default || WC_global);
+    const wcProvider = new WcCtor({ rpc: { [CHAIN_ID]: FALLBACK_RPC }, chainId: CHAIN_ID, qrcode: true });
+
     await wcProvider.enable();
     provider = new ethers.providers.Web3Provider(wcProvider, "any");
     signer = provider.getSigner();
     signerAddress = await signer.getAddress();
-    walletConnected = true; $('walletConnectBtn').textContent = 'Connected';
-    wcProvider.on && wcProvider.on("disconnect", ()=> { walletConnected = false; provider = null; signer = null; signerAddress = null; $('walletConnectBtn').textContent = 'Connect Wallet'; });
+    walletConnected = true; $('walletConnectBtn').textContent = signerAddress.slice(0,6) + '...' + signerAddress.slice(-4);
+
+    // handle disconnect
+    if (wcProvider.on) {
+      wcProvider.on("disconnect", ()=> {
+        walletConnected = false; provider = null; signer = null; signerAddress = null;
+        $('walletConnectBtn').textContent = 'Connect Wallet';
+      });
+    }
   } catch(e){ console.error('connectWallet error', e); alert('Wallet connect failed: ' + (e.message||e)); throw e; }
 }
 $('walletConnectBtn').addEventListener('click', connectWallet);
@@ -636,7 +624,7 @@ function swapTokenFields(){
   const fToken = $('fromToken'), tToken = $('toToken');
   const fLogo = $('fromLogo'), tLogo = $('toLogo');
   const fAmount = $('fromAmount'), tAmount = $('toAmount');
-  const fUsd = $('fromUsd'), tUsd = $('toUsd');
+  const fUsdText = $('fromUsdText'), tUsdText = $('toUsdText');
 
   // swap values
   const tmpVal = fToken.value; fToken.value = tToken.value; tToken.value = tmpVal;
@@ -649,7 +637,7 @@ function swapTokenFields(){
 
   // amounts & usd
   const tmpAmt = fAmount.value; fAmount.value = tAmount.value; tAmount.value = tmpAmt;
-  const tmpUsd = fUsd.textContent; fUsd.textContent = tUsd.textContent; tUsd.textContent = tmpUsd;
+  const tmpUsd = fUsdText.textContent; fUsdText.textContent = tUsdText.textContent; tUsdText.textContent = tmpUsd;
 
   // refresh quote & prices
   updateQuoteDebounced();
