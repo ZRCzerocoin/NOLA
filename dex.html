@@ -63,7 +63,7 @@ h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color
 @keyframes modalIn {from{opacity:0; transform:scale(0.8);}to{opacity:1; transform:scale(1);}}
 
 /* chart area (tucked under container) */
-.chart-wrap { width:90%; max-width:480px; margin:12px auto 60px; height:400px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.03); display:none; }
+.chart-wrap { width:90%; max-width:480px; margin:12px auto 20px; height:400px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.03); display:none; }
 .chart-wrap iframe{width:100%; height:100%; border:0; background:#08020b}
 
 /* top-right floating connect (keeps theme) */
@@ -71,6 +71,16 @@ h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color
 .addr-chip { padding:8px 12px; border-radius:12px; background:rgba(255,255,255,0.03); font-weight:700; display:none }
 .connect-floating { background:linear-gradient(90deg,#b445ff,#7013ff); color:#fff; padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:800; box-shadow:0 10px 30px rgba(106,0,255,0.12); }
 
+/* Footer */
+.footer { margin:30px auto 40px; width:90%; max-width:980px; color:rgba(255,255,255,0.7); display:flex; justify-content:space-between; align-items:center; font-size:14px; gap:10px; }
+.footer .links { display:flex; gap:12px; align-items:center; }
+.footer a { color:rgba(215,165,255,0.95); text-decoration:none; font-weight:600; }
+.footer .right { opacity:0.8; }
+
+@media(max-width:560px){
+  .container { padding:18px; }
+  .footer { flex-direction:column; gap:8px; text-align:center; }
+}
 </style>
 </head>
 <body>
@@ -107,6 +117,11 @@ for(let i=0;i<60;i++){
         <input type="text" id="fromToken" placeholder="Type token name...">
         <div class="suggestions" id="fromSuggestions"></div>
         <div class="usd-line" id="fromUsd"></div>
+
+        <!-- Amount input (small, themed) -->
+        <div style="margin-top:10px;">
+          <input id="amountInput" placeholder="Amount (e.g. 1.5)" style="width:100%; padding:10px; border-radius:10px; border:none; background:rgba(255,255,255,0.03); color:#fff;">
+        </div>
     </div>
 
     <div class="input-box">
@@ -117,14 +132,13 @@ for(let i=0;i<60;i++){
     </div>
 
     <div style="display:flex;gap:10px; align-items:center; margin-top:10px;">
-      <button class="btn small" id="getQuoteBtn" style="flex:1">Get Quote</button>
-      <button class="btn small" id="swapBtn" disabled>Swap</button>
+      <button class="btn small" id="swapBtn" style="flex:1">Swap</button>
     </div>
 </div>
 
-<!-- Chart -->
+<!-- Chart (under the same theme) -->
 <div class="chart-wrap" id="chartWrap">
-  <iframe id="chartFrame" src=""></iframe>
+  <iframe id="chartFrame" src="" allowfullscreen></iframe>
 </div>
 
 <!-- CHAT TOGGLE -->
@@ -147,6 +161,18 @@ for(let i=0;i<60;i++){
         <input type="text" id="modalUsername" placeholder="Type your username">
         <button id="confirmUsername">Enter Chat</button>
     </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <div class="links">
+    <a href="Terms.html" id="termsLink">Terms</a>
+    <a href="#" id="privacyLink">Privacy</a>
+    <a href="#" id="nolaSiteLink">NOLA Token</a>
+    <a href="#" id="xLink">X</a>
+    <a href="#" id="telegramLink">Telegram</a>
+  </div>
+  <div class="right">© NOLA — All rights reserved</div>
 </div>
 
 <!-- LIBRARIES -->
@@ -175,7 +201,7 @@ const fromSuggest = document.getElementById('fromSuggestions');
 const toSuggest = document.getElementById('toSuggestions');
 const fromUsdLine = document.getElementById('fromUsd');
 const toUsdLine = document.getElementById('toUsd');
-const getQuoteBtn = document.getElementById('getQuoteBtn');
+const amountInput = document.getElementById('amountInput');
 const swapBtn = document.getElementById('swapBtn');
 const chartWrap = document.getElementById('chartWrap');
 const chartFrame = document.getElementById('chartFrame');
@@ -203,18 +229,19 @@ function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt
 function short(a){ return a ? a.slice(0,6)+'…'+a.slice(-4) : ''; }
 async function fetchJson(url, opts){ const r = await fetch(url, opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 
-/* ================== LOAD TOKENS ================== */
+/* ================== LOAD TOKENS (1inch) - then attach autocomplete ================== */
 async function loadTokens(){
   try{
     const d = await fetchJson(`${ONEINCH_BASE}/tokens`);
     tokenList = Object.values(d.tokens || {});
-    tokenList.forEach(t => t.address = (t.address||'').toLowerCase());
-    console.log('tokens loaded', tokenList.length);
-  }catch(e){ console.error('token load failed', e); }
+    tokenList.forEach(t=> t.address = (t.address||'').toLowerCase());
+    console.log('1inch tokens loaded', tokenList.length);
+    attachAutocomplete(); // attach after tokens loaded to avoid race
+  }catch(e){ console.error('token load failed', e); attachAutocomplete(); }
 }
 loadTokens();
 
-/* ================ COINGECKO USD ================== */
+/* ================== USD price ================== */
 async function fetchUsd(address){
   try{
     const a = (address||'').toLowerCase();
@@ -226,7 +253,7 @@ async function fetchUsd(address){
   }catch(e){ return null; }
 }
 
-/* ================ AUTOCOMPLETE (icons + USD badge) ================== */
+/* ================== AUTOCOMPLETE (attached after tokenList loaded) ================== */
 function createSuggestionItem(token){
   const div = document.createElement('div');
   div.className = 'suggestion-item';
@@ -234,66 +261,69 @@ function createSuggestionItem(token){
   return div;
 }
 
-function attachAutocomplete(inputEl, suggestEl, onSelect){
-  inputEl.addEventListener('input', async ()=>{
-    const q = (inputEl.value||'').trim().toLowerCase();
-    suggestEl.innerHTML = '';
-    if(!q){ suggestEl.style.display='none'; return; }
-    const bySym = tokenList.filter(t => (t.symbol||'').toLowerCase().includes(q));
-    const byName = tokenList.filter(t => (t.name||'').toLowerCase().includes(q) && !bySym.includes(t));
-    const res = [...bySym, ...byName].slice(0,8);
-    for(const tok of res){
-      const item = createSuggestionItem(tok);
-      // price badge
-      (async ()=>{
-        try{
-          const usd = await fetchUsd(tok.address);
-          if(usd !== null){
-            const price = document.createElement('div');
-            price.style.marginLeft = 'auto';
-            price.style.fontWeight = '800';
-            price.style.fontSize = '13px';
-            price.textContent = '$' + Number(usd).toFixed(4);
-            item.appendChild(price);
-          }
-        }catch(e){}
-      })();
-      item.onclick = ()=>{ inputEl.value = tok.symbol; suggestEl.style.display='none'; onSelect(tok); };
-      suggestEl.appendChild(item);
-    }
-    suggestEl.style.display = res.length ? 'block' : 'none';
+function attachAutocomplete(){
+  // Both inputs: on input, build list from tokenList
+  function bind(inputEl, suggestEl, onSelect){
+    inputEl.addEventListener('input', async ()=>{
+      const q = (inputEl.value||'').trim().toLowerCase();
+      suggestEl.innerHTML = '';
+      if(!q){ suggestEl.style.display = 'none'; return; }
+      const bySym = tokenList.filter(t => (t.symbol||'').toLowerCase().includes(q));
+      const byName = tokenList.filter(t => (t.name||'').toLowerCase().includes(q) && !bySym.includes(t));
+      const res = [...bySym, ...byName].slice(0,8);
+      for(const tok of res){
+        const item = createSuggestionItem(tok);
+        // price badge
+        (async ()=>{
+          try{
+            const usd = await fetchUsd(tok.address);
+            if(usd !== null){
+              const price = document.createElement('div');
+              price.style.marginLeft = 'auto';
+              price.style.fontWeight = '800';
+              price.style.fontSize = '13px';
+              price.textContent = '$' + Number(usd).toFixed(4);
+              item.appendChild(price);
+            }
+          }catch(e){}
+        })();
+        item.onclick = ()=>{ inputEl.value = tok.symbol; suggestEl.style.display = 'none'; onSelect(tok); };
+        suggestEl.appendChild(item);
+      }
+      suggestEl.style.display = res.length ? 'block' : 'none';
+    });
+
+    inputEl.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        e.preventDefault();
+        const q = (inputEl.value||'').trim().toLowerCase();
+        if(!q) return;
+        const found = tokenList.find(t => ((t.symbol||'').toLowerCase() === q) || ((t.name||'').toLowerCase() === q) || ((t.address||'').toLowerCase() === q));
+        if(found){ inputEl.value = found.symbol; suggestEl.style.display='none'; onSelect(found); return; }
+        const fuzzy = tokenList.find(t => (t.symbol||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q));
+        if(fuzzy){ inputEl.value = fuzzy.symbol; suggestEl.style.display='none'; onSelect(fuzzy); return; }
+        suggestEl.style.display='none';
+      }
+    });
+  }
+
+  bind(fromTokenInput, fromSuggest, async (tok)=>{
+    selectedFrom = tok;
+    const usd = await fetchUsd(tok.address);
+    fromUsdLine.textContent = usd ? `${tok.symbol} ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
+    // when selecting from, open chart for that token
+    openChart(tok.address);
   });
 
-  inputEl.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter'){
-      e.preventDefault();
-      const q = (inputEl.value||'').trim().toLowerCase();
-      if(!q) return;
-      const found = tokenList.find(t => ((t.symbol||'').toLowerCase() === q) || ((t.name||'').toLowerCase() === q) || ((t.address||'').toLowerCase() === q));
-      if(found){ inputEl.value = found.symbol; suggestEl.style.display='none'; onSelect(found); return; }
-      const fuzzy = tokenList.find(t => (t.symbol||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q));
-      if(fuzzy){ inputEl.value = fuzzy.symbol; suggestEl.style.display='none'; onSelect(fuzzy); return; }
-      suggestEl.style.display='none';
-    }
+  bind(toTokenInput, toSuggest, async (tok)=>{
+    selectedTo = tok;
+    const usd = await fetchUsd(tok.address);
+    toUsdLine.textContent = usd ? `${tok.symbol} ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
+    openChart(tok.address);
   });
 }
 
-/* Attach autocompletes */
-attachAutocomplete(fromTokenInput, fromSuggest, async (tok)=>{
-  selectedFrom = tok;
-  // show USD under input
-  const usd = await fetchUsd(tok.address);
-  fromUsdLine.textContent = usd ? `${tok.symbol} price ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
-  openChart(tok.address);
-});
-attachAutocomplete(toTokenInput, toSuggest, async (tok)=>{
-  selectedTo = tok;
-  const usd = await fetchUsd(tok.address);
-  toUsdLine.textContent = usd ? `${tok.symbol} price ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
-  openChart(tok.address);
-});
-
-/* ================ Chart (Gecko first, Dexscreener fallback) ================ */
+/* ================== Chart (Gecko first, Dexscreener fallback) ================== */
 function openChart(address){
   if(!address) return;
   const a = address.toLowerCase();
@@ -301,7 +331,6 @@ function openChart(address){
   const dexs = `https://www.dexscreener.com/polygon/${a}?embed=1`;
   chartFrame.src = gecko;
   chartWrap.style.display = 'block';
-  // fallback timer & handlers
   let fallback = setTimeout(()=>{ chartFrame.src = dexs; }, 3800);
   const onload = ()=>{ clearTimeout(fallback); cleanup(); };
   const onerror = ()=>{ clearTimeout(fallback); chartFrame.src = dexs; cleanup(); };
@@ -309,10 +338,10 @@ function openChart(address){
   chartFrame.addEventListener('load', onload);
   chartFrame.addEventListener('error', onerror);
 }
-// open NOLA token at start
+// show NOLA token chart on load
 openChart(INITIAL_NOLA_TOKEN);
 
-/* ================ Web3Modal (WalletConnect v2) init ================ */
+/* ================== Web3Modal (WalletConnect v2) init ================== */
 async function initWeb3Modal(){
   try{
     web3modal = new window.WalletConnectWeb3Modal.default({
@@ -323,22 +352,20 @@ async function initWeb3Modal(){
 }
 initWeb3Modal();
 
-/* ================ Connect wallet (MetaMask pref, WalletConnect fallback) ================ */
+/* ================== Connect wallet (MetaMask pref, WalletConnect fallback) ================== */
 async function connectWallet(){
-  // MetaMask (preferred)
-  if(window.ethereum && window.ethereum.isMetaMask){
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send('eth_requestAccounts', []);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-    addrChip.style.display = 'inline-block';
-    addrChip.textContent = short(userAddress);
-    return true;
-  }
-  // WalletConnect via Web3Modal
-  if(web3modal && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
-    try{
-      const wcProvider = await web3modal.openModal(); // returns provider
+  try{
+    if(window.ethereum && window.ethereum.isMetaMask){
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      addrChip.style.display = 'inline-block';
+      addrChip.textContent = short(userAddress);
+      return true;
+    }
+    if(web3modal && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
+      const wcProvider = await web3modal.openModal();
       if(!wcProvider) return false;
       provider = new ethers.providers.Web3Provider(wcProvider);
       signer = provider.getSigner();
@@ -346,14 +373,18 @@ async function connectWallet(){
       addrChip.style.display = 'inline-block';
       addrChip.textContent = short(userAddress);
       return true;
-    }catch(e){ console.error('WalletConnect failed', e); return false; }
+    }
+    alert('No wallet found. Install MetaMask or set WalletConnect Project ID in the code.');
+    return false;
+  }catch(e){
+    console.error('connect wallet error', e);
+    alert('Wallet connection failed: ' + (e.message || e));
+    return false;
   }
-  alert('No wallet found. Install MetaMask or set WALLETCONNECT_PROJECT_ID in the code.');
-  return false;
 }
 connectFloating.addEventListener('click', connectWallet);
 
-/* ================ 1inch quote & swap + approval flow ================ */
+/* ================== utils for amounts ================== */
 function toBigIntAmount(value, decimals=18){
   const parts = String(value).split('.');
   if(parts.length === 1) return BigInt(parts[0] || '0') * (BigInt(10) ** BigInt(decimals));
@@ -362,98 +393,76 @@ function toBigIntAmount(value, decimals=18){
   return BigInt(intPart) * (BigInt(10) ** BigInt(decimals)) + BigInt(decPart);
 }
 
-getQuoteBtn.addEventListener('click', async ()=>{
-  if(!selectedFrom || !selectedTo){ alert('Choose both tokens first'); return; }
-  // ask user for amount via prompt to keep UI unchanged (we didn't have amount input in final layout)
-  const amount = prompt('Enter amount of ' + selectedFrom.symbol + ' to quote:');
-  if(!amount) return;
-  let amountInt;
-  try{ amountInt = toBigIntAmount(amount, selectedFrom.decimals || 18).toString(); }catch(e){ alert('Invalid amount'); return; }
-  try{
-    quoteTextShow('Fetching best price...');
-    const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('Quote failed');
-    const q = await res.json();
-    const out = Number(q.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
-    // show USD estimate if possible
-    const toUsd = await fetchUsd(selectedTo.address);
-    const usdLine = toUsd ? ` • ~$${(out * toUsd).toFixed(2)}` : '';
-    quoteTextShow(`Estimated: ${out.toLocaleString(undefined,{maximumFractionDigits:6})} ${selectedTo.symbol}${usdLine}`);
-    // enable swap button and store quote in element dataset for swap
-    swapBtn.disabled = false;
-    swapBtn.dataset.amount = amountInt;
-  }catch(e){
-    console.error(e);
-    quoteTextShow('Quote failed. Try again.');
-  }
-});
-
-function quoteTextShow(txt){ /* small visual: show as alert-like using the modal behavior? Keep simple: use default alert? */ alert(txt); }
-
-/* Swap flow with allowance check and approve if needed */
+/* ================== SINGLE-SWAP FLOW: quote -> approval -> swap ================== */
 swapBtn.addEventListener('click', async ()=>{
-  if(!selectedFrom || !selectedTo) return alert('Select tokens first');
-  if(!provider || !signer){
-    const ok = confirm('You must connect wallet to swap. Connect now?');
-    if(!ok) return;
-    const ok2 = await connectWallet();
-    if(!ok2) return;
-  }
-  const amountInt = swapBtn.dataset.amount;
-  if(!amountInt) return alert('No quote available. Get Quote first.');
   try{
-    // 1) check allowance if from token is not native (MATIC has address 0xEeee... in 1inch but token list has wrapped)
-    const tokenAddr = selectedFrom.address.toLowerCase();
-    // if token address equals 0xEeeee... or token symbol is MATIC might be native; 1inch uses special address for native; check decimals etc
-    // We'll treat tokens with address '0xeeee...' or address null as native (no approval)
-    const NATIVE_ADDRESSES = ['0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'];
-    if(!NATIVE_ADDRESSES.includes(tokenAddr)){
-      const allowUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${tokenAddr}&walletAddress=${userAddress}`;
+    if(!selectedFrom || !selectedTo) return alert('Choose both From and To tokens first.');
+    const amount = (amountInput.value||'').trim();
+    if(!amount || isNaN(Number(amount))) return alert('Enter a valid amount.');
+    // ensure wallet connected
+    if(!provider || !signer){
+      const ok = confirm('Connect wallet to swap now?');
+      if(!ok) return;
+      const ok2 = await connectWallet();
+      if(!ok2) return;
+    }
+    // build quote
+    const amountInt = toBigIntAmount(amount, selectedFrom.decimals || 18).toString();
+    swapBtn.disabled = true; swapBtn.textContent = 'Preparing...';
+    const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}`;
+    const qRes = await fetch(quoteUrl);
+    if(!qRes.ok) throw new Error('Quote failed');
+    const qJson = await qRes.json();
+    const outAmount = Number(qJson.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
+    // allowance check & approve if needed (skip if native)
+    const nativeAddr = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'; // 1inch pseudo-native
+    const fromAddr = (selectedFrom.address||'').toLowerCase();
+    if(fromAddr !== nativeAddr){
+      // check allowance
+      const allowUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${userAddress}`;
       const allowRes = await fetch(allowUrl);
       const allowJson = await allowRes.json();
-      const allowance = BigInt(allowJson?.allowance || '0');
+      const allowance = BigInt(allowJson.allowance || '0');
       const want = BigInt(amountInt);
       if(allowance < want){
-        // need approval
-        const approveUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${tokenAddr}`;
+        // build approve tx
+        const approveUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;
         const approveRes = await fetch(approveUrl);
         const approveTx = await approveRes.json();
-        if(!approveTx || !approveTx.data){
-          throw new Error('Approve tx build failed');
-        }
-        // send approval tx
-        const txReq = { to: approveTx.to, data: approveTx.data, value: approveTx.value ? approveTx.value : undefined };
-        const sent = await signer.sendTransaction(txReq);
-        alert('Approval tx sent: ' + sent.hash + '\nWaiting for confirmation...');
+        if(!approveTx || !approveTx.data) throw new Error('Approve build failed');
+        swapBtn.textContent = 'Approving...';
+        // send approval
+        const sent = await signer.sendTransaction({ to: approveTx.to, data: approveTx.data, value: approveTx.value ? approveTx.value : undefined });
+        alert('Approve tx sent: ' + sent.hash);
         await sent.wait();
         alert('Approval confirmed — proceeding to swap');
       }
     }
-
-    // 2) build swap
+    // build swap
+    swapBtn.textContent = 'Swapping ...';
     const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}&fromAddress=${userAddress}&slippage=1`;
     const swapRes = await fetch(swapUrl);
     const swapJson = await swapRes.json();
-    if(!swapJson.tx){
-      console.error('swap build failed', swapJson);
-      throw new Error('Swap build failed');
-    }
-    // 3) send swap tx via signer
-    const txData = swapJson.tx;
+    if(!swapJson || !swapJson.tx) throw new Error('Swap build failed: ' + JSON.stringify(swapJson));
+    // send tx
+    const txParams = swapJson.tx;
     const tx = await signer.sendTransaction({
-      to: txData.to,
-      data: txData.data,
-      value: txData.value ? txData.value : undefined
+      to: txParams.to,
+      data: txParams.data,
+      value: txParams.value ? txParams.value : undefined
     });
     alert('Swap tx sent: ' + tx.hash);
+    swapBtn.textContent = 'Swap';
+    swapBtn.disabled = false;
   }catch(e){
-    console.error(e);
+    console.error('swap flow error', e);
     alert('Swap failed: ' + (e.message || e));
+    swapBtn.textContent = 'Swap';
+    swapBtn.disabled = false;
   }
 });
 
-/* ================ Chat (Gun) global peers & themed modal ================ */
+/* ================== Chat (Gun) with global peers & themed modal ================== */
 const gun = Gun({ peers: GUN_PEERS });
 const chatNode = gun.get('nola_chat_global_v1');
 let chatUser = null;
@@ -475,7 +484,6 @@ confirmUsername.addEventListener('click', ()=>{
   usernameModal.style.display = 'none';
 });
 
-// listen for messages
 chatNode.map().on(m=>{
   if(!m || !m.user || !m.text) return;
   const el = document.createElement('div');
@@ -486,13 +494,12 @@ chatNode.map().on(m=>{
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
-/* chat toggle */
 chatToggle.addEventListener('click', ()=> {
   chatSidebar.style.display = (chatSidebar.style.display === 'flex') ? 'none' : 'flex';
 });
 
-/* ================== small ready log ================== */
-setTimeout(()=>{ if(tokenList.length) console.log('Tokens ready:', tokenList.length); }, 1200);
+/* ================== final logs ================== */
+setTimeout(()=>{ if(tokenList.length) console.log('Tokens loaded:', tokenList.length) }, 1200);
 
 </script>
 </body>
