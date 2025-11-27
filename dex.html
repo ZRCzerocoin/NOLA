@@ -1,829 +1,579 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>NOLA Exchange</title>
-<style>
-/* ===== THEME / LAYOUT ===== */
-:root{
-  --bg-1: #0c0014;
-  --bg-2: #1a002b;
-  --accent-1: #b445ff;
-  --accent-2: #7013ff;
-  --glass: rgba(255,255,255,0.05);
-  --glass-2: rgba(255,255,255,0.03);
-  --suggest-bg: rgba(25,0,50,0.98);
-  --shadow: 0 0 25px rgba(180,0,255,0.3);
-}
-html,body{height:100%; margin:0;}
-body {
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Arial',sans-serif;
-  background: radial-gradient(circle at center, var(--bg-1), var(--bg-2) 80%);
-  color:#fff;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
+I will send you a code , you will take the related ui to other code i will and memorize it , because you will apply it to the other code
 
-/* container centered */
-.container {
-  width:90%; max-width:480px;
-  background:var(--glass); border-radius:25px; padding:20px;
-  backdrop-filter:blur(18px); box-shadow:var(--shadow);
-  position:relative; margin:auto;
-}
-h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px var(--accent-1); margin:6px 0 12px 0;}
+You will import from this code the background,  the animation in background,  the section layout , and a pearence , the floating logo at the top center
 
-/* token input rows */
-.input-box {margin-top:14px; padding:8px 10px; background:rgba(255,255,255,0.02); border-radius:12px; position:relative;}
-.input-box .token-top {display:flex; align-items:center; justify-content:space-between; gap:8px;}
-.token-left {display:flex; align-items:center; gap:8px; min-width:140px; overflow:hidden;}
-.token-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; flex-shrink:0; display:none;}
-.token-left input[type="text"]{border:none; background:transparent; color:#fff; font-weight:700; font-size:15px; outline:none; width:100%; min-width:60px; padding:6px 0;}
-
-/* amount + USD on the right */
-.token-right {display:flex; align-items:center; gap:8px;}
-.token-right .amount{ padding:6px 8px; border-radius:10px; border:none; background:rgba(255,255,255,0.03); color:#fff; font-size:15px; width:110px; text-align:right; }
-.token-right .usd { font-size:13px; opacity:0.9; min-width:110px; text-align:right; display:flex; flex-direction:column; align-items:flex-end; }
-.usd-top { font-size:12px; color:rgba(255,255,255,0.92); }
-.usd-main { font-weight:700; font-size:13px; margin-top:4px; }
-
-/* suggestions */
-.suggestions { position:absolute; top:56px; left:8px; right:8px; background:var(--suggest-bg); border-radius:12px; max-height:320px; overflow-y:auto; display:none; z-index:220; box-shadow:0 8px 30px rgba(0,0,0,0.7); }
-.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; gap:8px; border-bottom:1px solid rgba(255,255,255,0.02); }
-.suggestion-left { display:flex; gap:10px; align-items:center; min-width:170px; overflow:hidden; }
-.suggestion-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; }
-.suggestion-main { display:flex; flex-direction:column; overflow:hidden; }
-.suggestion-symbol { font-weight:700; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.suggestion-name { font-size:12px; opacity:0.8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.suggestion-price { text-align:right; font-size:13px; opacity:0.95; min-width:100px; }
-
-/* buttons */
-.btn {width:100%; padding:14px; margin-top:18px; border:none; border-radius:20px; background: linear-gradient(135deg,var(--accent-1),var(--accent-2)); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 14px 30px rgba(180,68,255,0.12);}
-
-/* footer */
-footer {text-align:center; margin:26px 0 10px 0; font-size:14px; opacity:0.8;}
-footer a{color:var(--accent-1); text-decoration:none; margin:0 5px;}
-
-/* swap icon — moved to LEFT edge of container near the section */
+<!DOCTYPE html>  <html lang="en">  
+<head>  
+<meta charset="UTF-8">  
+<meta name="viewport" content="width=device-width, initial-scale=1.0">  
+<title>NOLA Exchange</title>  
+<style>  
+/* ===== BASIC THEME ===== (kept exactly as you provided, with tiny additions for suggestions) */  
+body {margin:0; padding:0; font-family:'Arial',sans-serif; background: radial-gradient(circle at center, #0c0014, #1a002b 80%); color:#fff;}  
+.container {width:90%; max-width:480px; margin:40px auto; background:rgba(255,255,255,0.05); border-radius:25px; padding:25px; backdrop-filter:blur(18px); box-shadow:0 0 25px rgba(180,0,255,0.3);}  
+h2{text-align:center; color:#e0b3ff; text-shadow:0 0 8px #b445ff;}  
+.input-box {margin-top:20px; padding:15px; background:rgba(255,255,255,0.05); border-radius:16px; position:relative;}  
+.input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}  
+.suggestions { position:absolute; top:50px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }  
+.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; justify-content:space-between; }  
+.suggestion-left { display:flex; gap:10px; align-items:center; }  
+.suggestion-left img { width:28px; height:28px; border-radius:8px; object-fit:cover; }  
+.suggestion-main { display:flex; flex-direction:column; }  
+.suggestion-symbol { font-weight:700; font-size:14px; }  
+.suggestion-name { font-size:12px; opacity:0.8; }  
+.suggestion-price { text-align:right; font-size:13px; opacity:0.9; min-width:88px; }  
+.btn {width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer;}  
+footer {text-align:center; margin:30px 0 10px 0; font-size:14px; opacity:0.8;}  
+footer a{color:#b445ff; text-decoration:none; margin:0 5px;}  /* small controls added but conservative so theme remains intact /
 #swapTokensBtn {
-  position:absolute;
-  left:10px; /* now near left edge of the section */
-  top:calc(50% - 20px);
-  width:40px; height:40px; border-radius:10px;
-  background:rgba(30,20,60,0.95);
-  border:2px solid rgba(255,255,255,0.06);
-  display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; color:#fff; z-index:250;
-  transition:transform 160ms ease, box-shadow 160ms ease;
+position:absolute;
+left:50%;
+transform:translateX(-50%);
+top:calc(50% - 20px);
+width:36px;
+height:36px;
+border-radius:50%;
+background:rgba(30,20,60,0.8);
+border:2px solid rgba(255,255,255,0.05);
+display:flex;
+align-items:center;
+justify-content:center;
+cursor:pointer;
+font-size:16px;
+color:#fff;
+z-index:150;
 }
-#swapTokensBtn:hover{ transform:translateY(-4px); box-shadow:0 12px 30px rgba(104,0,200,0.18); }
-#swapTokensBtn.pressed{ transform: translateY(0) scale(0.98); }
-
-/* wallet iframe slot (top-right) */
-#walletFrame {
-  position:fixed; top:12px; right:12px; width:48px; height:48px; border:0; border-radius:12px; overflow:hidden; z-index:999;
-  box-shadow:0 10px 30px rgba(0,0,0,0.6);
-  background:linear-gradient(135deg,var(--accent-1),var(--accent-2));
+#walletConnectBtn{
+position:fixed;
+top:16px;
+right:16px;
+padding:10px 14px;
+border:none;
+border-radius:14px;
+background: linear-gradient(135deg,#b445ff,#7013ff);
+color:#fff;
+cursor:pointer;
+z-index:999;
+font-weight:600;
 }
-#walletFallback { position:fixed; top:14px; right:14px; z-index:1000; display:none; padding:8px 10px; border-radius:12px; border:none; color:#fff; background:linear-gradient(135deg,var(--accent-1),var(--accent-2)); }
-
-/* logo floating upper-middle center */
-#logoFloat {
-  position:fixed;
-  top:8px;
-  left:50%;
-  transform:translateX(-50%);
-  width:88px;
-  height:88px;
-  pointer-events:none;
-  animation:float 6s ease-in-out infinite;
-  z-index:998;
-}
-@keyframes float { 0%{ transform:translateX(-50%) translateY(0) } 50%{ transform:translateX(-50%) translateY(-8px) } 100%{ transform:translateX(-50%) translateY(0) } }
-
-/* responsive */
-@media(max-width:420px){
-  .token-right .amount { width:86px; font-size:14px; }
-  .token-left input[type="text"]{font-size:14px;}
-  .token-left img{width:24px;height:24px;}
-  #swapTokensBtn{ left:8px; top:calc(50% - 18px); width:36px; height:36px; }
-  #logoFloat{ width:64px; height:64px; top:8px; }
+/ compact search inside container */
+#globalSearch {
+width:calc(100% - 10px);
+display:block;
+margin:8px auto 8px;
+padding:8px 10px;
+border-radius:10px;
+border:none;
+background:rgba(255,255,255,0.03);
+color:#fff;
+font-size:14px;
+outline:none;
 }
 </style>
-</head>
-<body>
 
-<!-- floating logo centered top -->
-<img id="logoFloat" src="logo.gif" alt="NOLA Logo">
-
-<!-- Wallet iframe slot -->
-<iframe id="walletFrame" src="walletconnect.html" title="Wallet Connect"></iframe>
-<button id="walletFallback" style="display:none">Connect</button>
-
-<div class="container">
-    <h2>NOLA Exchange</h2>
-
-    <div class="input-box" id="fromBox">
-        <div class="token-top">
-            <div class="token-left">
-                <img id="fromLogo" alt="logo">
-                <input type="text" id="fromToken" placeholder="From Token (symbol or contract)" autocomplete="off" aria-label="From token">
-            </div>
-            <div class="token-right">
-                <input id="fromAmount" class="amount" type="number" placeholder="Amount" min="0" step="any" aria-label="From amount">
-                <div id="fromUsd" class="usd" style="display:none;">
-                  <span class="usd-top" id="fromUsdTop">≈ $—</span>
-                  <span class="usd-main" id="fromUsdMain">— / unit</span>
-                </div>
-            </div>
-        </div>
-        <div class="suggestions" id="fromSuggestions" data-side="from"></div>
-    </div>
-
-    <div id="swapTokensBtn" title="Swap From ↔ To">⇅</div>
-
-    <div class="input-box" id="toBox" style="margin-top:12px;">
-        <div class="token-top">
-            <div class="token-left">
-                <img id="toLogo" alt="logo">
-                <input type="text" id="toToken" placeholder="To Token (symbol or contract)" autocomplete="off" aria-label="To token">
-            </div>
-            <div class="token-right">
-                <input id="toAmount" class="amount" type="number" placeholder="Estimated" readonly aria-label="To amount">
-                <div id="toUsd" class="usd" style="display:none;">
-                  <span class="usd-top" id="toUsdTop">≈ $—</span>
-                  <span class="usd-main" id="toUsdMain">per unit</span>
-                </div>
-            </div>
-        </div>
-        <div class="suggestions" id="toSuggestions" data-side="to"></div>
-    </div>
-
-    <div style="margin-top:10px;">
-        <select id="slippage" style="padding:8px; border-radius:10px; border:none; background:rgba(255,255,255,0.03); color:#fff;">
-            <option value="0.1">0.1%</option>
-            <option value="0.5">0.5%</option>
-            <option value="1" selected>1%</option>
-            <option value="2">2%</option>
-        </select>
-    </div>
-
-    <button class="btn" id="swapBtn">Swap</button>
-</div>
-
-<!-- libs -->
-<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
-
-<script>
-/* ===== CONFIG ===== */
-const CHAIN_ID = 137;
-const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
-const COINGECKO_CHAIN = 'polygon-pos';
-const FALLBACK_RPC = "https://polygon-rpc.com";
-const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-
-/* ===== STATE & CACHES ===== */
-let tokenList = [];
-let tokenMap = new Map();
-let cgStatsMap = new Map(); // maps symbol/name -> {price, change24h, volume24h, volume12h?, image}
-const priceCache = new Map(); // addr -> {price, ts}
-const suggestionCache = new Map(); // query -> results
-const ACTIVE_PRICE_ADDRS = new Set(); // addresses to refresh
-const PRICE_TTL = 7000; // ms, matches 7s update
-const SUGGEST_LIMIT = 12;
-const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
-
-/* ===== DOM shortcuts ===== */
-const $ = id => document.getElementById(id);
-const fromTokenInput = $('fromToken'), toTokenInput = $('toToken');
-const fromAmountEl = $('fromAmount'), toAmountEl = $('toAmount');
-const fromUsd = $('fromUsd'), toUsd = $('toUsd');
-const fromUsdTop = $('fromUsdTop'), fromUsdMain = $('fromUsdMain');
-const toUsdTop = $('toUsdTop'), toUsdMain = $('toUsdMain');
-const fromLogo = $('fromLogo'), toLogo = $('toLogo');
-const swapBtn = $('swapTokensBtn');
-const walletFrame = $('walletFrame');
-const walletFallback = $('walletFallback');
-
-const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
-const low = s => (s||'').toLowerCase();
-const nowTs = ()=> Date.now();
-
-/* small utilities */
-function formatUSD(v){
-  if (v === null || v === undefined || !Number.isFinite(v)) return '—';
-  const n = Number(v);
-  const opts = { style:'currency', currency:'USD', maximumFractionDigits:2, minimumFractionDigits:2 };
-  if (Math.abs(n)>0 && Math.abs(n) < 0.01){ opts.maximumFractionDigits=6; opts.minimumFractionDigits=4; }
-  return new Intl.NumberFormat('en-US', opts).format(n);
-}
-function fetchWithTimeout(url, opts={}, ms=3000){
-  const controller = new AbortController();
-  const id = setTimeout(()=> controller.abort(), ms);
-  const init = Object.assign({}, opts, { signal: controller.signal });
-  return fetch(url, init).finally(()=> clearTimeout(id));
-}
-
-/* ===== LOAD TOKENS & COINGECKO MARKETS (initial) ===== */
-async function loadTokensAndMarkets(){
-  try {
-    const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
-    const j = await r.json();
-    tokenList = (j.tokens||[]).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
-    tokenList.forEach(t => tokenMap.set(t.address, t));
-    if (!tokenMap.has(MATIC_ADDR)) tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
-
-    // initial Coingecko markets (top 250). store volume24h; if future responses include 12h volume we'll store it too.
-    try {
-      const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-      const rm = await fetchWithTimeout(marketsUrl, {}, 4000);
-      const jm = await rm.json();
-      jm.forEach(c => {
-        const sym = low(c.symbol||''), name = low(c.name||'');
-        const stat = {
-          price: (typeof c.current_price === 'number' ? c.current_price : null),
-          change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null),
-          volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0),
-          image: c.image||'',
-          // note: coingecko does not provide 12h volume in this endpoint; keep placeholder if available later
-          volume12h: null
-        };
-        if (sym) cgStatsMap.set(sym, stat);
-        if (name) cgStatsMap.set(name, stat);
-      });
-    } catch(e){ console.warn('CoinGecko markets failed', e); }
-
-    // merge 1inch token list as fallback (avoid duplicates)
-    try {
-      const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
-      const j1 = await r1.json();
-      if (j1 && j1.tokens) {
-        Object.values(j1.tokens).forEach(t => {
-          const addr = low(t.address||'');
-          if (!addr) return;
-          if (tokenMap.has(addr)) return;
-          const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
-          tokenList.push(obj); tokenMap.set(addr, obj);
-        });
-      }
-    } catch(e){ /* ignore */ }
-
-    // dedupe
-    const seen = new Set();
-    tokenList = tokenList.filter(t => { if (!t || !t.address) return false; if (seen.has(t.address)) return false; seen.add(t.address); return true; });
-
-  } catch(e){ console.error('loadTokensAndMarkets error', e); }
-}
-let tokensLoadedPromise = loadTokensAndMarkets();
-async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
-
-/* ===== PRICE SOURCES & FALLBACK ORDER (1inch -> Coingecko Contract -> Dexscreener) ===== */
-
-/* fetch price via 1inch quote (fast, often available) */
-async function fetch1InchQuotePrice(addr, decimals=18){
-  try {
-    const amountBN = ethers.BigNumber.from(10).pow(decimals);
-    const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${USDC_ADDR}&amount=${amountBN.toString()}`;
-    const res = await fetchWithTimeout(qUrl,{},3000);
-    if (!res.ok) throw new Error('1inch non-ok');
-    const j = await res.json();
-    if (!j || !j.toTokenAmount) throw new Error('1inch no toTokenAmount');
-    const usdcAmountBN = ethers.BigNumber.from(j.toTokenAmount);
-    const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j.toToken?.decimals ?? 6));
-    if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('1inch invalid price');
-    return usdc;
-  } catch(e){ throw e; }
-}
-
-/* fetch coingecko contract (slower but authoritative) */
-async function fetchCoingeckoContractPrice(addr){
-  try {
-    const url = `https://api.coingecko.com/api/v3/coins/${COINGECKO_CHAIN}/contract/${addr}`;
-    const res = await fetchWithTimeout(url,{},3000);
-    if (!res.ok) throw new Error('cg contract non-ok');
-    const j = await res.json();
-    const price = j?.market_data?.current_price?.usd;
-    const change = j?.market_data?.price_change_percentage_24h;
-    if (typeof price === 'number' && price > 0) return { price, change };
-    throw new Error('cg no price');
-  } catch(e){ throw e; }
-}
-
-/* fetch dexscreener as last fallback */
-async function fetchDexscreenerPrice(addr){
-  try {
-    const url = `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
-    const res = await fetchWithTimeout(url,{},3000);
-    if (!res.ok) throw new Error('dexscreener non-ok');
-    const j = await res.json();
-    const pairs = j?.pairs || [];
-    for (const p of pairs){
-      if (p?.priceUsd){ const v = Number(p.priceUsd); if (Number.isFinite(v) && v>0) return v; }
-      if (p?.price){ const v = Number(p.price); if (Number.isFinite(v) && v>0) return v; }
-    }
-    throw new Error('dexscreener no price');
-  } catch(e){ throw e; }
-}
-
-/* unified getTokenPriceUSD: tries 1inch -> coingecko -> dexscreener, caches result */
-async function getTokenPriceUSD(address, decimals=18){
-  if (!address) return null;
-  const addr = low(address);
-  const cached = priceCache.get(addr);
-  if (cached && (nowTs() - cached.ts) < PRICE_TTL) return cached.price;
-  // try in preferred order: 1inch, coingecko contract, dexscreener
-  try {
-    const p1 = await fetch1InchQuotePrice(addr, decimals);
-    priceCache.set(addr, {price:p1, ts:nowTs()});
-    return p1;
-  } catch(_) {}
-  try {
-    const cg = await fetchCoingeckoContractPrice(addr);
-    if (cg && typeof cg.price === 'number') { priceCache.set(addr, {price:cg.price, ts:nowTs()}); return cg.price; }
-  } catch(_) {}
-  try {
-    const d = await fetchDexscreenerPrice(addr);
-    if (d) { priceCache.set(addr,{price:d,ts:nowTs()}); return d; }
-  } catch(_) {}
-  priceCache.set(addr,{price:null,ts:nowTs()});
-  return null;
-}
-
-/* ===== SUGGESTION RENDERING & PRIORITIZATION ===== */
-function makeSuggestionItem(tokenObj, stats, priceUSD){
-  const row = document.createElement('div'); row.className='suggestion-item';
-  const left = document.createElement('div'); left.className='suggestion-left';
-  const img = document.createElement('img'); img.src = tokenObj.logoURI || (stats && stats.image) || DARK_SVG_PLACEHOLDER; img.onerror = ()=> img.src = DARK_SVG_PLACEHOLDER;
-  left.appendChild(img);
-  const main = document.createElement('div'); main.className='suggestion-main';
-  const sym = document.createElement('div'); sym.className='suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address?tokenObj.address.slice(0,6):'');
-  const nm = document.createElement('div'); nm.className='suggestion-name'; nm.textContent = tokenObj.name || '';
-  main.appendChild(sym); main.appendChild(nm);
-  if (stats && typeof stats.change24h === 'number') {
-    const ch = document.createElement('div'); ch.style.fontSize='11px'; ch.style.marginTop='6px'; ch.style.opacity='0.9';
-    ch.textContent = (stats.change24h>=0?'+':'')+stats.change24h.toFixed(2)+'% (24h)';
-    ch.style.color = stats.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
-    main.appendChild(ch);
-  }
-  left.appendChild(main);
-  const right = document.createElement('div'); right.className='suggestion-price';
-  if (priceUSD != null && Number.isFinite(priceUSD)) right.innerHTML = `<div style="font-size:12px;opacity:0.85">${tokenObj.symbol||''}</div><div style="margin-top:6px;font-weight:600;">≈ ${formatUSD(priceUSD)}</div>`;
-  else right.innerHTML = `<div style="font-size:12px;opacity:0.85">${tokenObj.symbol||''}</div><div style="margin-top:6px;opacity:0.8">—</div>`;
-  row.appendChild(left); row.appendChild(right);
-  return row;
-}
-
-/* show default list (top by CG volume) */
-function showDefaultList(side){
-  const box = (side === 'from') ? $('fromSuggestions') : $('toSuggestions');
-  box.innerHTML = '';
-  const candidates = tokenList.filter(t => {
-    const s = low(t.symbol), n = low(t.name);
-    return cgStatsMap.has(s) || cgStatsMap.has(n);
-  });
-  const withStats = candidates.map(t => {
-    const s = low(t.symbol), n = low(t.name);
-    const stat = cgStatsMap.get(s) || cgStatsMap.get(n) || {price:null,change24h:null,volume24h:0,image:''};
-    return {t,stat};
-  });
-  withStats.sort((a,b)=> (b.stat.volume24h||0) - (a.stat.volume24h||0));
-  const top = withStats.slice(0, Math.min(15, withStats.length));
-  (async ()=>{
-    for (const e of top){
-      const tk = e.t, stats = e.stat;
-      const price = stats.price ?? await getTokenPriceUSD(tk.address, tk.decimals);
-      const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || stats.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
-      box.appendChild(node);
-    }
-    box.style.display = top.length ? 'block' : 'none';
-  })();
-}
-
-/* cached promise for fetch suggestions to reduce repeated work */
-const suggestionPromises = new Map();
-
-/* Setup autocomplete with prioritization: CG 24h/12h first, then 1inch tokens (fallback) */
-function setupAutocomplete(inputId, suggestionsId, side){
-  const input = $(inputId), box = $(suggestionsId);
-  let timer = null;
-  input.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 140); });
-  input.addEventListener('focus', ()=> { const q = input.value.trim().toLowerCase(); if (!q) showDefaultList(side); else handle(q); });
-  input.addEventListener('blur', ()=> setTimeout(()=> {
-    // don't force hide here; we handle outside-click globally. keep a small delay for click-to-select.
-    box.style.display = 'none';
-  }, 160));
-
-  async function handle(q){
-    box.innerHTML = ''; if (!q){ box.style.display='none'; return; }
-
-    // address typed: onchain fetch
-    if (isAddress(q)){
-      let info = tokenMap.get(low(q));
-      if (!info) info = await fetchOnchainTokenInfo(q);
-      if (info){
-        const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
-        const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
-        const node = makeSuggestionItem(info, {change24h: stat?.change24h ?? null, image: info.logoURI}, price);
-        node.addEventListener('click', ()=>{ applyTokenSelection(side, info); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
-        box.appendChild(node); box.style.display='block';
-      }
-      return;
-    }
-
-    // caching common queries
-    if (suggestionCache.has(q)){
-      renderSuggestionsFromCache(q, side, box);
-      return;
-    }
-
-    // build candidate list in two stages:
-    // 1) coingecko-backed tokens that match
-    // 2) 1inch list fallback matches
-    await ensureTokensLoaded();
-
-    const matches = tokenList.filter(t => {
-      const s = t.symbol || '', n = t.name || '';
-      return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
-    });
-
-    const cgMatches = matches.filter(t => {
-      return cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name));
-    }).map(t => {
-      const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || {volume24h:0,volume12h:null,price:null,change24h:null,image:''};
-      // scoring: prefer volume24h and optional volume12h (if stored); give prefix matches bonus
-      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e12 : 0;
-      const v24 = stats.volume24h || 0;
-      const v12 = stats.volume12h || 0;
-      const score = v24 + (v12 * 1.2) + startBonus;
-      return {t, stats, score};
-    });
-
-    cgMatches.sort((a,b)=> b.score - a.score);
-
-    const inchMatches = matches.filter(t => {
-      const s = t.symbol || '', n = t.name || '';
-      const hasCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
-      return !hasCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
-    }).map(t => {
-      const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0;
-      return {t, stats:null, score:startBonus};
-    }).sort((a,b)=> b.score - a.score);
-
-    const merged = cgMatches.concat(inchMatches).slice(0, SUGGEST_LIMIT);
-
-    // cache the merged result structure (addresses + minimal metadata) for quick re-render
-    const cacheResult = merged.map(x => ({ address: x.t.address, symbol: x.t.symbol, name: x.t.name, logoURI: x.t.logoURI, score: x.score }));
-    suggestionCache.set(q, cacheResult);
-
-    // render UI
-    for (const s of merged){
-      const tk = s.t;
-      const stats = s.stats || {change24h:null,image: tk.logoURI||''};
-      // fetch price but don't block (still render quickly)
-      (async ()=>{
-        const price = (s.stats && s.stats.price) ? s.stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
-        const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, image: tk.logoURI || ''}, price);
-        node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
-        box.appendChild(node);
-      })();
-    }
-    box.style.display = merged.length ? 'block' : 'none';
-  }
-}
-
-function renderSuggestionsFromCache(q, side, box){
-  const cached = suggestionCache.get(q) || [];
-  box.innerHTML = '';
-  (async ()=>{
-    for (const item of cached.slice(0,SUGGEST_LIMIT)){
-      const tk = tokenMap.get(low(item.address)) || { address: item.address, symbol: item.symbol, name: item.name, logoURI: item.logoURI };
-      const stats = cgStatsMap.get(low(tk.symbol)) || cgStatsMap.get(low(tk.name)) || null;
-      const price = await getTokenPriceUSD(tk.address, tk.decimals || 18);
-      const node = makeSuggestionItem(tk, {change24h: stats?.change24h ?? null, image: tk.logoURI || stats?.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); });
-      box.appendChild(node);
-    }
-    box.style.display = cached.length ? 'block' : 'none';
-  })();
-}
-
-/* Install autocomplete for both inputs */
-setupAutocomplete('fromToken','fromSuggestions','from');
-setupAutocomplete('toToken','toSuggestions','to');
-
-/* apply token selection and show USD area only when token chosen */
-function applyTokenSelection(side, tokenObj){
-  if (!tokenObj) return;
-  const input = (side === 'from') ? fromTokenInput : toTokenInput;
-  const logo = (side === 'from') ? fromLogo : toLogo;
-  const usdBlock = (side === 'from') ? fromUsd : toUsd;
-  const addrLower = tokenObj.address ? low(tokenObj.address) : undefined;
-  input.value = tokenObj.symbol || tokenObj.name || (addrLower?addrLower.slice(0,8):'');
-  if (addrLower) input.dataset.address = addrLower;
-  input.dataset.decimals = tokenObj.decimals || 18;
-  if (tokenObj.logoURI){ logo.src = tokenObj.logoURI; logo.style.display = 'inline-block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
-  tokenMap.set(tokenObj.address, tokenObj);
-  usdBlock.style.display = 'flex';
-  // mark for active price refresh
-  ACTIVE_PRICE_ADDRS.add(addrLower);
-  fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
-}
-
-/* hide USD blocks if no token selected */
-function updateUsdVisibility(){
-  if (!fromTokenInput.dataset.address) { fromUsd.style.display = 'none'; ACTIVE_PRICE_ADDRS.delete(low(fromTokenInput.dataset.address||'')); } else { fromUsd.style.display = 'flex'; ACTIVE_PRICE_ADDRS.add(low(fromTokenInput.dataset.address||'')); }
-  if (!toTokenInput.dataset.address) { toUsd.style.display = 'none'; ACTIVE_PRICE_ADDRS.delete(low(toTokenInput.dataset.address||'')); } else { toUsd.style.display = 'flex'; ACTIVE_PRICE_ADDRS.add(low(toTokenInput.dataset.address||'')); }
-}
-
-/* detect paste of address and auto-resolve */
-document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{
-  inp.addEventListener('paste', (ev)=>{
-    const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
-    if (isAddress(txt)) {
-      setTimeout(async ()=> {
-        inp.dataset.address = low(txt);
-        let info = tokenMap.get(low(txt)) || await fetchOnchainTokenInfo(txt);
-        if (info) {
-          inp.dataset.decimals = info.decimals || 18;
-          inp.value = info.symbol || info.name || txt.slice(0,8);
-          tokenMap.set(info.address, info);
-          const logo = (inp.id === 'fromToken') ? fromLogo : toLogo;
-          if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'inline-block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; }
-          updateUsdVisibility();
-          fetchBothPrices(); updateQuoteDebounced(); updateEstimate();
-        }
-      }, 10);
-    }
-  });
-});
-
-/* fetch onchain metadata fallback */
-async function fetchOnchainTokenInfo(address){
-  try {
-    const addrL = low(address);
-    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
-    const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);
-    const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
-    const c = new ethers.Contract(address, abi, rpcProvider);
-    const [symbol,name,decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
-    const info = { address: addrL, symbol: symbol||address.slice(0,6), name: name||symbol||address.slice(0,8), decimals: decimals||18, logoURI: '' };
-    tokenMap.set(info.address, info);
-    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
-    return info;
-  } catch(e){ console.warn('fetchOnchainTokenInfo failed', e); return null; }
-}
-
-/* fetch price for a token and update USD displays (used when selection or periodic refresh) */
-async function fetchPriceForToken(address, decimals, side){
-  try {
-    if (!address) return;
-    const price = await getTokenPriceUSD(address, decimals);
-    const usdElTop = (side === 'from') ? fromUsdTop : toUsdTop;
-    const usdElMain = (side === 'from') ? fromUsdMain : toUsdMain;
-    const amtEl = (side === 'from') ? fromAmountEl : toAmountEl;
-    const amt = Number(amtEl.value || 0);
-
-    if (price != null && !Number.isNaN(amt) && amt>0) {
-      usdElTop.textContent = '≈ ' + formatUSD(Number(price) * amt);
-      usdElMain.textContent = `${formatUSD(price)} / unit`;
-    } else if (price != null) {
-      usdElTop.textContent = '≈ ' + formatUSD(price);
-      usdElMain.textContent = `${formatUSD(price)} / unit`;
-    } else {
-      usdElTop.textContent = '≈ $—';
-      usdElMain.textContent = '— / unit';
-    }
-  } catch(e){ console.warn('fetchPriceForToken error', e); }
-}
-
-/* fetch both prices (for from/to) */
-async function fetchBothPrices(){
-  const fAddr = low(fromTokenInput.dataset.address || '');
-  const tAddr = low(toTokenInput.dataset.address || '');
-  const fDec = Number(fromTokenInput.dataset.decimals || 18);
-  const tDec = Number(toTokenInput.dataset.decimals || 18);
-  await Promise.all([
-    fAddr ? fetchPriceForToken(fAddr, fDec, 'from') : Promise.resolve(),
-    tAddr ? fetchPriceForToken(tAddr, tDec, 'to') : Promise.resolve()
-  ]);
-}
-
-/* ===== QUOTE (1inch) with debounce ===== */
-let quoteTimer = null;
-function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 140); }
-
-async function updateQuote(){
-  try {
-    const fromAddr = low(fromTokenInput.dataset.address || '');
-    const toAddr = low(toTokenInput.dataset.address || '');
-    const amount = fromAmountEl.value;
-    if (!fromAddr || !toAddr || !amount) { await fetchBothPrices(); return; }
-
-    const fromDecimals = Number(fromTokenInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
-    const toDecimals = Number(toTokenInput.dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
-    const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
-    const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;
-    const r = await fetchWithTimeout(quoteUrl, {}, 3000);
-    const j = await r.json();
-    if (j && j.toTokenAmount) {
-      const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals);
-      toAmountEl.value = formattedTo;
-    }
-    await fetchBothPrices();
-  } catch (e) {
-    console.warn('updateQuote error (1inch)', e);
-    await fetchBothPrices();
-  }
-}
-
-/* live update when typing amount */
-fromAmountEl.addEventListener('input', ()=>{ updateQuoteDebounced(); updateEstimate(); });
-
-/* SIMPLE MATH ESTIMATE */
-async function updateEstimate(){
-  try {
-    await ensureTokensLoaded();
-    resolveTokenInputsIfNeeded();
-
-    const fromAddr = low(fromTokenInput.dataset.address || '');
-    const toAddr = low(toTokenInput.dataset.address || '');
-    const fromAmount = Number(fromAmountEl.value || 0);
-    if (!fromAddr || !toAddr || !fromAmount || Number.isNaN(fromAmount) || fromAmount <= 0) return;
-
-    const fDec = Number(fromTokenInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);
-    const tDec = Number(toTokenInput.dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);
-
-    const [fromPrice, toPrice] = await Promise.all([ getTokenPriceUSD(fromAddr, fDec), getTokenPriceUSD(toAddr, tDec) ]);
-    if (!fromPrice || !toPrice) return;
-
-    const fromUSD = Number(fromAmount) * Number(fromPrice);
-    const estimatedTo = fromUSD / Number(toPrice);
-    const display = (Number.isFinite(estimatedTo)) ? Number(estimatedTo.toFixed(6)).toString() : '';
-    toAmountEl.value = display;
-
-    fromUsd.style.display = 'flex';
-    toUsd.style.display = 'flex';
-    fromUsdTop.textContent = `≈ ${formatUSD(fromUSD)}`;
-    fromUsdMain.textContent = `${formatUSD(fromPrice)} / unit`;
-    toUsdTop.textContent = `≈ ${formatUSD(toPrice)}`;
-    toUsdMain.textContent = `per unit`;
-  } catch(e){ console.warn('updateEstimate error', e); }
-}
-
-/* resolve typed tokens heuristically */
-function resolveTokenInputsIfNeeded(){
-  const tryResolve = (inputEl) => {
-    const val = (inputEl.value || '').trim(); if (!val || inputEl.dataset.address) return;
-    const q = val.toLowerCase();
-    let found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
-    if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
-    if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
-    if (!found) found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
-    if (found){ inputEl.dataset.address = found.address; inputEl.dataset.decimals = found.decimals || 18; const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo; if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'inline-block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'inline-block'; } }
-  };
-  tryResolve(fromTokenInput); tryResolve(toTokenInput);
-}
-
-/* swap fields action (button moved left) */
-swapBtn.addEventListener('click', ()=>{
-  swapBtn.classList.add('pressed');
-  setTimeout(()=> swapBtn.classList.remove('pressed'), 300);
-
-  const fVal = fromTokenInput.value, tVal = toTokenInput.value;
-  const fAddr = fromTokenInput.dataset.address, tAddr = toTokenInput.dataset.address;
-  const fDec = fromTokenInput.dataset.decimals, tDec = toTokenInput.dataset.decimals;
-  const fLogo = fromLogo.src, tLogoSrc = toLogo.src;
-  const aFrom = fromAmountEl.value, aTo = toAmountEl.value;
-
-  fromTokenInput.value = tVal; toTokenInput.value = fVal;
-  if (tAddr) fromTokenInput.dataset.address = tAddr; else delete fromTokenInput.dataset.address;
-  if (fAddr) toTokenInput.dataset.address = fAddr; else delete toTokenInput.dataset.address;
-  if (tDec) fromTokenInput.dataset.decimals = tDec; else delete fromTokenInput.dataset.decimals;
-  if (fDec) toTokenInput.dataset.decimals = fDec; else delete toTokenInput.dataset.decimals;
-
-  fromLogo.src = tLogoSrc || DARK_SVG_PLACEHOLDER; fromLogo.style.display = tLogoSrc ? 'inline-block' : 'none';
-  toLogo.src = fLogo || DARK_SVG_PLACEHOLDER; toLogo.style.display = fLogo ? 'inline-block' : 'none';
-
-  fromAmountEl.value = aTo; toAmountEl.value = aFrom;
-
-  updateQuoteDebounced(); fetchBothPrices(); updateEstimate(); updateUsdVisibility();
-});
-
-/* simple 'swap' flow notice */
-$('swapBtn').addEventListener('click', ()=> {
-  try { walletFrame.focus(); } catch(e){}
-  alert('To run a swap: connect wallet via the small Wallet UI in the top-right iframe (walletconnect.html).');
-});
-
-/* iframe fallback */
-walletFrame.addEventListener('error', ()=>{ walletFrame.style.display='none'; walletFallback.style.display='block'; walletFallback.addEventListener('click', ()=> window.open('walletconnect.html','walletconnect','width=420,height=760')); });
-
-/* ===== GLOBAL REFRESH: COINGECKO MARKETS (7s) & ACTIVE PRICE REFRESH ===== */
-async function refreshCoinGeckoMarkets(){
-  try {
-    const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-    const rm = await fetchWithTimeout(marketsUrl, {}, 4000);
-    if (!rm.ok) throw new Error('CG markets refresh failed');
-    const jm = await rm.json();
-    jm.forEach(c => {
-      const sym = low(c.symbol||''), name = low(c.name||'');
-      const stat = {
-        price: (typeof c.current_price === 'number' ? c.current_price : null),
-        change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null),
-        volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0),
-        image: c.image||'',
-        volume12h: null
-      };
-      if (sym) cgStatsMap.set(sym, stat);
-      if (name) cgStatsMap.set(name, stat);
-      // update price cache for matching tokens
-      tokenList.forEach(t => { if (t.symbol && low(t.symbol) === sym) priceCache.set(t.address, { price: stat.price, ts: nowTs() }); });
-    });
-    // after refreshing CG markets, update displayed prices & estimates
-    fetchBothPrices();
-    updateEstimate();
-    updateUsdVisibility();
-  } catch(e){ console.warn('refreshCoinGeckoMarkets error', e); }
-}
-
-let refreshInterval = null;
-function startBackgroundRefresh(){
-  if (refreshInterval) clearInterval(refreshInterval);
-  // refresh markets every 7s
-  refreshCoinGeckoMarkets();
-  refreshInterval = setInterval(refreshCoinGeckoMarkets, 7000);
-}
-
-/* Active price refresh (for tokens selected in UI), runs every 7s too */
-let activePriceInterval = null;
-function scheduleActivePriceRefresh(){
-  // ensure ACTIVE_PRICE_ADDRS has the currently selected tokens
-  updateUsdVisibility();
-  if (activePriceInterval) return; // already running
-  // immediate run then interval
-  (async()=>{
-    await refreshActivePrices();
-    activePriceInterval = setInterval(refreshActivePrices, 7000);
-  })();
-}
-async function refreshActivePrices(){
-  const addrs = Array.from(ACTIVE_PRICE_ADDRS).filter(a => a && a.length === 42);
-  if (!addrs.length) return;
-  // refresh prices in parallel (but rely on getTokenPriceUSD cache and ordering)
-  await Promise.all(addrs.map(async addr => {
-    const decimals = tokenMap.get(addr)?.decimals || 18;
-    const price = await getTokenPriceUSD(addr, decimals);
-    // update cached prices and UI
-    if (addr === low(fromTokenInput.dataset.address || '')) fetchPriceForToken(addr, decimals, 'from');
-    if (addr === low(toTokenInput.dataset.address || '')) fetchPriceForToken(addr, decimals, 'to');
-  }));
-}
-
-/* call scheduleActivePriceRefresh so active tokens update every 7s */
-(function ensureActiveUpdater(){
-  // start once when page inits
-  scheduleActivePriceRefresh();
-})();
-
-/* ===== SUGGESTIONS HIDE WHEN CLICK OUTSIDE / ESC ===== */
-document.addEventListener('click', (ev)=>{
-  const inInputOrSuggest = ev.target.closest('.input-box') || ev.target.closest('.suggestions') || ev.target.closest('#fromToken') || ev.target.closest('#toToken');
-  if (!inInputOrSuggest){
-    $('fromSuggestions').style.display = 'none';
-    $('toSuggestions').style.display = 'none';
-  }
-});
-document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ $('fromSuggestions').style.display='none'; $('toSuggestions').style.display='none'; } });
-
-/* ===== INIT ===== */
-(async function init(){
-  await ensureTokensLoaded();
-  // preselect USDC on from side if available
-  const usdc = tokenList.find(t => t.address && t.address.toLowerCase() === USDC_ADDR.toLowerCase());
-  if (usdc) {
-    fromTokenInput.value = usdc.symbol || 'USDC';
-    fromTokenInput.dataset.address = usdc.address;
-    fromTokenInput.dataset.decimals = usdc.decimals || 6;
-    if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='inline-block'; }
-    ACTIVE_PRICE_ADDRS.add(low(usdc.address));
-  }
-  const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
-  if (top) {
-    toTokenInput.value = top.symbol || top.name;
-    toTokenInput.dataset.address = top.address;
-    toTokenInput.dataset.decimals = top.decimals || 18;
-    if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='inline-block'; }
-    ACTIVE_PRICE_ADDRS.add(low(top.address));
-  }
-  updateUsdVisibility();
-  fetchBothPrices();
-  startBackgroundRefresh();
-  // ensure active price refresh is running
-  scheduleActivePriceRefresh();
-})();
-</script>
-</body>
-</html>
+</head>  
+<body>  <button id="walletConnectBtn">Connect Wallet</button>
+
+<div class="container">  
+    <h2>NOLA Exchange</h2>  <!-- Compact global search inside container -->  
+<input id="globalSearch" placeholder="Search contract address or token (fills To)" autocomplete="off">  
+
+<div class="input-box">  
+    <input type="text" id="fromToken" placeholder="From Token">  
+    <div class="suggestions" id="fromSuggestions"></div>  
+</div>  
+
+<div id="swapTokensBtn" title="Swap From ↔ To">⇅</div>  
+
+<div class="input-box" style="margin-top:44px;">  
+    <input type="text" id="toToken" placeholder="To Token">  
+    <div class="suggestions" id="toSuggestions"></div>  
+</div>  
+
+<div style="margin-top:12px; display:flex; gap:8px;">  
+    <input id="fromAmount" type="number" placeholder="Amount" style="flex:1; padding:10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;">  
+    <input id="toAmount" type="number" placeholder="Estimated" readonly style="flex:1; padding:10px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff;">  
+</div>  
+
+<div style="margin-top:10px;">  
+    <select id="slippage" style="padding:8px; border-radius:10px; border:none; background:rgba(255,255,255,0.03); color:#fff;">  
+        <option value="0.1">0.1%</option>  
+        <option value="0.5">0.5%</option>  
+        <option value="1" selected>1%</option>  
+        <option value="2">2%</option>  
+    </select>  
+</div>  
+
+<button class="btn" id="swapBtn">Swap</button>
+
+</div>  <footer>  
+&copy; 2025 NOLA | <a href="Terms.html">Privacy & Terms</a> |   
+<a href="#" id="nolTokenLink">NOLA Token</a> |   
+<a href="#" id="xLink">X</a> |   
+<a href="#" id="telegramLink">Telegram</a>  
+</footer>  <!-- libraries: ethers + WalletConnect v1 provider (reliable fallback) -->  <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>  <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider/dist/umd/index.min.js"></script>  <script>  
+/* ========== CONFIG ========== */  
+const CHAIN_ID = 137; // Polygon  
+const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;  
+const COINGECKO_CHAIN = 'polygon-pos';  
+const FALLBACK_RPC = "https://polygon-rpc.com";  
+  
+/* ========== STATE ========== */  
+let tokenList = [];  
+let tokenMap = new Map(); // addressLower -> tokenObj  
+let volumeMap = new Map(); // symbolLower -> 24h volume  
+let provider = null;  
+let signer = null;  
+let signerAddress = null;  
+let walletConnected = false;  
+  
+/* ========== HELPERS ========== */  
+const $ = id => document.getElementById(id);  
+const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());  
+const low = s => (s||'').toLowerCase();  
+const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';  
+  
+/* ========== LOAD TOKENS + 24H VOLUME (CoinGecko) ========== */  
+async function loadTokensAndVolumes(){  
+    try {  
+        // load polygon token list (includes decimals & logo)  
+        const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');  
+        const j = await r.json();  
+        tokenList = (j.tokens || []).map(t=>({  
+            address: low(t.address),  
+            symbol: t.symbol || '',  
+            name: t.name || '',  
+            decimals: t.decimals || 18,  
+            logoURI: t.logoURI || t.logo || ''  
+        }));  
+        tokenList.forEach(t => tokenMap.set(t.address, t));  
+  
+        // add MATIC pseudo-token  
+        tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol: 'MATIC', name:'Polygon', decimals:18, logoURI:'https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/info/logo.png' });  
+  
+        // fetch top markets by volume (per_page 250)  
+        // use markets endpoint to get total_volume (24h)  
+        const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false`;  
+        const rm = await fetch(marketsUrl);  
+        const jm = await rm.json();  
+        jm.forEach(c => {  
+            if (c && c.symbol) volumeMap.set(low(c.symbol), c.total_volume || 0);  
+            // Also map name -> volume to help matching (e.g., 'polygon' name)  
+            if (c && c.name) volumeMap.set(low(c.name), c.total_volume || 0);  
+        });  
+    } catch (e) {  
+        console.error('loadTokensAndVolumes error', e);  
+    }  
+}  
+loadTokensAndVolumes();  
+  
+/* ========== ON-CHAIN INFO FOR UNKNOWN ADDRESSES ========= */  
+async function fetchOnchainTokenInfo(address){  
+    try {  
+        const rpcProvider = new ethers.providers.JsonRpcProvider(FALLBACK_RPC);  
+        const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];  
+        const c = new ethers.Contract(address, abi, rpcProvider);  
+        const [symbol, name, decimals] = await Promise.all([  
+            c.symbol().catch(()=>null),  
+            c.name().catch(()=>null),  
+            c.decimals().catch(()=>18)  
+        ]);  
+        const info = { address: low(address), symbol: symbol || address.slice(0,6), name: name || symbol || address.slice(0,8), decimals: decimals || 18, logoURI: 'https://via.placeholder.com/28' };  
+        tokenMap.set(info.address, info);  
+        return info;  
+    } catch (e) {  
+        console.warn('fetchOnchainTokenInfo failed', e);  
+        return null;  
+    }  
+}  
+  
+/* ========== PRICE FETCH (Coingecko simple/token_price) ========== */  
+async function fetchTokenPriceUSD(address){  
+    try {  
+        if (!address) return null;  
+        if (low(address) === MATIC_ADDR) {  
+            const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=matic-network&vs_currencies=usd');  
+            const j = await r.json();  
+            return j['matic-network']?.usd ?? null;  
+        }  
+        const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${address}&vs_currencies=usd`;  
+        const r = await fetch(url);  
+        const j = await r.json();  
+        return j[low(address)]?.usd ?? null;  
+    } catch (e) {  
+        console.warn('price fetch failed', e);  
+        return null;  
+    }  
+}  
+  
+/* ========== SUGGESTION ITEM BUILDER ========= */  
+function makeSuggestionItem(tokenObj, priceUSD, extraLabel){  
+    const row = document.createElement('div');  
+    row.className = 'suggestion-item';  
+  
+    const left = document.createElement('div');  
+    left.className = 'suggestion-left';  
+    const img = document.createElement('img');  
+    img.src = tokenObj.logoURI || 'https://via.placeholder.com/28';  
+    img.onerror = ()=> img.src = 'https://via.placeholder.com/28';  
+    left.appendChild(img);  
+  
+    const main = document.createElement('div');  
+    main.className = 'suggestion-main';  
+    const sym = document.createElement('div');  
+    sym.className = 'suggestion-symbol';  
+    sym.textContent = tokenObj.symbol || tokenObj.address.slice(0,6);  
+    const nm = document.createElement('div');  
+    nm.className = 'suggestion-name';  
+    nm.textContent = tokenObj.name || '';  
+    main.appendChild(sym);  
+    main.appendChild(nm);  
+    left.appendChild(main);  
+  
+    const right = document.createElement('div');  
+    right.className = 'suggestion-price';  
+    if (priceUSD != null) right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;font-weight:600;">≈ $${Number(priceUSD).toFixed(4)}</div>`;  
+    else right.innerHTML = `<div style="font-size:12px;opacity:0.85">${extraLabel || ''}</div><div style="margin-top:6px;opacity:0.8">—</div>`;  
+  
+    row.appendChild(left);  
+    row.appendChild(right);  
+    return row;  
+}  
+  
+/* ========== AUTOCOMPLETE (FROM / TO) prioritized by 24h volume ========== */  
+function setupAutocomplete(inputId, suggestionsId){  
+    const input = $(inputId);  
+    const box = $(suggestionsId);  
+    let timer = null;  
+  
+    input.addEventListener('input', ()=> {  
+        clearTimeout(timer);  
+        timer = setTimeout(()=> handle(input.value.trim().toLowerCase()), 150);  
+    });  
+    input.addEventListener('focus', ()=> { if (input.value.trim()) handle(input.value.trim().toLowerCase()); });  
+    input.addEventListener('blur', ()=> setTimeout(()=> box.style.display='none', 150));  
+  
+    async function handle(q){  
+        box.innerHTML = '';  
+        if (!q) { box.style.display='none'; return; }  
+  
+        // if looks like address, attempt fetch onchain & show single suggestion  
+        if (isAddress(q)) {  
+            let info = tokenMap.get(low(q));  
+            if (!info) info = await fetchOnchainTokenInfo(q);  
+            if (info) {  
+                const price = await fetchTokenPriceUSD(info.address);  
+                const node = makeSuggestionItem(info, price, `${info.symbol}`);  
+                node.onclick = ()=>{  
+                    input.value = info.symbol || info.name || info.address;  
+                    input.dataset.address = info.address;  
+                    input.dataset.decimals = info.decimals || 18;  
+                    box.style.display='none';  
+                    updateQuoteDebounced();  
+                };  
+                box.appendChild(node);  
+                box.style.display = 'block';  
+            }  
+            return;  
+        }  
+  
+        // find matches by symbol/name substring  
+        const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));  
+  
+        // score by 24h volume, and give bonus if startsWith  
+        const scored = matches.map(t => {  
+            const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;  
+            const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;  
+            return { t, score: vol + startBonus };  
+        }).sort((a,b)=> b.score - a.score).slice(0,8);  
+  
+        if (!scored.length) { box.style.display='none'; return; }  
+  
+        for (const s of scored) {  
+            const tk = s.t;  
+            const price = await fetchTokenPriceUSD(tk.address);  
+            const label = `${tk.symbol} | ${tk.name}`;  
+            const node = makeSuggestionItem(tk, price, label);  
+            node.onclick = ()=>{  
+                input.value = tk.symbol || tk.name;  
+                input.dataset.address = tk.address;  
+                input.dataset.decimals = tk.decimals || 18;  
+                box.style.display='none';  
+                updateQuoteDebounced();  
+            };  
+            box.appendChild(node);  
+        }  
+        box.style.display = 'block';  
+    }  
+}  
+  
+setupAutocomplete('fromToken','fromSuggestions');  
+setupAutocomplete('toToken','toSuggestions');  
+  
+/* ========== GLOBAL SEARCH (compact, suggestions same style) ========= */  
+const globalSearch = $('globalSearch');  
+const globalBox = document.createElement('div');  
+globalBox.className = 'suggestions';  
+globalBox.style.position = 'absolute';  
+globalBox.style.zIndex = 200;  
+globalSearch.parentElement.insertBefore(globalBox, globalSearch.nextSibling);  
+let gTimer = null;  
+globalSearch.addEventListener('input', ()=> {  
+    clearTimeout(gTimer);  
+    gTimer = setTimeout(()=> handleGlobal(globalSearch.value.trim().toLowerCase()), 140);  
+});  
+globalSearch.addEventListener('blur', ()=> setTimeout(()=> globalBox.style.display='none', 150));  
+  
+async function handleGlobal(q){  
+    globalBox.innerHTML = '';  
+    // position it under the globalSearch  
+    globalBox.style.left = (globalSearch.offsetLeft) + 'px';  
+    globalBox.style.top = (globalSearch.offsetTop + globalSearch.offsetHeight + 8) + 'px';  
+    globalBox.style.width = (globalSearch.offsetWidth) + 'px';  
+  
+    if (!q) { globalBox.style.display='none'; return; }  
+  
+    if (isAddress(q)) {  
+        let info = tokenMap.get(low(q));  
+        if (!info) info = await fetchOnchainTokenInfo(q);  
+        if (info) {  
+            const price = await fetchTokenPriceUSD(info.address);  
+            const node = makeSuggestionItem(info, price, `${info.symbol}`);  
+            node.onclick = ()=>{  
+                // fill To  
+                $('toToken').value = info.symbol || info.name;  
+                $('toToken').dataset.address = info.address;  
+                $('toToken').dataset.decimals = info.decimals || 18;  
+                globalBox.style.display='none';  
+                updateQuoteDebounced();  
+            };  
+            globalBox.appendChild(node);  
+            globalBox.style.display='block';  
+        }  
+        return;  
+    }  
+  
+    // not an address: search tokenList by symbol/name and score by 24h volume  
+    const matches = tokenList.filter(t => (t.symbol && t.symbol.toLowerCase().includes(q)) || (t.name && t.name.toLowerCase().includes(q)));  
+    const scored = matches.map(t => {  
+        const vol = volumeMap.get(low(t.symbol)) || volumeMap.get(low(t.name)) || 0;  
+        const startBonus = (t.symbol.toLowerCase().startsWith(q) || t.name.toLowerCase().startsWith(q)) ? 1e15 : 0;  
+        return { t, score: vol + startBonus };  
+    }).sort((a,b)=> b.score - a.score).slice(0,8);  
+  
+    for (const s of scored) {  
+        const tk = s.t;  
+        const price = await fetchTokenPriceUSD(tk.address);  
+        const node = makeSuggestionItem(tk, price, `${tk.symbol}`);  
+        node.onclick = ()=>{  
+            $('toToken').value = tk.symbol;  
+            $('toToken').dataset.address = tk.address;  
+            $('toToken').dataset.decimals = tk.decimals || 18;  
+            globalBox.style.display='none';  
+            updateQuoteDebounced();  
+        };  
+        globalBox.appendChild(node);  
+    }  
+    globalBox.style.display = scored.length ? 'block' : 'none';  
+}  
+  
+/* reposition globalBox when window resizes */  
+window.addEventListener('resize', ()=> {  
+    globalBox.style.width = (globalSearch.offsetWidth) + 'px';  
+    globalBox.style.left = (globalSearch.offsetLeft) + 'px';  
+});  
+  
+/* ========== Wallet connect: try injected (MetaMask) first, then WalletConnect v1 fallback (UMD) ========= */  
+async function connectWallet(){  
+    if (walletConnected && signer) return;  
+    try {  
+        if (window.ethereum && window.ethereum.isMetaMask) {  
+            provider = new ethers.providers.Web3Provider(window.ethereum, "any");  
+            await provider.send("eth_requestAccounts", []);  
+            signer = provider.getSigner();  
+            signerAddress = await signer.getAddress();  
+            walletConnected = true;  
+            $('walletConnectBtn').textContent = 'Connected';  
+            return;  
+        }  
+        // fallback to WalletConnect v1 (UMD global: WalletConnectProvider)  
+        const WC = window.WalletConnectProvider;  
+        if (!WC) {  
+            alert('WalletConnect library not loaded. Please allow loading external scripts or use MetaMask.');  
+            throw new Error('WC v1 library missing');  
+        }  
+        const wcProvider = new WC.default({  
+            rpc: { [CHAIN_ID]: FALLBACK_RPC },  
+            chainId: CHAIN_ID,  
+            qrcode: true,  
+        });  
+        await wcProvider.enable(); // opens modal / deep link  
+        provider = new ethers.providers.Web3Provider(wcProvider, "any");  
+        signer = provider.getSigner();  
+        signerAddress = await signer.getAddress();  
+        walletConnected = true;  
+        $('walletConnectBtn').textContent = 'Connected';  
+  
+        // handle disconnect  
+        wcProvider.on && wcProvider.on("disconnect", ()=> {  
+            walletConnected = false;  
+            provider = null; signer = null; signerAddress = null;  
+            $('walletConnectBtn').textContent = 'Connect Wallet';  
+        });  
+    } catch (e) {  
+        console.error('connectWallet error', e);  
+        alert('Wallet connect failed: ' + (e.message || e));  
+        throw e;  
+    }  
+}  
+$('walletConnectBtn').addEventListener('click', connectWallet);  
+  
+/* ========== QUOTE LOGIC (1inch) - decimal-aware ========== */  
+let quoteTimer = null;  
+function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=>updateQuote(), 200); }  
+  
+async function updateQuote(){  
+    try {  
+        const fromAddr = low($('fromToken').dataset.address || '');  
+        const toAddr = low($('toToken').dataset.address || '');  
+        const amount = $('fromAmount').value;  
+        if (!fromAddr || !toAddr || !amount) { $('toAmount').value = ''; return; }  
+  
+        // determine decimals: from dataset decimals or tokenMap or default 18  
+        const fromDecimals = Number($('fromToken').dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);  
+        const toDecimals = Number($('toToken').dataset.decimals || tokenMap.get(toAddr)?.decimals || 18);  
+  
+        const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();  
+        const quoteUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`;  
+        const r = await fetch(quoteUrl);  
+        const j = await r.json();  
+        if (j && j.toTokenAmount) {  
+            $('toAmount').value = ethers.utils.formatUnits(j.toTokenAmount, toDecimals);  
+        } else {  
+            $('toAmount').value = '';  
+        }  
+    } catch (e) {  
+        console.error('updateQuote error', e);  
+        $('toAmount').value = '';  
+    }  
+}  
+$('fromAmount').addEventListener('input', updateQuoteDebounced);  
+  
+/* When user pastes an address into from/to input, fetch on-chain info and set decimals */  
+document.querySelectorAll('.input-box input[type="text"]').forEach(inp=>{  
+    inp.addEventListener('paste', (ev)=>{  
+        const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();  
+        if (isAddress(txt)) {  
+            setTimeout(async ()=> {  
+                inp.dataset.address = low(txt);  
+                const info = tokenMap.get(low(txt)) || await fetchOnchainTokenInfo(txt);  
+                if (info) {  
+                    inp.dataset.decimals = info.decimals || 18;  
+                    inp.value = info.symbol || info.name || txt.slice(0,8);  
+                    tokenMap.set(info.address, info);  
+                    updateQuoteDebounced();  
+                }  
+            }, 10);  
+        }  
+    });  
+});  
+  
+/* ========== Swap flow: allowance -> approve -> swap (1inch) ========== */  
+async function ensureApprovalAndSwap(){  
+    try {  
+        await connectWallet();  
+        const fromInput = $('fromToken'), toInput = $('toToken');  
+        const amountInput = $('fromAmount').value;  
+        const slippage = $('slippage')?.value || 1;  
+        if (!fromInput.dataset.address || !toInput.dataset.address || !amountInput) { alert('Fill both tokens and amount'); return; }  
+  
+        const fromAddr = low(fromInput.dataset.address);  
+        const toAddr = low(toInput.dataset.address);  
+        const fromDecimals = Number(fromInput.dataset.decimals || tokenMap.get(fromAddr)?.decimals || 18);  
+        const parsedAmount = ethers.utils.parseUnits(String(amountInput), fromDecimals).toString();  
+  
+        // approval if ERC20 (not native MATIC)  
+        if (fromAddr !== MATIC_ADDR) {  
+            const allowanceUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${fromAddr}&walletAddress=${signerAddress}`;  
+            const ar = await fetch(allowanceUrl);  
+            const aj = await ar.json();  
+            const allowance = aj.allowance ? ethers.BigNumber.from(aj.allowance) : ethers.BigNumber.from('0');  
+            if (allowance.lt(ethers.BigNumber.from(parsedAmount))) {  
+                // fetch approve tx data  
+                const aprUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${fromAddr}`;  
+                const aprRes = await fetch(aprUrl);  
+                const aprJson = await aprRes.json();  
+                if (!aprJson || !aprJson.data) throw new Error('Approve data unavailable');  
+                const txReq = { to: aprJson.to, data: aprJson.data, value: aprJson.value ? ethers.BigNumber.from(aprJson.value) : undefined };  
+                const sent = await signer.sendTransaction(txReq);  
+                alert('Approve sent: ' + sent.hash);  
+                await sent.wait();  
+            }  
+        }  
+  
+        // build swap  
+        const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsedAmount}&fromAddress=${signerAddress}&slippage=${slippage}`;  
+        const sr = await fetch(swapUrl);  
+        const sj = await sr.json();  
+        if (!sj || !sj.tx) { console.error('swap build failed', sj); alert('Swap build failed'); return; }  
+  
+        // send swap tx  
+        const txReq = sj.tx;  
+        const sentSwap = await signer.sendTransaction(txReq);  
+        alert('Swap sent: ' + sentSwap.hash);  
+    } catch (e) {  
+        console.error('swap error', e);  
+        alert('Swap failed: ' + (e.message || e));  
+    }  
+}  
+$('swapBtn').addEventListener('click', ensureApprovalAndSwap);  
+  
+/* ========== Small utility: when global search enter pressed, fill To ========== */  
+globalSearch.addEventListener('keydown', (e)=>{  
+    if (e.key === 'Enter') {  
+        const v = globalSearch.value.trim();  
+        if (!v) return;  
+        if (isAddress(v)) {  
+            setToFromAddress(v);  
+        } else {  
+            // fallback: try find by symbol or name  
+            const found = tokenList.find(t => (t.symbol && low(t.symbol).includes(low(v))) || (t.name && low(t.name).includes(low(v))));  
+            if (found) {  
+                $('toToken').value = found.symbol;  
+                $('toToken').dataset.address = found.address;  
+                $('toToken').dataset.decimals = found.decimals || 18;  
+                updateQuoteDebounced();  
+            }  
+        }  
+        globalBox.style.display = 'none';  
+    }  
+});  
+  
+/* helper setToFromAddress */  
+async function setToFromAddress(addr){  
+    const lowAddr = low(addr);  
+    let info = tokenMap.get(lowAddr);  
+    if (!info) info = await fetchOnchainTokenInfo(addr);  
+    if (info) {  
+        $('toToken').value = info.symbol || info.name;  
+        $('toToken').dataset.address = info.address;  
+        $('toToken').dataset.decimals = info.decimals || 18;  
+        updateQuoteDebounced();  
+    } else {  
+        $('toToken').value = addr;  
+        $('toToken').dataset.address = lowAddr;  
+        $('toToken').dataset.decimals = 18;  
+        updateQuoteDebounced();  
+    }  
+}  
+  
+/* ========== Initialization: ensure token list warm-up and style positions ========== */  
+(async function init(){  
+    await loadTokensAndVolumes();  
+    // position globalBox initial  
+    globalBox.style.left = (globalSearch.offsetLeft) + 'px';  
+    globalBox.style.top = (globalSearch.offsetTop + globalSearch.offsetHeight + 8) + 'px';  
+    globalBox.style.width = (globalSearch.offsetWidth) + 'px';  
+})();  
+</script>  </body>  
+</html>  When you ready i will send you the other code to apply the new changes
