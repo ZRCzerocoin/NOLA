@@ -31,17 +31,21 @@ h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color
 .input-box input{width:100%; padding:12px; border-radius:12px; border:none; background:rgba(255,255,255,0.05); color:#fff; font-size:16px;}
 .input-box p{font-size:14px; opacity:0.8; margin-bottom:8px;}
 
+/* small usd displays under inputs */
+.usd-line { margin-top:8px; font-size:13px; color:rgba(255,255,255,0.8); }
+
 /* ===== TOKEN SUGGESTIONS ===== */
-.suggestions { position:absolute; top:65px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:200px; overflow-y:auto; display:none; z-index:100; }
-.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; transition:0.2s; }
+.suggestions { position:absolute; top:65px; left:0; width:100%; background:rgba(25,0,50,0.95); border-radius:12px; max-height:260px; overflow-y:auto; display:none; z-index:100; }
+.suggestion-item { padding:10px; display:flex; align-items:center; cursor:pointer; transition:0.2s; justify-content:space-between; }
 .suggestion-item:hover { background:rgba(120,0,255,0.3); }
-.suggestion-item img { width:24px; height:24px; margin-right:10px; border-radius:12px; }
+.suggestion-item img { width:28px; height:28px; margin-right:10px; border-radius:12px; }
 
 /* ===== BUTTON ===== */
 .btn { width:100%; padding:14px; margin-top:20px; border:none; border-radius:20px; background: linear-gradient(135deg,#b445ff,#7013ff); color:#fff; font-size:18px; cursor:pointer; box-shadow:0 0 15px rgba(180,0,255,0.35); transition:0.3s; position:relative; overflow:hidden;}
 .btn::after { content:''; position:absolute; left:50%; top:50%; width:300%; height:300%; background:rgba(255,255,255,0.1); transform:translate(-50%,-50%) scale(0); border-radius:50%; transition:0.5s; }
 .btn:hover::after { transform:translate(-50%,-50%) scale(1); }
 .btn:hover { transform:scale(1.05); box-shadow:0 0 25px rgba(200,0,255,0.55); }
+.btn.small { width:auto; padding:10px 12px; border-radius:12px; font-size:14px; }
 
 /* ===== CHAT SIDEBAR ===== */
 .chat-toggle { position:fixed; right:20px; bottom:20px; background:#b445ff; padding:10px 14px; border-radius:20px; cursor:pointer; box-shadow:0 0 15px rgba(180,0,255,0.35); }
@@ -58,7 +62,7 @@ h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color
 #usernameModal button{margin-top:15px; padding:10px 20px; border:none; border-radius:12px; background:linear-gradient(135deg,#b445ff,#7013ff); color:#fff; cursor:pointer;}
 @keyframes modalIn {from{opacity:0; transform:scale(0.8);}to{opacity:1; transform:scale(1);}}
 
-/* chart area (kept minimal and tucked under container) */
+/* chart area (tucked under container) */
 .chart-wrap { width:90%; max-width:480px; margin:12px auto 60px; height:400px; border-radius:14px; overflow:hidden; border:1px solid rgba(255,255,255,0.03); display:none; }
 .chart-wrap iframe{width:100%; height:100%; border:0; background:#08020b}
 
@@ -66,6 +70,7 @@ h2{text-align:center; font-size:28px; font-weight:600; margin-bottom:15px; color
 .top-right-connect { position:fixed; right:18px; top:18px; z-index:60; display:flex; gap:10px; align-items:center; }
 .addr-chip { padding:8px 12px; border-radius:12px; background:rgba(255,255,255,0.03); font-weight:700; display:none }
 .connect-floating { background:linear-gradient(90deg,#b445ff,#7013ff); color:#fff; padding:10px 14px; border-radius:12px; border:none; cursor:pointer; font-weight:800; box-shadow:0 10px 30px rgba(106,0,255,0.12); }
+
 </style>
 </head>
 <body>
@@ -93,7 +98,7 @@ for(let i=0;i<60;i++){
   <button id="connectFloating" class="connect-floating">Connect Wallet</button>
 </div>
 
-<!-- MAIN CARD (kept exact) -->
+<!-- MAIN CARD (exact theme preserved) -->
 <div class="container">
     <h2>NOLA Exchange</h2>
 
@@ -101,19 +106,23 @@ for(let i=0;i<60;i++){
         <p>From Token</p>
         <input type="text" id="fromToken" placeholder="Type token name...">
         <div class="suggestions" id="fromSuggestions"></div>
+        <div class="usd-line" id="fromUsd"></div>
     </div>
 
     <div class="input-box">
         <p>To Token</p>
         <input type="text" id="toToken" placeholder="Type token name...">
         <div class="suggestions" id="toSuggestions"></div>
+        <div class="usd-line" id="toUsd"></div>
     </div>
 
-    <!-- kept the main swap flow controls minimal (quote/swap removed for now per your last request) -->
-    <button class="btn" id="getQuoteBtn">Get Quote</button>
+    <div style="display:flex;gap:10px; align-items:center; margin-top:10px;">
+      <button class="btn small" id="getQuoteBtn" style="flex:1">Get Quote</button>
+      <button class="btn small" id="swapBtn" disabled>Swap</button>
+    </div>
 </div>
 
-<!-- Chart (separate element so UI stays identical) -->
+<!-- Chart -->
 <div class="chart-wrap" id="chartWrap">
   <iframe id="chartFrame" src=""></iframe>
 </div>
@@ -151,7 +160,7 @@ for(let i=0;i<60;i++){
 const CHAIN_ID = 137;
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const COINGECKO = (addr)=>`https://api.coingecko.com/api/v3/simple/token_price/polygon-pos?contract_addresses=${addr}&vs_currencies=usd`;
-const WALLETCONNECT_PROJECT_ID = "WALLETCONNECT_PROJECT_ID"; // <-- paste yours here
+const WALLETCONNECT_PROJECT_ID = "WALLETCONNECT_PROJECT_ID"; // <-- paste your WalletConnect v2 Project ID here
 const GUN_PEERS = [
   'https://relay.peer.ooo/gun',
   'https://gun-us.herokuapp.com/gun',
@@ -159,13 +168,20 @@ const GUN_PEERS = [
 ];
 const INITIAL_NOLA_TOKEN = '0x1515546B052151D5eb8CCB1bcf2857E0C6f51451'.toLowerCase();
 
-/* ================== REFS ================== */
-const fromInput = document.getElementById('fromToken');
-const toInput = document.getElementById('toToken');
+/* ================== DOM refs ================== */
+const fromTokenInput = document.getElementById('fromToken');
+const toTokenInput = document.getElementById('toToken');
 const fromSuggest = document.getElementById('fromSuggestions');
 const toSuggest = document.getElementById('toSuggestions');
+const fromUsdLine = document.getElementById('fromUsd');
+const toUsdLine = document.getElementById('toUsd');
+const getQuoteBtn = document.getElementById('getQuoteBtn');
+const swapBtn = document.getElementById('swapBtn');
+const chartWrap = document.getElementById('chartWrap');
+const chartFrame = document.getElementById('chartFrame');
 const connectFloating = document.getElementById('connectFloating');
 const addrChip = document.getElementById('addrChip');
+
 const chatToggle = document.getElementById('chatToggle');
 const chatSidebar = document.getElementById('chatSidebar');
 const chatMessages = document.getElementById('chatMessages');
@@ -174,55 +190,47 @@ const sendChatBtn = document.getElementById('sendChat');
 const usernameModal = document.getElementById('usernameModal');
 const modalUsername = document.getElementById('modalUsername');
 const confirmUsername = document.getElementById('confirmUsername');
-const chartWrap = document.getElementById('chartWrap');
-const chartFrame = document.getElementById('chartFrame');
-const getQuoteBtn = document.getElementById('getQuoteBtn');
 
 /* ================== STATE ================== */
 let tokenList = [];
 let selectedFrom = null;
 let selectedTo = null;
 let provider = null, signer = null, userAddress = null;
+let web3modal = null;
 
 /* ================== UTIL ================== */
-const $ = id => document.getElementById(id);
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
 function short(a){ return a ? a.slice(0,6)+'…'+a.slice(-4) : ''; }
-function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function fetchJson(url, opts){ const r = await fetch(url, opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 
-/* ================== LOAD TOKENS (1inch) ================== */
+/* ================== LOAD TOKENS ================== */
 async function loadTokens(){
   try{
-    const r = await fetch(`${ONEINCH_BASE}/tokens`);
-    const d = await r.json();
+    const d = await fetchJson(`${ONEINCH_BASE}/tokens`);
     tokenList = Object.values(d.tokens || {});
-    // ensure addresses normalized
-    tokenList.forEach(t => t.address = (t.address || '').toLowerCase());
-    console.log('1inch tokens loaded:', tokenList.length);
-  }catch(e){
-    console.error('Failed to load tokens', e);
-  }
+    tokenList.forEach(t => t.address = (t.address||'').toLowerCase());
+    console.log('tokens loaded', tokenList.length);
+  }catch(e){ console.error('token load failed', e); }
 }
 loadTokens();
 
-/* ================== COINGECKO PRICE ================== */
+/* ================ COINGECKO USD ================== */
 async function fetchUsd(address){
   try{
-    const a = address.toLowerCase();
+    const a = (address||'').toLowerCase();
+    if(!a) return null;
     const r = await fetch(COINGECKO(a));
+    if(!r.ok) return null;
     const j = await r.json();
     return j[a]?.usd ?? null;
-  }catch(e){
-    return null;
-  }
+  }catch(e){ return null; }
 }
 
-/* ================== AUTOCOMPLETE (icons + USD) ================== */
-function makeSuggestion(token){
+/* ================ AUTOCOMPLETE (icons + USD badge) ================== */
+function createSuggestionItem(token){
   const div = document.createElement('div');
   div.className = 'suggestion-item';
-  div.style.display = 'flex';
-  div.style.alignItems = 'center';
-  div.innerHTML = `<img src="${token.logoURI||''}" onerror="this.style.display='none'"><div style="display:flex;flex-direction:column"><strong style="font-weight:800">${escapeHtml(token.symbol)}</strong><span style="font-size:12px;color:rgba(255,255,255,0.75)">${escapeHtml(token.name)}</span></div>`;
+  div.innerHTML = `<div style="display:flex;align-items:center;gap:10px"><img src="${token.logoURI||''}" onerror="this.style.display='none'"><div style="display:flex;flex-direction:column"><strong style="font-weight:800">${escapeHtml(token.symbol)}</strong><span style="font-size:12px;color:rgba(255,255,255,0.75)">${escapeHtml(token.name)}</span></div></div>`;
   return div;
 }
 
@@ -230,52 +238,62 @@ function attachAutocomplete(inputEl, suggestEl, onSelect){
   inputEl.addEventListener('input', async ()=>{
     const q = (inputEl.value||'').trim().toLowerCase();
     suggestEl.innerHTML = '';
-    if(!q){ suggestEl.style.display = 'none'; return; }
-    // exact symbol first
+    if(!q){ suggestEl.style.display='none'; return; }
     const bySym = tokenList.filter(t => (t.symbol||'').toLowerCase().includes(q));
     const byName = tokenList.filter(t => (t.name||'').toLowerCase().includes(q) && !bySym.includes(t));
-    const list = [...bySym, ...byName].slice(0,8);
-    for(const tok of list){
-      const item = makeSuggestion(tok);
+    const res = [...bySym, ...byName].slice(0,8);
+    for(const tok of res){
+      const item = createSuggestionItem(tok);
       // price badge
       (async ()=>{
-        const usd = await fetchUsd(tok.address);
-        if(usd !== null){
-          const price = document.createElement('div');
-          price.style.marginLeft = 'auto';
-          price.style.fontWeight = '800';
-          price.style.fontSize = '13px';
-          price.textContent = '$' + Number(usd).toFixed(4);
-          item.appendChild(price);
-        }
+        try{
+          const usd = await fetchUsd(tok.address);
+          if(usd !== null){
+            const price = document.createElement('div');
+            price.style.marginLeft = 'auto';
+            price.style.fontWeight = '800';
+            price.style.fontSize = '13px';
+            price.textContent = '$' + Number(usd).toFixed(4);
+            item.appendChild(price);
+          }
+        }catch(e){}
       })();
-      item.onclick = ()=>{
-        inputEl.value = tok.symbol;
-        suggestEl.style.display = 'none';
-        onSelect(tok);
-      };
+      item.onclick = ()=>{ inputEl.value = tok.symbol; suggestEl.style.display='none'; onSelect(tok); };
       suggestEl.appendChild(item);
     }
-    suggestEl.style.display = list.length ? 'block' : 'none';
+    suggestEl.style.display = res.length ? 'block' : 'none';
   });
 
   inputEl.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){
       e.preventDefault();
       const q = (inputEl.value||'').trim().toLowerCase();
-      const found = tokenList.find(t => (t.symbol||'').toLowerCase()===q || (t.name||'').toLowerCase()===q || (t.address||'').toLowerCase()===q );
+      if(!q) return;
+      const found = tokenList.find(t => ((t.symbol||'').toLowerCase() === q) || ((t.name||'').toLowerCase() === q) || ((t.address||'').toLowerCase() === q));
       if(found){ inputEl.value = found.symbol; suggestEl.style.display='none'; onSelect(found); return; }
       const fuzzy = tokenList.find(t => (t.symbol||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q));
       if(fuzzy){ inputEl.value = fuzzy.symbol; suggestEl.style.display='none'; onSelect(fuzzy); return; }
+      suggestEl.style.display='none';
     }
   });
 }
 
-/* attach */
-attachAutocomplete(fromInput, fromSuggest, (tok)=>{ selectedFrom = tok; openChart(tok.address); });
-attachAutocomplete(toInput, toSuggest, (tok)=>{ selectedTo = tok; openChart(tok.address); });
+/* Attach autocompletes */
+attachAutocomplete(fromTokenInput, fromSuggest, async (tok)=>{
+  selectedFrom = tok;
+  // show USD under input
+  const usd = await fetchUsd(tok.address);
+  fromUsdLine.textContent = usd ? `${tok.symbol} price ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
+  openChart(tok.address);
+});
+attachAutocomplete(toTokenInput, toSuggest, async (tok)=>{
+  selectedTo = tok;
+  const usd = await fetchUsd(tok.address);
+  toUsdLine.textContent = usd ? `${tok.symbol} price ≈ $${Number(usd).toFixed(6)}` : `${tok.symbol} price unknown`;
+  openChart(tok.address);
+});
 
-/* ================== Chart: Gecko first, Dexscreener fallback ================== */
+/* ================ Chart (Gecko first, Dexscreener fallback) ================ */
 function openChart(address){
   if(!address) return;
   const a = address.toLowerCase();
@@ -283,36 +301,31 @@ function openChart(address){
   const dexs = `https://www.dexscreener.com/polygon/${a}?embed=1`;
   chartFrame.src = gecko;
   chartWrap.style.display = 'block';
-
-  // fallback after timeout if gecko doesn't load
+  // fallback timer & handlers
   let fallback = setTimeout(()=>{ chartFrame.src = dexs; }, 3800);
-  // attach onload/onerror handlers
   const onload = ()=>{ clearTimeout(fallback); cleanup(); };
   const onerror = ()=>{ clearTimeout(fallback); chartFrame.src = dexs; cleanup(); };
-  function cleanup(){ chartFrame.removeEventListener('load', onload); chartFrame.removeEventListener('error', onerror); }
+  function cleanup(){ try{ chartFrame.removeEventListener('load', onload); chartFrame.removeEventListener('error', onerror); }catch(e){} }
   chartFrame.addEventListener('load', onload);
   chartFrame.addEventListener('error', onerror);
 }
-
-/* open NOLA chart on start */
+// open NOLA token at start
 openChart(INITIAL_NOLA_TOKEN);
 
-/* ================== Wallet connect (MetaMask + WalletConnect v2 optional) ================== */
-let web3modal = null;
+/* ================ Web3Modal (WalletConnect v2) init ================ */
 async function initWeb3Modal(){
   try{
     web3modal = new window.WalletConnectWeb3Modal.default({
       projectId: WALLETCONNECT_PROJECT_ID,
       themeMode: 'dark'
     });
-  }catch(e){
-    console.warn('web3modal init', e);
-  }
+  }catch(e){ console.warn('web3modal init failed', e); web3modal = null; }
 }
 initWeb3Modal();
 
+/* ================ Connect wallet (MetaMask pref, WalletConnect fallback) ================ */
 async function connectWallet(){
-  // MetaMask
+  // MetaMask (preferred)
   if(window.ethereum && window.ethereum.isMetaMask){
     provider = new ethers.providers.Web3Provider(window.ethereum);
     await provider.send('eth_requestAccounts', []);
@@ -322,54 +335,147 @@ async function connectWallet(){
     addrChip.textContent = short(userAddress);
     return true;
   }
-  // WalletConnect (if project id set)
+  // WalletConnect via Web3Modal
   if(web3modal && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
     try{
-      const wc = await web3modal.openModal();
-      if(!wc) return false;
-      provider = new ethers.providers.Web3Provider(wc);
+      const wcProvider = await web3modal.openModal(); // returns provider
+      if(!wcProvider) return false;
+      provider = new ethers.providers.Web3Provider(wcProvider);
       signer = provider.getSigner();
       userAddress = await signer.getAddress();
       addrChip.style.display = 'inline-block';
       addrChip.textContent = short(userAddress);
       return true;
-    }catch(e){
-      console.error('WalletConnect fail', e);
-      return false;
-    }
+    }catch(e){ console.error('WalletConnect failed', e); return false; }
   }
-  alert('No wallet found. Install MetaMask or set WalletConnect Project ID in the code.');
+  alert('No wallet found. Install MetaMask or set WALLETCONNECT_PROJECT_ID in the code.');
   return false;
 }
-
 connectFloating.addEventListener('click', connectWallet);
 
-/* ================== Chat (Gun) improved global peers + modal username ================== */
+/* ================ 1inch quote & swap + approval flow ================ */
+function toBigIntAmount(value, decimals=18){
+  const parts = String(value).split('.');
+  if(parts.length === 1) return BigInt(parts[0] || '0') * (BigInt(10) ** BigInt(decimals));
+  const intPart = parts[0] || '0';
+  const decPart = (parts[1] || '').slice(0,decimals).padEnd(decimals,'0');
+  return BigInt(intPart) * (BigInt(10) ** BigInt(decimals)) + BigInt(decPart);
+}
+
+getQuoteBtn.addEventListener('click', async ()=>{
+  if(!selectedFrom || !selectedTo){ alert('Choose both tokens first'); return; }
+  // ask user for amount via prompt to keep UI unchanged (we didn't have amount input in final layout)
+  const amount = prompt('Enter amount of ' + selectedFrom.symbol + ' to quote:');
+  if(!amount) return;
+  let amountInt;
+  try{ amountInt = toBigIntAmount(amount, selectedFrom.decimals || 18).toString(); }catch(e){ alert('Invalid amount'); return; }
+  try{
+    quoteTextShow('Fetching best price...');
+    const url = `${ONEINCH_BASE}/quote?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Quote failed');
+    const q = await res.json();
+    const out = Number(q.toTokenAmount) / (10 ** (selectedTo.decimals || 18));
+    // show USD estimate if possible
+    const toUsd = await fetchUsd(selectedTo.address);
+    const usdLine = toUsd ? ` • ~$${(out * toUsd).toFixed(2)}` : '';
+    quoteTextShow(`Estimated: ${out.toLocaleString(undefined,{maximumFractionDigits:6})} ${selectedTo.symbol}${usdLine}`);
+    // enable swap button and store quote in element dataset for swap
+    swapBtn.disabled = false;
+    swapBtn.dataset.amount = amountInt;
+  }catch(e){
+    console.error(e);
+    quoteTextShow('Quote failed. Try again.');
+  }
+});
+
+function quoteTextShow(txt){ /* small visual: show as alert-like using the modal behavior? Keep simple: use default alert? */ alert(txt); }
+
+/* Swap flow with allowance check and approve if needed */
+swapBtn.addEventListener('click', async ()=>{
+  if(!selectedFrom || !selectedTo) return alert('Select tokens first');
+  if(!provider || !signer){
+    const ok = confirm('You must connect wallet to swap. Connect now?');
+    if(!ok) return;
+    const ok2 = await connectWallet();
+    if(!ok2) return;
+  }
+  const amountInt = swapBtn.dataset.amount;
+  if(!amountInt) return alert('No quote available. Get Quote first.');
+  try{
+    // 1) check allowance if from token is not native (MATIC has address 0xEeee... in 1inch but token list has wrapped)
+    const tokenAddr = selectedFrom.address.toLowerCase();
+    // if token address equals 0xEeeee... or token symbol is MATIC might be native; 1inch uses special address for native; check decimals etc
+    // We'll treat tokens with address '0xeeee...' or address null as native (no approval)
+    const NATIVE_ADDRESSES = ['0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'];
+    if(!NATIVE_ADDRESSES.includes(tokenAddr)){
+      const allowUrl = `${ONEINCH_BASE}/approve/allowance?tokenAddress=${tokenAddr}&walletAddress=${userAddress}`;
+      const allowRes = await fetch(allowUrl);
+      const allowJson = await allowRes.json();
+      const allowance = BigInt(allowJson?.allowance || '0');
+      const want = BigInt(amountInt);
+      if(allowance < want){
+        // need approval
+        const approveUrl = `${ONEINCH_BASE}/approve/transaction?tokenAddress=${tokenAddr}`;
+        const approveRes = await fetch(approveUrl);
+        const approveTx = await approveRes.json();
+        if(!approveTx || !approveTx.data){
+          throw new Error('Approve tx build failed');
+        }
+        // send approval tx
+        const txReq = { to: approveTx.to, data: approveTx.data, value: approveTx.value ? approveTx.value : undefined };
+        const sent = await signer.sendTransaction(txReq);
+        alert('Approval tx sent: ' + sent.hash + '\nWaiting for confirmation...');
+        await sent.wait();
+        alert('Approval confirmed — proceeding to swap');
+      }
+    }
+
+    // 2) build swap
+    const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${selectedFrom.address}&toTokenAddress=${selectedTo.address}&amount=${amountInt}&fromAddress=${userAddress}&slippage=1`;
+    const swapRes = await fetch(swapUrl);
+    const swapJson = await swapRes.json();
+    if(!swapJson.tx){
+      console.error('swap build failed', swapJson);
+      throw new Error('Swap build failed');
+    }
+    // 3) send swap tx via signer
+    const txData = swapJson.tx;
+    const tx = await signer.sendTransaction({
+      to: txData.to,
+      data: txData.data,
+      value: txData.value ? txData.value : undefined
+    });
+    alert('Swap tx sent: ' + tx.hash);
+  }catch(e){
+    console.error(e);
+    alert('Swap failed: ' + (e.message || e));
+  }
+});
+
+/* ================ Chat (Gun) global peers & themed modal ================ */
 const gun = Gun({ peers: GUN_PEERS });
 const chatNode = gun.get('nola_chat_global_v1');
 let chatUser = null;
 const userColors = {};
-function pickColor(name){ if(userColors[name]) return userColors[name]; const c = '#'+Math.floor(Math.random()*16777215).toString(16); userColors[name]=c; return c; }
+function pickColor(n){ if(userColors[n]) return userColors[n]; const c = '#'+Math.floor(Math.random()*16777215).toString(16); userColors[n]=c; return c; }
 
 sendChatBtn.addEventListener('click', ()=>{
   const txt = (chatInput.value||'').trim();
   if(!txt) return;
-  if(!chatUser){
-    usernameModal.style.display = 'flex';
-    return;
-  }
-  const msg = { user: chatUser, text: txt, color: pickColor(chatUser), t: Date.now() };
-  chatNode.set(msg);
+  if(!chatUser){ usernameModal.style.display='flex'; return; }
+  const obj = { user: chatUser, text: txt, color: pickColor(chatUser), t: Date.now() };
+  chatNode.set(obj);
   chatInput.value = '';
 });
 
 confirmUsername.addEventListener('click', ()=>{
-  const val = (modalUsername.value||'').trim();
-  chatUser = val || ('Anon'+Math.floor(Math.random()*999));
+  const v = (modalUsername.value||'').trim();
+  chatUser = v || ('Anon'+Math.floor(Math.random()*999));
   usernameModal.style.display = 'none';
 });
 
-// listen to global chat (will sync across devices)
+// listen for messages
 chatNode.map().on(m=>{
   if(!m || !m.user || !m.text) return;
   const el = document.createElement('div');
@@ -385,14 +491,8 @@ chatToggle.addEventListener('click', ()=> {
   chatSidebar.style.display = (chatSidebar.style.display === 'flex') ? 'none' : 'flex';
 });
 
-/* small: get quote button opens quote using 1inch quote if tokens selected (keeps UI minimal) */
-getQuoteBtn.addEventListener('click', async ()=>{
-  if(!selectedFrom || !selectedTo) { alert('Select From and To tokens first'); return; }
-  alert('Quote function is ready (1inch) — amount & swap UX coming next. For now chart and search are active.');
-});
-
-/* ================== final polish ================== */
-setTimeout(()=>{ if(tokenList.length>0) console.log('Tokens loaded', tokenList.length); }, 1200);
+/* ================== small ready log ================== */
+setTimeout(()=>{ if(tokenList.length) console.log('Tokens ready:', tokenList.length); }, 1200);
 
 </script>
 </body>
