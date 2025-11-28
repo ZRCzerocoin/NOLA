@@ -82,7 +82,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* SWAP OUTSIDE CONTROL moved into controls area */
 .swap-outside{
   width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 20px rgba(120,0,255,0.06);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px)}
-.swap-outside:hover{transform:translateY(-4px) rotate(-10deg)}
+.swap-outside:hover{transform:translateY(-4px) rotate(0deg)}
 
 /* SLIPPAGE THEME - minimal, placed on right side of controls */
 .slippage-min{appearance:none;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);color:#fff;border:1px solid rgba(255,255,255,0.05);font-weight:700;font-size:13px}
@@ -180,7 +180,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
         </div>
 
         <div class="input-field">
-          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="fromToken" placeholder="Token" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
         <div class="input-amount" style="min-width:120px;">
@@ -212,7 +212,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
         </div>
 
         <div class="input-field">
-          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="toToken" placeholder="Token" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
         <div class="input-amount" style="min-width:120px;">
@@ -267,7 +267,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <!-- footer -->
 <div class="footer">
   <div>© 2025 NOLA — All rights reserved</div>
-  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
+  <div><a href="PrivacyTerms.html" id="privacyTerms">Terms & privacy</a> • <a href="terms&privacy" id="https://x.com/NOLA_CHAIN">X</a> <a href="index.html" id="siteLink">Website</a></div>
 </div>
 
 <!-- LIBS -->
@@ -293,7 +293,7 @@ const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384';
 
 // WalletConnect project id — set your real id here. If left empty the code will fallback to window.ethereum (MetaMask).
-const WALLETCONNECT_PROJECT_ID = ""; // <-- PUT YOUR WALLETCONNECT PROJECT ID HERE
+const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1"; // <-- PUT YOUR WALLETCONNECT PROJECT ID HERE
 
 // Fee settings (you can change)
 const FEE_PERCENT = 0.00001; // 0.001% (0.00001 decimal) — extremely user-friendly
@@ -306,7 +306,7 @@ const priceCache = new Map();
 const suggestionCache = new Map();
 const ACTIVE_PRICE_ADDRS = new Set();
 const PRICE_TTL = 10000; // 10s TTL
-const SUGGEST_LIMIT = 12;
+const SUGGEST_LIMIT = 15;
 const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
 
 /* ================= DOM REFS */
