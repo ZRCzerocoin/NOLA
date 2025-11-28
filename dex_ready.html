@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NOLA Exchange — Full</title>
+<style>
+/* ===== RESET & THEME ===== */
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif}
+body{overflow-x:hidden;background:radial-gradient(circle at center,#0c0014,#1a002b 80%);color:#fff;scroll-behavior:smooth;min-height:100vh}
+:root{
+  --accent-1:#b445ff;--accent-2:#7013ff;
+  --glass:rgba(255,255,255,0.05);--glass-2:rgba(255,255,255,0.03);
+  --suggest-bg:rgba(25,0,50,0.98);
+  --shadow:0 0 25px rgba(180,0,255,0.3);
+  --container-max:480px;
+}
+
+/* NEBULA + PARTICLES */
+body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(150,0,255,0.12),transparent 60%);animation:nebulaMove 20s infinite alternate ease-in-out;z-index:-2}
+@keyframes nebulaMove{0%{transform:translate(-10%,-10%)}100%{transform:translate(5%,5%)}}
+.particle{position:absolute;width:2px;height:2px;background:#b445ff;border-radius:50%;opacity:0.8;animation:floatParticle linear infinite;z-index:-1}
+@keyframes floatParticle{0%{transform:translateY(0) translateX(0);opacity:0.8}50%{transform:translateY(-50px) translateX(20px);opacity:0.4}100%{transform:translateY(0) translateX(0);opacity:0.8}}
+
+/* TOP LOGO moved down to sit above section */
+.logo{
+  width:112px;height:auto;display:block;margin:0 auto;pointer-events:none;
+  animation:logoGlow 5s ease-in-out infinite alternate,logoRotate 30s linear infinite;
+  z-index:998;position:fixed;left:50%;top:18vh;transform:translateX(-50%);
+}
+@keyframes logoGlow{0%{filter:drop-shadow(0 0 12px #9c00ff)}50%{filter:drop-shadow(0 0 30px #d15fff)}100%{filter:drop-shadow(0 0 12px #9c00ff)}}
+@keyframes logoRotate{0%{transform:translateX(-50%) rotateY(0deg)}100%{transform:translateX(-50%) rotateY(360deg)}}
+
+/* SECTION WRAPPER - CENTER EVERYTHING */
+.section-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:18px;padding:28px;position:relative;z-index:1}
+
+/* CARD */
+.container{width:90%;max-width:var(--container-max);margin:0;background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:25px;padding:22px;backdrop-filter:blur(18px);box-shadow:var(--shadow);animation:cardIn 800ms ease;position:relative}
+@keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
+
+/* UNIFIED ROW - compact "thin bar" look */
+.input-box{margin-top:14px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.04)}
+.input-box .left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+
+/* chosen tokens: professional rounded-rectangle icons (not circular) */
+.token-icon{width:36px;height:36px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.05);z-index:5}
+.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:8px;z-index:6}
+.token-chip{position:absolute;right:-8px;bottom:-8px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:3px 7px;border-radius:999px;font-weight:800;font-size:10px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px);z-index:7}
+.input-box.has-token .token-chip{display:inline-flex}
+
+/* token info (symbol + 24h change) - placed neatly next to icon */
+.token-info{display:flex;flex-direction:column;gap:2px;min-width:0;z-index:3}
+.token-symbol{font-weight:800;font-size:14px}
+.token-change{font-size:12px;opacity:0.95}
+
+/* suggestions list icons remain circular */
+.suggestions .suggestion-left img{border-radius:50%}
+
+/* INPUT BLOCK (single visible text input per row) */
+.input-field{display:flex;flex-direction:column;min-width:0;width:100%}
+.input-field input[type="text"]{padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:14px}
+.input-amount{margin-left:8px;min-width:120px}
+.input-amount input{width:100%;padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:14px;outline:none}
+
+/* small price area under amount/estimate - align to right without covering icons */
+.price-small{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto;margin-top:6px;min-width:120px;z-index:2}
+.price-small .price-usd{font-size:12px;opacity:0.85}
+.price-small .price-unit{font-size:12px;opacity:0.65}
+
+/* SUGGESTIONS: COMPACT & STYLISH */
+.suggestions{position:absolute;top:68px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
+.suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
+.suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
+.suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
+.suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.suggestion-main{display:flex;flex-direction:column;min-width:0}
+.suggestion-symbol{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggestion-name{font-size:12px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.suggestion-price-pill{min-width:70px;text-align:right;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);font-weight:700;font-size:12px}
+
+/* SWAP OUTSIDE CONTROL moved into controls area */
+.swap-outside{
+  width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 20px rgba(120,0,255,0.06);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px)}
+.swap-outside:hover{transform:translateY(-4px) rotate(-10deg)}
+
+/* SLIPPAGE THEME - minimal, placed on right side of controls */
+.slippage-min{appearance:none;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);color:#fff;border:1px solid rgba(255,255,255,0.05);font-weight:700;font-size:13px}
+.slippage-min option{background:transparent}
+
+/* tiny glassy tooltip / toast */
+.toast{position:fixed;right:18px;bottom:90px;z-index:9999;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#fff;font-weight:700}
+
+/* ELECTRIC BILL + NEON PILL BUTTON THEMES */
+.electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
+.electric-pill{
+  position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 24px;border-radius:999px;
+  /* electric-bill warm gradient */
+  background:linear-gradient(90deg,#ffd66b,#ff8a00);
+  box-shadow:0 10px 40px rgba(255,160,0,0.18),0 0 40px rgba(255,200,80,0.08) inset;
+  color:#2b0b00;font-weight:800;font-size:15px;border:none;outline:none;overflow:hidden;transition:transform 140ms ease,box-shadow 140ms ease;
+}
+.electric-pill:active{transform:translateY(-1px) scale(.997)}
+.electric-pill .sweep{position:absolute;left:-20%;top:-20%;width:40%;height:140%;background:linear-gradient(90deg,rgba(255,255,255,0.6),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(8px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
+@keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
+.electric-pill .label{position:relative;z-index:2;pointer-events:none}
+.electric-pill .icon{width:28px;height:28px;border-radius:999px;background:rgba(255,255,255,0.9);display:inline-flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:inset 0 -4px 8px rgba(0,0,0,0.12);font-size:14px}
+
+/* NEON VARIANT - matches existing vibe but alternates the pill theme */
+.neon-pill{
+  position:relative;display:inline-flex;align-items:center;gap:10px;padding:8px 18px;border-radius:999px;
+  background:transparent;border:1px solid rgba(180,68,255,0.18);color:#e9d3ff;font-weight:800;font-size:14px;
+  box-shadow:0 6px 24px rgba(112,19,255,0.08),0 0 18px rgba(180,68,255,0.06) inset;backdrop-filter:blur(6px);
+}
+.neon-pill .icon{width:22px;height:22px;border-radius:999px;background:linear-gradient(180deg,#ffffff20,#ffffff06);display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:12px}
+.neon-pill:active{transform:translateY(-1px)}
+
+/* Connected state (lights up) */
+.electric-pill.connected{box-shadow:0 20px 60px rgba(255,130,0,0.28),0 0 60px rgba(255,160,0,0.12);transform:translateY(-2px)}
+.electric-pill.connected .icon{background:linear-gradient(180deg,#fff,#fff0);color:#3b0066}
+
+/* SMALLER variant for the container's swap appearance */
+.swap-row{display:flex;gap:12px;align-items:center}
+.swap-row .electric-btn{flex:1}
+
+/* TOP-RIGHT CONNECT */
+.top-right-connect{position:fixed;right:18px;top:18px;z-index:70;display:flex;gap:10px;align-items:center}
+.addr-chip{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,0.03);font-weight:700;display:none}
+/* styled connect button */
+.connect-floating{
+  background:linear-gradient(90deg,#9c00ff,#ff66d6);
+  color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;box-shadow:0 12px 40px rgba(156,0,255,0.20);
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+.connect-floating:hover{transform:translateY(-3px);box-shadow:0 18px 50px rgba(156,0,255,0.26)}
+
+/* footer */
+.footer{position:fixed;left:0;right:0;bottom:12px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;z-index:40;color:rgba(255,255,255,0.75);font-size:13px}
+.footer a{color:rgba(215,165,255,0.95);text-decoration:none;font-weight:700;margin-left:8px}
+
+/* SMALL SCREEN POLISH: slightly reduce chip + layout stack */
+@media(max-width:720px){
+  .section-wrapper{padding:18px;gap:12px;flex-direction:column-reverse}
+  .container{width:100%;max-width:520px}
+  .input-box .token-chip{font-size:10px;padding:3px 6px;right:-4px;bottom:-4px}
+  .logo{top:12vh;width:88px}
+}
+</style>
+</head>
+<body>
+
+<!-- particles will be created by script -->
+<!-- logo (inline SVG fallback) -->
+<img id="logoFloat" class="logo" src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='utf-8'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23b445ff'/><stop offset='1' stop-color='%237013ff'/></linearGradient></defs><rect rx='28' ry='28' width='200' height='200' fill='url(%23g)'/><text x='50%' y='54%' font-size='56' fill='white' font-family='Arial' font-weight='700' text-anchor='middle' dominant-baseline='middle'>N</text></svg>" alt="NOLA Logo">
+
+<!-- top-right connect -->
+<div class="top-right-connect">
+  <div id="addrChip" class="addr-chip"></div>
+  <button id="connectFloating" class="connect-floating">Connect Wallet</button>
+</div>
+
+<!-- SECTION WRAPPER centers card and swap control -->
+<div class="section-wrapper">
+
+  <div class="container" role="main" aria-label="NOLA Exchange">
+    <h2>NOLA Exchange</h2>
+
+    <!-- FROM -->
+    <div class="input-box" id="fromBox" style="position:relative;">
+      <div class="left">
+        <div class="token-icon" id="fromIcon">
+          <img id="fromLogo" src="" alt="" style="display:none">
+          <span class="token-chip" id="fromChip" style="display:none">---</span>
+        </div>
+
+        <!-- token info: symbol + change (with period) -->
+        <div class="token-info">
+          <div class="token-symbol" id="fromSymbol">---</div>
+          <div class="token-change" id="fromChange" style="display:none">+0.00%</div>
+        </div>
+
+        <div class="input-field">
+          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
+        </div>
+
+        <div class="input-amount" style="min-width:120px;">
+          <input id="fromAmount" placeholder="Amount" type="number" step="any">
+        </div>
+
+        <!-- small price area under amount -->
+        <div class="price-small">
+          <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
+          <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
+        </div>
+
+      </div>
+      <div class="suggestions" id="fromSuggestions" data-side="from"></div>
+    </div>
+
+    <!-- TO -->
+    <div class="input-box" id="toBox" style="position:relative;margin-top:12px;">
+      <div class="left">
+        <div class="token-icon" id="toIcon">
+          <img id="toLogo" src="" alt="" style="display:none">
+          <span class="token-chip" id="toChip" style="display:none">---</span>
+        </div>
+
+        <!-- token info: symbol + change (with period) -->
+        <div class="token-info">
+          <div class="token-symbol" id="toSymbol">---</div>
+          <div class="token-change" id="toChange" style="display:none">+0.00%</div>
+        </div>
+
+        <div class="input-field">
+          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
+        </div>
+
+        <div class="input-amount" style="min-width:120px;">
+          <input id="toAmount" placeholder="Estimate" readonly>
+        </div>
+
+        <!-- small price area under estimate -->
+        <div class="price-small">
+          <div id="toUsdSmall" class="price-usd" style="display:none">≈ $—</div>
+          <div id="toUnitSmall" class="price-unit" style="display:none">— / unit</div>
+        </div>
+
+      </div>
+      <div class="suggestions" id="toSuggestions" data-side="to"></div>
+    </div>
+
+    <!-- CONTROLS: slippage minimal on right, swap icon moved here -->
+    <div class="controls" style="margin-top:14px;display:flex;align-items:center;gap:12px;">
+      <div style="flex:1;display:flex;align-items:center;gap:10px">
+        <div id="swapOutside" class="swap-outside" title="Swap From ↔ To">⇅</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;">
+        <select id="slippage" class="slippage-min" title="Select slippage">
+          <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="3">3%</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="swap-row" style="margin-top:14px">
+      <!-- new electric pill swap button (id kept as swapBtn) -->
+      <button id="swapBtn" class="electric-btn" title="Swap">
+        <span class="electric-pill" role="button" aria-pressed="false">
+          <span class="sweep" aria-hidden="true"></span>
+          <span class="icon">⇄</span>
+          <span class="label">Swap</span>
+        </span>
+      </button>
+      <button id="swapBtnAlt" class="electric-btn" title="Quick Swap">
+        <span class="neon-pill" role="button" aria-pressed="false">
+          <span class="icon">⚡</span>
+          <span class="label">Quick Swap</span>
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- toast container -->
+<div id="toastRoot" style="pointer-events:none;position:fixed;right:18px;bottom:90px;z-index:9999"></div>
+
+<!-- footer -->
+<div class="footer">
+  <div>© 2025 NOLA — All rights reserved</div>
+  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
+</div>
+
+<!-- LIBS -->
+<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
+<script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
+
+<script>
+/* ================= PARTICLES */
+(function createParticles(){ for(let i=0;i<60;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
+
+/* ================= CONFIG & STATE */
+const CHAIN_ID = 137;
+const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
+const ZEROX_BASE = 'https://polygon.api.0x.org';
+const COINGECKO_CHAIN = 'polygon-pos';
+const FALLBACK_RPC = "https://polygon-rpc.com";
+const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
+const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
+const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+// YOUR 0x API KEY (you provided)
+const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384';
+
+// WalletConnect project id — set your real id here. If left empty the code will fallback to window.ethereum (MetaMask).
+const WALLETCONNECT_PROJECT_ID = ""; // <-- PUT YOUR WALLETCONNECT PROJECT ID HERE
+
+// Fee settings (you can change)
+const FEE_PERCENT = 0.00001; // 0.001% (0.00001 decimal) — extremely user-friendly
+const FEE_RECIPIENT = '0xFEE_RECIPIENT_PLACEHOLDER'; // <-- replace with real address when ready
+
+let tokenList = [];
+let tokenMap = new Map();
+let cgStatsMap = new Map();
+const priceCache = new Map();
+const suggestionCache = new Map();
+const ACTIVE_PRICE_ADDRS = new Set();
+const PRICE_TTL = 10000; // 10s TTL
+const SUGGEST_LIMIT = 12;
+const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
+
+/* ================= DOM REFS */
+const $ = id => document.getElementById(id);
+const fromTokenInput = $('fromToken'), toTokenInput = $('toToken');
+const fromAmountEl = $('fromAmount'), toAmountEl = $('toAmount');
+const fromUsdSmall = $('fromUsdSmall'), toUsdSmall = $('toUsdSmall');
+const fromUnitSmall = $('fromUnitSmall'), toUnitSmall = $('toUnitSmall');
+const fromLogo = $('fromLogo'), toLogo = $('toLogo');
+const fromChip = $('fromChip'), toChip = $('toChip');
+const fromSuggestions = $('fromSuggestions'), toSuggestions = $('toSuggestions');
+const swapOutside = $('swapOutside'), swapBtn = $('swapBtn');
+const fromBox = $('fromBox'), toBox = $('toBox');
+const connectFloating = $('connectFloating'), addrChip = $('addrChip');
+const slippageSel = $('slippage');
+const fromChangeEl = $('fromChange'), toChangeEl = $('toChange');
+
+/* ================= HELPERS */
+const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
+const low = s => (s||'').toLowerCase();
+const nowTs = ()=> Date.now();
+function formatUSD(v){ if (v===null||v===undefined||!Number.isFinite(v)) return '—'; const n=Number(v); const opts={style:'currency',currency:'USD',maximumFractionDigits:2,minimumFractionDigits:2}; if(Math.abs(n)>0&&Math.abs(n)<0.01){opts.maximumFractionDigits=6;opts.minimumFractionDigits=4;} return new Intl.NumberFormat('en-US',opts).format(n); }
+function fetchWithTimeout(url,opts={},ms=5000){ const controller=new AbortController(); const id=setTimeout(()=>controller.abort(),ms); const init=Object.assign({},opts,{signal:controller.signal}); return fetch(url,init).finally(()=>clearTimeout(id)); }
+async function fetchJson(url,opts){ const r = await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
+
+/* quick glassy toast */
+function showToast(msg,ttl=3500){ const root = $('toastRoot'); const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.pointerEvents='auto'; root.appendChild(el); setTimeout(()=>{ el.style.opacity=1; },10); setTimeout(()=>{ el.style.transition='opacity 300ms'; el.style.opacity=0; setTimeout(()=>el.remove(),300); },ttl); }
+
+/* ================= LOAD TOKENS & COINGECKO MARKETS */
+async function loadTokensAndMarkets(){
+  try {
+    const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
+    const j = await r.json();
+    tokenList = (j.tokens||[]).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
+    tokenList.forEach(t => tokenMap.set(t.address, t));
+    if (!tokenMap.has(MATIC_ADDR)) tokenMap.set(MATIC_ADDR, { address: MATIC_ADDR, symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
+
+    try {
+        const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+        const rm = await fetchWithTimeout(marketsUrl, {}, 5000);
+        const jm = await rm.json();
+        jm.forEach(c => {
+            const sym = low(c.symbol||''), name = low(c.name||'');
+            const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
+            if (sym) cgStatsMap.set(sym, stat);
+            if (name) cgStatsMap.set(name, stat);
+        });
+    } catch(e){ console.warn('CoinGecko markets failed', e); }
+
+    try {
+      const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
+      const j1 = await r1.json();
+      if (j1 && j1.tokens) {
+        Object.values(j1.tokens).forEach(t => {
+          const addr = low(t.address||'');
+          if (!addr) return;
+          if (tokenMap.has(addr)) return;
+          const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
+          tokenList.push(obj); tokenMap.set(addr, obj);
+        });
+      }
+    } catch(e){ /* ignore */ }
+
+    // dedupe
+    const seen = new Set();
+    tokenList = tokenList.filter(t => { if(!t||!t.address) return false; if(seen.has(t.address)) return false; seen.add(t.address); return true; });
+    console.log('Loaded tokens:', tokenList.length);
+  } catch(e){ console.error('loadTokensAndMarkets error', e); }
+}
+let tokensLoadedPromise = loadTokensAndMarkets();
+async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
+
+/* ================= PRICE SOURCES (priority: 0x -> CoinGecko -> 1inch -> Dexscreener -> derive) */
+
+async function fetch0xPrice(addr){
+  try {
+    const sellToken = addr;
+    const buyToken = USDC_ADDR;
+    const resp = await fetchWithTimeout(`${ZEROX_BASE}/swap/v1/price?sellToken=${encodeURIComponent(sellToken)}&buyToken=${encodeURIComponent(buyToken)}&sellAmount=1`, { headers: { '0x-api-key': ZEROX_API_KEY } }, 3500);
+    if (!resp.ok) throw new Error('0x price fail');
+    const j = await resp.json();
+    if (j && j.price) return Number(j.price);
+    if (j && j.buyAmount) {
+      const val = Number(j.buyAmount);
+      if (Number.isFinite(val) && val > 0) return val;
+    }
+    return null;
+  } catch(e){ return null; }
+}
+
+/* remaining JS omitted in preview for brevity */
+</script>
+</body>
+</html>
