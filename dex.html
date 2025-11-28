@@ -39,32 +39,34 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 @keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
 
-/* UNIFIED ROW */
-.input-box{margin-top:14px;padding:12px;background:rgba(255,255,255,0.04);border-radius:14px;border:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;gap:12px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.06)}
-.input-box .left{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.token-icon{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.04)}
-.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%}
-.token-chip{position:absolute;right:-6px;bottom:-6px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:4px 8px;border-radius:999px;font-weight:800;font-size:11px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px)}
+/* UNIFIED ROW - compact "thin bar" look */
+.input-box{margin-top:14px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.04)}
+.input-box .left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
+
+/* make icon slightly smaller so bars match amount box height */
+.token-icon{width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,0.02);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.05);z-index:3}
+.token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;z-index:3}
+.token-chip{position:absolute;right:-6px;bottom:-6px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:3px 7px;border-radius:999px;font-weight:800;font-size:10px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px);z-index:5}
 .input-box.has-token .token-chip{display:inline-flex}
 
-/* token info (symbol + 24h change) */
-.token-info{display:flex;flex-direction:column;gap:2px}
-.token-symbol{font-weight:800;font-size:14px}
-.token-change{font-size:12px;opacity:0.85}
+/* token info (symbol + 24h change) - placed neatly next to icon */
+.token-info{display:flex;flex-direction:column;gap:2px;min-width:0;z-index:2}
+.token-symbol{font-weight:800;font-size:13px}
+.token-change{font-size:12px;opacity:0.9}
 
 /* INPUT BLOCK (single visible text input per row) */
 .input-field{display:flex;flex-direction:column;min-width:0;width:100%}
-.input-field input[type="text"]{padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:15px}
+.input-field input[type="text"]{padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:14px}
 .input-amount{margin-left:8px;min-width:120px}
-.input-amount input{width:100%;padding:10px 12px;border-radius:10px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:15px;outline:none}
+.input-amount input{width:100%;padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:14px;outline:none}
 
-/* small price area under amount/estimate */
-.price-small{display:flex;flex-direction:column;align-items:flex-end;margin-left:8px;min-width:120px}
+/* small price area under amount/estimate - align to right without covering icons */
+.price-small{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto;margin-top:6px;min-width:120px;z-index:2}
 .price-small .price-usd{font-size:12px;opacity:0.85}
 .price-small .price-unit{font-size:12px;opacity:0.65}
 
 /* SUGGESTIONS: COMPACT & STYLISH */
-.suggestions{position:absolute;top:78px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
+.suggestions{position:absolute;top:68px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
 .suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
 .suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
 .suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
@@ -155,22 +157,22 @@ box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18);
           <span class="token-chip" id="fromChip" style="display:none">---</span>
         </div>
 
-        <!-- token info: symbol + 24h change -->
+        <!-- token info: symbol + 24h change (only % shown) -->
         <div class="token-info">
           <div class="token-symbol" id="fromSymbol">---</div>
           <div class="token-change" id="fromChange" style="display:none">+0.00%</div>
         </div>
 
         <div class="input-field">
-          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
         <div class="input-amount" style="min-width:120px;">
           <input id="fromAmount" placeholder="Amount" type="number" step="any">
         </div>
 
-        <!-- small price area under amount -->
-        <div class="price-small" style="position:relative;right:-6px;top:16px;">
+        <!-- small price area under amount (aligned to right; won't overlap icon) -->
+        <div class="price-small">
           <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
           <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
         </div>
@@ -187,14 +189,14 @@ box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18);
           <span class="token-chip" id="toChip" style="display:none">---</span>
         </div>
 
-        <!-- token info: symbol + 24h change -->
+        <!-- token info: symbol + 24h change (only % shown) -->
         <div class="token-info">
           <div class="token-symbol" id="toSymbol">---</div>
           <div class="token-change" id="toChange" style="display:none">+0.00%</div>
         </div>
 
         <div class="input-field">
-          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:10px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
         <div class="input-amount" style="min-width:120px;">
@@ -202,7 +204,7 @@ box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18);
         </div>
 
         <!-- small price area under estimate -->
-        <div class="price-small" style="position:relative;right:-6px;top:16px;">
+        <div class="price-small">
           <div id="toUsdSmall" class="price-usd" style="display:none">≈ $—</div>
           <div id="toUnitSmall" class="price-unit" style="display:none">— / unit</div>
         </div>
@@ -480,7 +482,7 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   main.appendChild(sym); main.appendChild(nm);
   if (stats && typeof stats.change24h === 'number') {
     const ch = document.createElement('div'); ch.style.fontSize='11px'; ch.style.marginTop='6px'; ch.style.opacity='0.9';
-    ch.textContent = (stats.change24h>=0?'+':'')+stats.change24h.toFixed(2)+'% (24h)';
+    ch.textContent = (stats.change24h>=0?'+':'')+stats.change24h.toFixed(2)+'%'; // only percent
     ch.style.color = stats.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
     main.appendChild(ch);
   }
@@ -620,7 +622,7 @@ function applyTokenSelection(side, tokenObj){
   focusAndPlaceCaretAtEnd(input);
   fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 
-  // show 24h change if available in cgStatsMap by symbol or name
+  // show 24h change if available in cgStatsMap by symbol or name (ONLY percent)
   try {
     const sym = (tokenObj.symbol||'').toLowerCase();
     const nm = (tokenObj.name||'').toLowerCase();
@@ -628,8 +630,11 @@ function applyTokenSelection(side, tokenObj){
     if (stat && typeof stat.change24h === 'number') {
       const el = (side==='from')? fromChangeEl : toChangeEl;
       el.style.display = 'block';
-      el.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '% (24h)';
+      el.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '%';
       el.style.color = stat.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
+    } else {
+      const el = (side==='from')? fromChangeEl : toChangeEl;
+      el.style.display = 'none';
     }
   } catch(e){}
 }
@@ -712,17 +717,16 @@ async function fetchPriceForToken(address, decimals, side){
       unitEl.style.display = 'block';
     }
 
-    // if we have CG stat, show change under token
+    // if we have CG stat, show change under token (ONLY percent)
     const t = tokenMap.get(low(address));
     try {
       const stat = (t && t.symbol) ? cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name || '')) : null;
       const changeEl = (side==='from')? fromChangeEl : toChangeEl;
       if (stat && typeof stat.change24h === 'number') {
         changeEl.style.display = 'block';
-        changeEl.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '% (24h)';
+        changeEl.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '%';
         changeEl.style.color = stat.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
       } else if (changeEl) {
-        // hide if unknown
         changeEl.style.display = 'none';
       }
     } catch(e){}
@@ -792,7 +796,7 @@ async function updateEstimate(){
 
     fromUsdSmall.textContent = `≈ ${formatUSD(fromUSD)}`;
     fromUnitSmall.textContent = `${formatUSD(fromPrice)} / unit`;
-    toUsdSmall.textContent = `${formatUSD(toPrice)} / unit`; // for estimate, show target unit price as 'price per unit'
+    toUsdSmall.textContent = `${formatUSD(toPrice)} / unit`;
     toUnitSmall.textContent = `—`;
   } catch(e){ console.warn('updateEstimate error', e); }
 }
@@ -819,13 +823,13 @@ function resolveTokenInputsIfNeeded(){
       chip.textContent = found.symbol || found.name || '';
       chip.style.display = 'inline-flex';
 
-      // update 24h change if present
+      // update 24h change if present (ONLY percent)
       try {
         const stat = cgStatsMap.get(low(found.symbol)) || cgStatsMap.get(low(found.name));
         const el = (inputEl.id === 'fromToken') ? fromChangeEl : toChangeEl;
         if (stat && typeof stat.change24h === 'number') {
           el.style.display = 'block';
-          el.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '% (24h)';
+          el.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '%';
           el.style.color = stat.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
         } else el.style.display = 'none';
       } catch(_) {}
@@ -1027,9 +1031,9 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
     fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token'); fromBox.style.setProperty('--token-icon-bg', usdc.logoURI ? `url('${usdc.logoURI}')` : 'none');
-    // show 24h change if available
+    // show 24h change if available (ONLY percent)
     const stat = cgStatsMap.get(low(usdc.symbol)) || cgStatsMap.get(low(usdc.name||''));
-    if (stat && typeof stat.change24h === 'number'){ fromChangeEl.style.display='block'; fromChangeEl.textContent = (stat.change24h>=0?'+':'')+stat.change24h.toFixed(2)+'% (24h)'; fromChangeEl.style.color = stat.change24h>=0? '#9ef39e':'#ff9e9e'; }
+    if (stat && typeof stat.change24h === 'number'){ fromChangeEl.style.display='block'; fromChangeEl.textContent = (stat.change24h>=0?'+':'')+stat.change24h.toFixed(2)+'%'; fromChangeEl.style.color = stat.change24h>=0? '#9ef39e':'#ff9e9e'; }
   }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
   if (top) {
@@ -1041,7 +1045,7 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
     toBox.classList.add('has-token'); toBox.style.setProperty('--token-icon-bg', top.logoURI ? `url('${top.logoURI}')` : 'none');
     const stat = cgStatsMap.get(low(top.symbol)) || cgStatsMap.get(low(top.name||''));
-    if (stat && typeof stat.change24h === 'number'){ toChangeEl.style.display='block'; toChangeEl.textContent = (stat.change24h>=0?'+':'')+stat.change24h.toFixed(2)+'% (24h)'; toChangeEl.style.color = stat.change24h>=0? '#9ef39e':'#ff9e9e'; }
+    if (stat && typeof stat.change24h === 'number'){ toChangeEl.style.display='block'; toChangeEl.textContent = (stat.change24h>=0?'+':'')+stat.change24h.toFixed(2)+'%'; toChangeEl.style.color = stat.change24h>=0? '#9ef39e':'#ff9e9e'; }
   }
   updateUsdVisibility();
   fetchBothPrices();
