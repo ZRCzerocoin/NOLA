@@ -49,6 +49,13 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 .token-chip{position:absolute;right:-8px;bottom:-8px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:3px 7px;border-radius:999px;font-weight:800;font-size:10px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px);z-index:7}
 .input-box.has-token .token-chip{display:inline-flex}
 
+/* NEW: selected token icon dark/invisible background for better contrast */
+.input-box.has-token .token-icon{
+  background: rgba(0,0,0,0.36);
+  border: none;
+  box-shadow: inset 0 -6px 18px rgba(0,0,0,0.35);
+}
+
 /* token info (symbol + 24h change) - placed neatly next to icon */
 .token-info{display:flex;flex-direction:column;gap:2px;min-width:0;z-index:3}
 .token-symbol{font-weight:800;font-size:14px}
@@ -84,9 +91,12 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 20px rgba(120,0,255,0.06);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px)}
 .swap-outside:hover{transform:translateY(-4px) rotate(-10deg)}
 
-/* SLIPPAGE THEME - minimal, placed on right side of controls */
-.slippage-min{appearance:none;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);color:#fff;border:1px solid rgba(255,255,255,0.05);font-weight:700;font-size:13px}
-.slippage-min option{background:transparent}
+/* SLIPPAGE THEME - now visually matches the app (styled select) */
+.slippage-min{
+  appearance:none;padding:8px 10px;border-radius:10px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:0;font-weight:800;font-size:13px;box-shadow:0 8px 22px rgba(106,0,255,0.12);
+  -webkit-appearance:none; -moz-appearance:none;
+}
+.slippage-min option{background:transparent;color:#111}
 
 /* tiny glassy tooltip / toast */
 .toast{position:fixed;right:18px;bottom:90px;z-index:9999;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#fff;font-weight:700}
@@ -130,8 +140,8 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
 <body>
 
 <!-- particles will be created by script -->
-<!-- logo (inline SVG fallback) -->
-<img id="logoFloat" class="logo" src="data:image/svg+xml;utf8,<?xml version='1.0' encoding='utf-8'?><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><defs><linearGradient id='g' x1='0' x2='1'><stop offset='0' stop-color='%23b445ff'/><stop offset='1' stop-color='%237013ff'/></linearGradient></defs><rect rx='28' ry='28' width='200' height='200' fill='url(%23g)'/><text x='50%' y='54%' font-size='56' fill='white' font-family='Arial' font-weight='700' text-anchor='middle' dominant-baseline='middle'>N</text></svg>" alt="NOLA Logo">
+<!-- floating logo uses logo.gif as requested -->
+<img id="logoFloat" class="logo" src="logo.gif" alt="NOLA Logo">
 
 <!-- top-right connect -->
 <div class="top-right-connect">
@@ -153,7 +163,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
           <span class="token-chip" id="fromChip" style="display:none">---</span>
         </div>
 
-        <!-- token info: symbol + change (with period) -->
+        <!-- token info: symbol + change (percent only) -->
         <div class="token-info">
           <div class="token-symbol" id="fromSymbol">---</div>
           <div class="token-change" id="fromChange" style="display:none">+0.00%</div>
@@ -185,7 +195,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
           <span class="token-chip" id="toChip" style="display:none">---</span>
         </div>
 
-        <!-- token info: symbol + change (with period) -->
+        <!-- token info: symbol + change (percent only) -->
         <div class="token-info">
           <div class="token-symbol" id="toSymbol">---</div>
           <div class="token-change" id="toChange" style="display:none">+0.00%</div>
@@ -303,8 +313,31 @@ function formatUSD(v){ if (v===null||v===undefined||!Number.isFinite(v)) return 
 function fetchWithTimeout(url,opts={},ms=5000){ const controller=new AbortController(); const id=setTimeout(()=>controller.abort(),ms); const init=Object.assign({},opts,{signal:controller.signal}); return fetch(url,init).finally(()=>clearTimeout(id)); }
 async function fetchJson(url,opts){ const r = await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 
-/* quick glassy toast */
-function showToast(msg,ttl=3500){ const root = $('toastRoot'); const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.pointerEvents='auto'; root.appendChild(el); setTimeout(()=>{ el.style.opacity=1; },10); setTimeout(()=>{ el.style.transition='opacity 300ms'; el.style.opacity=0; setTimeout(()=>el.remove(),300); },ttl); }
+/* ================= THEMED SINGLE-TOAST QUEUE (prevents overlapping) */
+let _toastQueue = [];
+let _toastVisible = false;
+function showToast(msg, ttl = 3500){
+  _toastQueue.push({msg, ttl});
+  if (!_toastVisible) _processToastQueue();
+}
+function _processToastQueue(){
+  if (_toastQueue.length === 0){ _toastVisible = false; return; }
+  _toastVisible = true;
+  const item = _toastQueue.shift();
+  const root = $('toastRoot');
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = item.msg;
+  el.style.pointerEvents = 'auto';
+  el.style.opacity = '0';
+  root.appendChild(el);
+  // entrance
+  requestAnimationFrame(()=>{ el.style.transition = 'opacity 180ms ease, transform 180ms ease'; el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
+  setTimeout(()=> {
+    el.style.transition = 'opacity 220ms'; el.style.opacity = '0';
+    setTimeout(()=>{ el.remove(); _processToastQueue(); }, 260);
+  }, item.ttl);
+}
 
 /* ================= LOAD TOKENS & COINGECKO MARKETS */
 async function loadTokensAndMarkets(){
@@ -350,21 +383,17 @@ async function loadTokensAndMarkets(){
 let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
-/* ================= PRICE SOURCES (priority: 0x -> CoinGecko -> 1inch -> Dexscreener -> derive) */
+/* ================= PRICE SOURCES (priority + fast-first heuristic) */
 
 async function fetch0xPrice(addr){
   try {
-    // 0x price endpoint - expects addresses or symbols
     const sellToken = addr;
-    const buyToken = USDC_ADDR; // price per token in USD
+    const buyToken = USDC_ADDR;
     const resp = await fetchWithTimeout(`${ZEROX_BASE}/swap/v1/price?sellToken=${encodeURIComponent(sellToken)}&buyToken=${encodeURIComponent(buyToken)}&sellAmount=1`, { headers: { '0x-api-key': ZEROX_API_KEY } }, 3500);
     if (!resp.ok) throw new Error('0x price fail');
     const j = await resp.json();
-    // 0x price might not directly be USD per unit; we try to parse
-    // When requesting sellAmount=1 with token address, 0x returns buyAmount in USDC units, but this is best-effort.
     if (j && j.price) return Number(j.price);
     if (j && j.buyAmount) {
-      // If buyAmount is returned for sellAmount=1 and buyToken=USDC, it's USD
       const val = Number(j.buyAmount);
       if (Number.isFinite(val) && val > 0) return val;
     }
@@ -384,7 +413,7 @@ async function fetch1InchQuotePrice(addr, decimals=18){
     const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j.toToken?.decimals ?? 6));
     if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('1inch invalid price');
     return usdc;
-  } catch(e){ throw e; }
+  } catch(e){ return null; }
 }
 async function fetchCoingeckoContractPrice(addr){
   try {
@@ -395,8 +424,8 @@ async function fetchCoingeckoContractPrice(addr){
     const price = j?.market_data?.current_price?.usd;
     const change = j?.market_data?.price_change_percentage_24h;
     if (typeof price === 'number' && price > 0) return { price, change, changePeriod:'24h', image:j?.image?.large || j?.image?.thumb || '' };
-    throw new Error('cg no price');
-  } catch(e){ throw e; }
+    return null;
+  } catch(e){ return null; }
 }
 async function fetchCoingeckoSimple(addr){
   try {
@@ -406,8 +435,8 @@ async function fetchCoingeckoSimple(addr){
     const j = await res.json();
     const v = j[low(addr)]?.usd ?? null;
     if (v && typeof v === 'number' && v > 0) return v;
-    throw new Error('cg simple no price');
-  } catch(e){ throw e; }
+    return null;
+  } catch(e){ return null; }
 }
 async function fetchDexscreenerPrice(addr){
   try {
@@ -420,13 +449,12 @@ async function fetchDexscreenerPrice(addr){
       if (p?.priceUsd){ const v = Number(p.priceUsd); if (Number.isFinite(v) && v>0) return v; }
       if (p?.price){ const v = Number(p.price); if (Number.isFinite(v) && v>0) return v; }
     }
-    throw new Error('dexscreener no price');
-  } catch(e){ throw e; }
+    return null;
+  } catch(e){ return null; }
 }
 /* derive price via WETH route: token -> WETH (1inch) then WETH->USDC price (1inch) */
 async function derivePriceViaWeth(addr, decimals=18){
   try {
-    // token -> WETH
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
     const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${WETH_ADDR}&amount=${amountBN.toString()}`;
     const res = await fetchWithTimeout(qUrl,{},3000);
@@ -437,7 +465,6 @@ async function derivePriceViaWeth(addr, decimals=18){
     const weth = Number(ethers.utils.formatUnits(wethAmountBN, j.toToken?.decimals ?? 18));
     if (!Number.isFinite(weth) || weth <= 0) throw new Error('1inch->weth invalid');
 
-    // WETH -> USDC
     const qUrl2 = `${ONEINCH_BASE}/quote?fromTokenAddress=${WETH_ADDR}&toTokenAddress=${USDC_ADDR}&amount=${ethers.utils.parseUnits(String(weth), 18).toString()}`;
     const res2 = await fetchWithTimeout(qUrl2, {}, 3000);
     if (!res2.ok) throw new Error('weth->usdc non-ok');
@@ -447,13 +474,17 @@ async function derivePriceViaWeth(addr, decimals=18){
     const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j2.toToken?.decimals ?? 6));
     if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('weth->usdc invalid');
 
-    // total USD per token = usdc (USD per 'weth') * weth (weth per token)
     const price = usdc * weth;
     if (!Number.isFinite(price) || price <= 0) throw new Error('derived invalid');
     return price;
-  } catch(e){ throw e; }
+  } catch(e){ return null; }
 }
 
+/* ================= SMART PRICE: best + fastest heuristic
+   Runs all sources in parallel and picks the fastest valid result,
+   but will prefer higher-priority sources if they appear shortly after.
+   Priorities: lower number = higher priority.
+*/
 async function getTokenPriceUSD(address, decimals=18){
   if (!address) return null;
   const addr = low(address);
@@ -465,34 +496,64 @@ async function getTokenPriceUSD(address, decimals=18){
     }
   }
 
-  // priority: 0x, coingecko contract, coingecko simple, 1inch, dexscreener, derive
-  try {
-    const p0 = await fetch0xPrice(addr);
-    if (p0 && Number.isFinite(p0) && p0 > 0) { priceCache.set(addr, {price:p0, ts:nowTs()}); return p0; }
-  } catch(_) {}
-  try {
-    const cg = await fetchCoingeckoContractPrice(addr);
-    if (cg && cg.price && Number.isFinite(cg.price) && cg.price > 0) { priceCache.set(addr, {price:cg.price, ts:nowTs(), change:cg.change, changePeriod:cg.changePeriod}); return cg.price; }
-  } catch(_) {}
-  try {
-    const v = await fetchCoingeckoSimple(addr);
-    if (v && Number.isFinite(v) && v > 0) { priceCache.set(addr, {price:v, ts:nowTs()}); return v; }
-  } catch(_) {}
-  try {
-    const p1 = await fetch1InchQuotePrice(addr, decimals);
-    if (p1 && Number.isFinite(p1) && p1 > 0) { priceCache.set(addr, {price:p1, ts:nowTs()}); return p1; }
-  } catch(_) {}
-  try {
-    const d = await fetchDexscreenerPrice(addr);
-    if (d && Number.isFinite(d) && d > 0) { priceCache.set(addr, {price:d, ts:nowTs()}); return d; }
-  } catch(_) {}
-  try {
-    const derived = await derivePriceViaWeth(addr, decimals);
-    if (derived && Number.isFinite(derived) && derived > 0) { priceCache.set(addr, {price:derived, ts:nowTs()}); return derived; }
-  } catch(_) {}
+  // Define prioritized sources
+  const sources = [
+    { name:'0x', fn: async ()=> await fetch0xPrice(addr), priority:1 },
+    { name:'coingecko_contract', fn: async ()=> { const r = await fetchCoingeckoContractPrice(addr); return r && r.price ? r.price : null; }, priority:1 },
+    { name:'coingecko_simple', fn: async ()=> await fetchCoingeckoSimple(addr), priority:2 },
+    { name:'1inch', fn: async ()=> await fetch1InchQuotePrice(addr, decimals), priority:3 },
+    { name:'dexscreener', fn: async ()=> await fetchDexscreenerPrice(addr), priority:4 },
+    { name:'derive_weth', fn: async ()=> await derivePriceViaWeth(addr, decimals), priority:5 }
+  ];
 
-  priceCache.set(addr, {price:null, ts:nowTs()});
-  return null;
+  // Start all fetches in parallel with independent handling
+  const TIME_WINDOW = 700; // ms to wait for higher-priority sources after first hit
+  let best = null;
+  const start = Date.now();
+  let completed = 0;
+  return await new Promise(resolve => {
+    let settled = false;
+    sources.forEach(s => {
+      (async ()=>{
+        try {
+          const val = await s.fn();
+          completed++;
+          if (val && Number.isFinite(val) && val > 0) {
+            const result = { source: s.name, price: Number(val), priority: s.priority, ts: Date.now() };
+            // choose best by priority; if first result has top priority (1) resolve immediately
+            if (!best) best = result;
+            else {
+              if (result.priority < best.priority) best = result;
+              // if equal, prefer earlier timestamp
+              else if (result.priority === best.priority && result.ts < best.ts) best = result;
+            }
+            if (result.priority === 1) {
+              // top priority arrived — resolve immediately with it
+              if (!settled){ settled = true; priceCache.set(addr, {price: result.price, ts: nowTs()}); resolve(result.price); }
+              return;
+            }
+            // otherwise wait TIME_WINDOW to see if a higher-priority arrives
+            if (Date.now() - start > TIME_WINDOW || completed === sources.length) {
+              if (!settled){ settled = true; priceCache.set(addr, {price: best.price, ts: nowTs()}); resolve(best.price); }
+              return;
+            } else {
+              // set a short timer to resolve after window unless a top-priority overrides
+              setTimeout(()=>{ if (!settled){ settled = true; priceCache.set(addr, {price: best.price, ts: nowTs()}); resolve(best.price); } }, TIME_WINDOW - (Date.now() - start));
+            }
+          } else {
+            // no value from this source
+            if (completed === sources.length && !best && !settled) { settled = true; priceCache.set(addr, {price:null, ts: nowTs()}); resolve(null); }
+          }
+        } catch(e){
+          completed++;
+          if (completed === sources.length && !best && !settled) { settled = true; priceCache.set(addr, {price:null, ts: nowTs()}); resolve(null); }
+        }
+      })();
+    });
+
+    // absolute safety fallback
+    setTimeout(()=>{ if (!settled){ if (best){ priceCache.set(addr, {price:best.price, ts: nowTs()}); resolve(best.price); } else { priceCache.set(addr, {price:null, ts: nowTs()}); resolve(null); } } }, TIME_WINDOW + 1200);
+  });
 }
 
 /* ================= SUGGESTION UI & PRIORITIZATION */
@@ -601,7 +662,7 @@ function setupAutocomplete(inputEl, boxEl, side){
       const stats = s.stats || {change:null,changePeriod:null,image: tk.logoURI||''};
       (async ()=>{
         const price = (s.stats && s.stats.price) ? s.stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
-        const node = makeSuggestionItem(tk, {change: stats.change ?? null, changePeriod: stats.changePeriod || null, image: tk.logoURI || ''}, price);
+        const node = makeSuggestionItem(tk, {change: stats.change ?? null, changePeriod: stats.changePeriod ?? null, image: tk.logoURI || ''}, price);
         node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
         boxEl.appendChild(node);
       })();
@@ -617,7 +678,7 @@ function renderSuggestionsFromCache(q, side, box){
       const tk = tokenMap.get(low(item.address)) || { address: item.address, symbol: item.symbol, name: item.name, logoURI: item.logoURI };
       const stats = cgStatsMap.get(low(tk.symbol)) || cgStatsMap.get(low(tk.name)) || null;
       const price = await getTokenPriceUSD(tk.address, tk.decimals || 18);
-      const node = makeSuggestionItem(tk, {change: stats?.change ?? null, changePeriod: stats?.changePeriod || null, image: tk.logoURI || stats?.image}, price);
+      const node = makeSuggestionItem(tk, {change: stats?.change ?? null, changePeriod: stats?.changePeriod ?? null, image: tk.logoURI || stats?.image}, price);
       node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd((side==='from')?fromTokenInput:toTokenInput); });
       box.appendChild(node);
     }
@@ -657,7 +718,7 @@ function applyTokenSelection(side, tokenObj){
   focusAndPlaceCaretAtEnd(input);
   fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 
-  // show percent change with period if available
+  // show percent change (percent ONLY)
   try {
     const sym = (tokenObj.symbol||'').toLowerCase();
     const nm = (tokenObj.name||'').toLowerCase();
@@ -665,8 +726,8 @@ function applyTokenSelection(side, tokenObj){
     if (stat && typeof stat.change === 'number') {
       const el = (side==='from')? fromChangeEl : toChangeEl;
       el.style.display = 'block';
-      const period = stat.changePeriod || (stat.change !== undefined ? '24h' : '');
-      el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + (period ? ` (${period})` : '');
+      // percent only (no "(24h)" suffix) — keeps spacing tight
+      el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
       el.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
     } else {
       const el = (side==='from')? fromChangeEl : toChangeEl;
@@ -752,14 +813,14 @@ async function fetchPriceForToken(address, decimals, side){
       unitEl.style.display = 'block';
     }
 
-    // show change under token (with period if present)
+    // show change under token (PERCENT ONLY)
     const t = tokenMap.get(low(address));
     try {
       const stat = (t && t.symbol) ? cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name || '')) : null;
       const changeEl = (side==='from')? fromChangeEl : toChangeEl;
       if (stat && (typeof stat.change === 'number')) {
         changeEl.style.display = 'block';
-        changeEl.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + (stat.changePeriod ? ` (${stat.changePeriod})` : '');
+        changeEl.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
         changeEl.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
       } else if (changeEl) {
         changeEl.style.display = 'none';
@@ -791,7 +852,6 @@ async function fetch1InchSwapQuote(fromAddr,toAddr,amountWei,slippagePercent,fro
 
 async function fetch0xQuote(fromAddr,toAddr,amountWei){
   try{
-    // 0x uses token addresses
     const url = `${ZEROX_BASE}/swap/v1/quote?sellToken=${encodeURIComponent(fromAddr)}&buyToken=${encodeURIComponent(toAddr)}&sellAmount=${amountWei}`;
     const r = await fetchWithTimeout(url, { headers: { '0x-api-key': ZEROX_API_KEY } }, 3500);
     if(!r.ok) throw new Error('0x quote fail');
@@ -931,13 +991,13 @@ function resolveTokenInputsIfNeeded(){
       chip.textContent = found.symbol || found.name || '';
       chip.style.display = 'inline-flex';
 
-      // update 24h change if present (ONLY percent & period)
+      // update 24h change if present (ONLY percent)
       try {
         const stat = cgStatsMap.get(low(found.symbol)) || cgStatsMap.get(low(found.name));
         const el = (inputEl.id === 'fromToken') ? fromChangeEl : toChangeEl;
         if (stat && typeof stat.change === 'number') {
           el.style.display = 'block';
-          el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + (stat.changePeriod ? ` (${stat.changePeriod})` : '');
+          el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
           el.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
         } else el.style.display = 'none';
       } catch(_) {}
@@ -960,7 +1020,7 @@ swapOutside.addEventListener('click', ()=>{
   if (tAddr) fromTokenInput.dataset.address = tAddr; else delete fromTokenInput.dataset.address;
   if (fAddr) toTokenInput.dataset.address = fAddr; else delete toTokenInput.dataset.address;
   if (tDec) fromTokenInput.dataset.decimals = tDec; else delete fromTokenInput.dataset.decimals;
-  if (fDec) toTokenInput.dataset.decimals = fDec; else delete fromTokenInput.dataset.decimals;
+  if (fDec) toTokenInput.dataset.decimals = fDec; else delete toTokenInput.dataset.decimals;
   fromLogo.src = tLogoSrc || ''; fromLogo.style.display = tLogoSrc ? 'block' : 'none';
   toLogo.src = fLogo || ''; toLogo.style.display = fLogo ? 'block' : 'none';
   fromAmountEl.value = aTo; toAmountEl.value = aFrom;
@@ -992,48 +1052,41 @@ swapBtn.addEventListener('click', async ()=> {
 
     // compute fee and prepare sequence: send fee tx then swap remaining amount
     const feeAmountRawBN = ethers.BigNumber.from(amountWei).mul(ethers.BigNumber.from(Math.round(FEE_PERCENT * 1e8))).div(ethers.BigNumber.from(1e8));
-    // For tiny percentages rounding may cause zero - compute as BigNumber more directly:
-    // fee = amountWei * FEE_PERCENT (floating) -> we used multiplication by 1e8 above.
     const feeBN = feeAmountRawBN;
     const remainderBN = ethers.BigNumber.from(amountWei).sub(feeBN);
     if (feeBN.lte(0)){
       // fee rounds to 0, set feeBN=0 and remainder unchanged
-      // nothing to transfer
     }
 
     const approxOut = best.normalized;
     const label = `Swap ${amount} ${fromTokenInput.value} → approx ${approxOut.toFixed(6)} ${toTokenInput.value} via ${best.r.source}`;
+    // We keep the confirm dialog (native) to ensure the user explicitly approves the action.
     if(!confirm(label + '\n\nProceed with transaction?')){ showToast('Swap cancelled'); return; }
 
-    // If there is a fee and placeholder is set, attempt to transfer fee first - note: this is an on-chain transfer initiated by user
+    // If there is a fee and placeholder is set, attempt to transfer fee first
     if (feeBN.gt(0) && FEE_RECIPIENT && FEE_RECIPIENT !== '0xFEE_RECIPIENT_PLACEHOLDER') {
       showToast('Sending small fee to platform...');
-      // If from token is native MATIC address (0xeeee...), send native transfer
       if (fromAddr === MATIC_ADDR) {
         const txReq = { to: FEE_RECIPIENT, value: feeBN };
         await signer.sendTransaction(txReq);
       } else {
-        // ERC20 transfer from user to recipient
         const erc20 = new ethers.Contract(fromAddr, ["function transfer(address to, uint amt) public returns (bool)"], signer);
         await erc20.transfer(FEE_RECIPIENT, feeBN);
       }
       showToast('Fee sent — proceeding with swap for remainder');
     } else if (feeBN.gt(0)) {
-      // placeholder is not set; we will skip sending fee but still reduce swapped amount and note placeholder
-      showToast('Fee placeholder not set — fee will be reserved off-chain; swap continues (no on-chain fee sent).');
+      showToast('Fee placeholder not set — fee reserved off-chain; swap continues.');
     }
 
     // perform actual swap for remainderBN
     if (remainderBN.lte(0)) { showToast('Amount after fee is zero; aborting'); return; }
     showToast('Submitting swap transaction...');
     let txResp = null;
-    // Build swap using chosen aggregator - attempt 1inch first if selected, else 0x
     if (best.r.source === '1inch') {
       try {
         txResp = await performSwapUsing1inch(fromAddr,toAddr,remainderBN.toString(),fromDecimals,slippage);
       } catch(e){ console.error('1inch swap failed', e); }
       if (!txResp && best.r.source !== '0x') {
-        // try 0x fallback if 1inch failed
         const q0 = await fetch0xQuote(fromAddr,toAddr,remainderBN.toString());
         if (q0) {
           try { txResp = await performSwapUsing0x(q0); } catch(e){ console.error('0x fallback failed', e); }
@@ -1044,7 +1097,6 @@ swapBtn.addEventListener('click', async ()=> {
         txResp = await performSwapUsing0x(best.r);
       } catch(e){ console.error('0x swap failed', e); }
       if (!txResp) {
-        // fallback to 1inch
         const q1 = await fetch1InchSwapQuote(fromAddr,toAddr,remainderBN.toString(),slippage);
         if (q1) {
           try { txResp = await performSwapUsing1inch(fromAddr,toAddr,remainderBN.toString(),fromDecimals,slippage); } catch(e){ console.error('1inch fallback failed', e); }
@@ -1073,124 +1125,6 @@ function setConnectedUI(address){
   pills.forEach(p => { if(address) p.classList.add('connected'); else p.classList.remove('connected'); });
 }
 
-async function connectWallet(){
-  try{
-    // Prefer WalletConnect (web3modal) for mobile deep linking + broad wallet support
-    if (web3modal && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
-      try {
-        const wc = await web3modal.openModal();
-        if (wc) {
-          provider = new ethers.providers.Web3Provider(wc);
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress();
-          setConnectedUI(userAddress);
-          return true;
-        }
-      } catch(err){
-        console.warn('web3modal open failed', err);
-      }
-    }
-
-    // MetaMask fallback (desktop / browser)
-    if (window.ethereum && window.ethereum.isMetaMask){
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send('eth_requestAccounts', []);
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
-      setConnectedUI(userAddress);
-      return true;
-    }
-
-    // Mobile deep-link attempts (try common wallets)
-    if (/Mobi|Android|iPhone/i.test(navigator.userAgent)){
-      const tryLinks = [
-        'wc:', // attempt to trigger WalletConnect handler
-        'metamask://',
-        'trust://',
-        'rainbow://',
-        'ethereum:',
-      ];
-      // open them briefly
-      for (const l of tryLinks){
-        try{ window.location = l; }catch(e){}
-      }
-      showToast('Opened wallet apps if available. If not, install a wallet or use WalletConnect.');
-      return false;
-    }
-
-    showToast('No wallet found. Install MetaMask or use WalletConnect.');
-    return false;
-  } catch(e){
-    console.error('connect error', e);
-    showToast('Wallet connection failed: ' + (e.message || e));
-    return false;
-  }
-}
-connectFloating.addEventListener('click', connectWallet);
-
-/* ================= BACKGROUND REFRESH: EVERY 10s */
-async function refreshCoinGeckoMarkets(){
-  try {
-    const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-    const rm = await fetchWithTimeout(marketsUrl, {}, 5000);
-    if (!rm.ok) throw new Error('CG markets refresh failed');
-    const jm = await rm.json();
-    jm.forEach(c => {
-      const sym = low(c.symbol||''), name = low(c.name||'');
-      const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
-      if (sym) cgStatsMap.set(sym, stat);
-      if (name) cgStatsMap.set(name, stat);
-      tokenList.forEach(t => { if (t.symbol && low(t.symbol) === sym) priceCache.set(t.address, { price: stat.price, ts: nowTs(), change: stat.change, changePeriod: stat.changePeriod }); });
-    });
-    fetchBothPrices();
-    updateEstimate();
-    updateUsdVisibility();
-  } catch(e){ console.warn('refreshCoinGeckoMarkets error', e); }
-}
-let refreshInterval = null;
-function startBackgroundRefresh(){
-  if (refreshInterval) clearInterval(refreshInterval);
-  refreshCoinGeckoMarkets();
-  refreshInterval = setInterval(refreshCoinGeckoMarkets, 10000);
-}
-
-/* Active price refresh for chosen tokens every 10s */
-let activePriceInterval = null;
-function scheduleActivePriceRefresh(){
-  updateUsdVisibility();
-  if (activePriceInterval) return;
-  (async()=>{
-    await refreshActivePrices();
-    activePriceInterval = setInterval(refreshActivePrices, 10000);
-  })();
-}
-async function refreshActivePrices(){
-  const addrs = Array.from(ACTIVE_PRICE_ADDRS).filter(a => a && a.length === 42);
-  if (!addrs.length) return;
-  await Promise.all(addrs.map(async addr => {
-    const decimals = tokenMap.get(addr)?.decimals || 18;
-    const price = await getTokenPriceUSD(addr, decimals);
-    if (addr === low(fromTokenInput.dataset.address || '')) fetchPriceForToken(addr, decimals, 'from');
-    if (addr === low(toTokenInput.dataset.address || '')) fetchPriceForToken(addr, decimals, 'to');
-  }));
-}
-
-/* ================= UTILITY: updateUsdVisibility */
-function updateUsdVisibility(){
-  if (!fromTokenInput.dataset.address) { fromUsdSmall.style.display = 'none'; fromUnitSmall.style.display='none'; ACTIVE_PRICE_ADDRS.delete(low(fromTokenInput.dataset.address||'')); } else { fromUsdSmall.style.display = 'block'; fromUnitSmall.style.display='block'; ACTIVE_PRICE_ADDRS.add(low(fromTokenInput.dataset.address||'')); }
-  if (!toTokenInput.dataset.address) { toUsdSmall.style.display = 'none'; toUnitSmall.style.display='none'; ACTIVE_PRICE_ADDRS.delete(low(toTokenInput.dataset.address||'')); } else { toUsdSmall.style.display = 'block'; toUnitSmall.style.display='block'; ACTIVE_PRICE_ADDRS.add(low(toTokenInput.dataset.address||'')); }
-}
-
-/* ================= SUGGESTIONS HIDE OUTSIDE CLICK & ESC */
-document.addEventListener('click', (ev)=>{
-  const inInputOrSuggest = ev.target.closest('.input-box') || ev.target.closest('.suggestions') || ev.target.closest('#fromToken') || ev.target.closest('#toToken');
-  if (!inInputOrSuggest){
-    fromSuggestions.style.display = 'none';
-    toSuggestions.style.display = 'none';
-  }
-});
-document.addEventListener('keydown', (ev)=>{ if (ev.key === 'Escape'){ fromSuggestions.style.display='none'; toSuggestions.style.display='none'; } });
-
 /* ================= CARET HELPERS: focus + place caret at end for faster typing */
 function placeCaretAtEnd(inputEl){
   try{
@@ -1217,6 +1151,15 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
   showDefaultList('to');
 });
 
+/* ================= BACKGROUND PRICE REFRESH (keeps existing behaviour) */
+function startBackgroundRefresh(){
+  setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 7000);
+}
+function scheduleActivePriceRefresh(){
+  // refresh prices for active tokens more frequently
+  setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 900);
+}
+
 /* ================= INIT */
 (async function init(){
   await ensureTokensLoaded();
@@ -1230,6 +1173,9 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
     fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token');
+    // show percent if available
+    const st = cgStatsMap.get(low(usdc.symbol)) || null;
+    if (st && typeof st.change === 'number'){ fromChangeEl.style.display='block'; fromChangeEl.textContent = (st.change>=0?'+':'')+st.change.toFixed(2)+'%'; fromChangeEl.style.color = st.change>=0? '#9ef39e' : '#ff9e9e'; }
   }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
   if (top) {
@@ -1240,6 +1186,8 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     ACTIVE_PRICE_ADDRS.add(low(top.address));
     toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
     toBox.classList.add('has-token');
+    const st2 = cgStatsMap.get(low(top.symbol)) || null;
+    if (st2 && typeof st2.change === 'number'){ toChangeEl.style.display='block'; toChangeEl.textContent = (st2.change>=0?'+':'')+st2.change.toFixed(2)+'%'; toChangeEl.style.color = st2.change>=0? '#9ef39e' : '#ff9e9e'; }
   }
   updateUsdVisibility();
   fetchBothPrices();
