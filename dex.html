@@ -7,7 +7,8 @@
 <style>
 /* ===== RESET & THEME ===== */
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif}
-body{overflow-x:hidden;background:radial-gradient(circle at center,#0c0014,#1a002b 80%);color:#fff;scroll-behavior:smooth;min-height:100vh}
+html,body{height:100%}
+body{overflow:hidden;background:radial-gradient(circle at center,#0c0014,#1a002b 80%);color:#fff;scroll-behavior:smooth;min-height:100vh}
 :root{
   --accent-1:#b445ff;--accent-2:#7013ff;
   --glass:rgba(255,255,255,0.05);--glass-2:rgba(255,255,255,0.03);
@@ -31,50 +32,49 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 @keyframes logoGlow{0%{filter:drop-shadow(0 0 12px #9c00ff)}50%{filter:drop-shadow(0 0 30px #d15fff)}100%{filter:drop-shadow(0 0 12px #9c00ff)}}
 @keyframes logoRotate{0%{transform:translateX(-50%) rotateY(0deg)}100%{transform:translateX(-50%) rotateY(360deg)}}
 
-/* SECTION WRAPPER - CENTER EVERYTHING */
-.section-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:18px;padding:28px;position:relative;z-index:1}
+/* SECTION WRAPPER - CENTER EVERYTHING, fixed single page */
+.section-wrapper{height:100vh;display:flex;align-items:center;justify-content:center;gap:18px;padding:28px;position:relative;z-index:1;overflow:hidden}
 
 /* CARD */
-.container{width:90%;max-width:var(--container-max);margin:0;background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:25px;padding:22px;backdrop-filter:blur(18px);box-shadow:var(--shadow);animation:cardIn 800ms ease;position:relative}
+.container{width:90%;max-width:var(--container-max);margin:0;background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:18px 18px 22px 18px;backdrop-filter:blur(18px);box-shadow:var(--shadow);animation:cardIn 600ms ease;position:relative}
 @keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
+h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:10px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
 
-/* UNIFIED ROW - compact "thin bar" look */
-.input-box{margin-top:14px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative;box-shadow:0 6px 16px rgba(150,0,255,0.04)}
+/* compact "thin bar" look - from/to should match size of amount/estimate */
+.input-box{margin-top:10px;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:10px;border:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:10px;position:relative;box-shadow:0 6px 12px rgba(150,0,255,0.03)}
 .input-box .left{display:flex;align-items:center;gap:8px;min-width:0;flex:1}
 
-/* chosen token icon shape: not circular (rounded rect) */
-.token-icon{width:40px;height:30px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.05);z-index:5}
+/* chosen tokens: professional rounded-rectangle icons (not circular) */
+.token-icon{width:36px;height:36px;border-radius:8px;background:transparent;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;position:relative;border:1px solid rgba(255,255,255,0.05);z-index:5}
 .token-icon img{width:100%;height:100%;object-fit:cover;display:block;border-radius:6px;z-index:6}
-
-/* suggestion list images remain circular */
-.suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
-
-/* chip */
 .token-chip{position:absolute;right:-8px;bottom:-8px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));padding:3px 7px;border-radius:999px;font-weight:800;font-size:10px;color:#fff;box-shadow:0 8px 22px rgba(180,68,255,0.12),inset 0 -3px 8px rgba(0,0,0,0.12);display:none;white-space:nowrap;transform:translate(6px,6px);z-index:7}
 .input-box.has-token .token-chip{display:inline-flex}
 
-/* token info (symbol + 24h/12h change) - placed neatly next to icon */
+/* token info (symbol + 24h change) - chosen token shows only percent (no hours) */
 .token-info{display:flex;flex-direction:column;gap:2px;min-width:0;z-index:3}
-.token-symbol{font-weight:800;font-size:13px}
-.token-change{font-size:12px;opacity:0.9}
+.token-symbol{font-weight:800;font-size:14px}
+.token-change{font-size:12px;opacity:0.95}
+
+/* suggestions list icons remain circular */
+.suggestions .suggestion-left img{border-radius:50%}
 
 /* INPUT BLOCK (single visible text input per row) */
 .input-field{display:flex;flex-direction:column;min-width:0;width:100%}
 .input-field input[type="text"]{padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%;outline:none;font-size:14px}
-.input-amount{margin-left:8px;min-width:120px}
+.input-amount{margin-left:8px;min-width:140px}
 .input-amount input{width:100%;padding:8px 10px;border-radius:8px;border:none;background:rgba(255,255,255,0.03);color:#fff;font-size:14px;outline:none}
 
-/* small price area under amount/estimate - align to right */
+/* small price area under amount/estimate - align to the right */
 .price-small{display:flex;flex-direction:column;align-items:flex-end;margin-left:auto;margin-top:6px;min-width:120px;z-index:2}
-.price-small .price-usd{font-size:12px;opacity:0.85}
-.price-small .price-unit{font-size:12px;opacity:0.65}
+.price-small .price-usd{font-size:12px;opacity:0.9}
+.price-small .price-unit{font-size:12px;opacity:0.7}
 
 /* SUGGESTIONS: COMPACT & STYLISH */
-.suggestions{position:absolute;top:68px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:240px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
+.suggestions{position:absolute;top:64px;left:12px;right:12px;background:var(--suggest-bg);border-radius:12px;padding:6px;max-height:260px;overflow:auto;display:none;z-index:220;box-shadow:0 10px 30px rgba(120,0,255,0.08)}
 .suggestion-item{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer;justify-content:space-between}
 .suggestion-item:hover{background:linear-gradient(90deg, rgba(180,68,255,0.06), rgba(112,19,255,0.04))}
 .suggestion-left{display:flex;align-items:center;gap:10px;min-width:0}
+.suggestion-left img{width:28px;height:28px;border-radius:50%;object-fit:cover}
 .suggestion-main{display:flex;flex-direction:column;min-width:0}
 .suggestion-symbol{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .suggestion-name{font-size:12px;opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -87,32 +87,33 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
 /* SLIPPAGE THEME - minimal, placed on right side of controls */
 .slippage-min{appearance:none;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);color:#fff;border:1px solid rgba(255,255,255,0.05);font-weight:700;font-size:13px}
+.slippage-min option{background:transparent}
+
+/* connect-floating glowy "electrical" style */
+.connect-floating{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+  color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12);
+  transition:box-shadow 220ms, transform 160ms;
+}
+.connect-floating:active{transform:translateY(1px)}
+.connect-floating .light{width:10px;height:10px;border-radius:999px;background:#2b2b2b;box-shadow:inset 0 -2px 4px rgba(0,0,0,0.6)}
+.connect-floating.connected{box-shadow:0 20px 60px rgba(180,68,255,0.28),0 0 40px rgba(180,68,255,0.12)}
+.connect-floating.connected .light{background:linear-gradient(180deg,#fff,#f6e9ff);box-shadow:0 6px 18px rgba(180,68,255,0.4)}
 
 /* tiny glassy tooltip / toast */
-.toast{position:relative;display:inline-block;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#fff;font-weight:700;margin-top:8px}
+.toast{position:fixed;right:18px;bottom:90px;z-index:9999;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#fff;font-weight:700}
 
 /* ELECTRIC PILL SWAP BUTTON */
 .electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
-.electric-pill{
-position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 26px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 12px 36px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:15px;border:none;outline:none;overflow:hidden;transition:transform 140ms ease,box-shadow 140ms ease;}
+.electric-pill{position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 26px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 12px 36px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:15px;border:none;outline:none;overflow:hidden;transition:transform 140ms ease,box-shadow 140ms ease;}
 .electric-pill:active{transform:translateY(-1px) scale(.997)}
 .electric-pill .sweep{position:absolute;left:-30%;top:-10%;width:40%;height:120%;background:linear-gradient(90deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(10px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
 @keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
 .electric-pill .label{position:relative;z-index:2;pointer-events:none}
 .electric-pill .icon{width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,0.08);display:inline-flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18)}
-
-/* Connected state (lights up) */
 .electric-pill.connected{box-shadow:0 20px 60px rgba(180,68,255,0.28),0 0 60px rgba(180,68,255,0.12);transform:translateY(-2px)}
 .electric-pill.connected .icon{background:linear-gradient(180deg,#fff,#f5e7ff);color:#3b0066}
-
-/* SMALLER variant for the container's swap appearance */
-.swap-row{display:flex;gap:12px;align-items:center}
-.swap-row .electric-btn{flex:1}
-
-/* TOP-RIGHT CONNECT */
-.top-right-connect{position:fixed;right:18px;top:18px;z-index:70;display:flex;gap:10px;align-items:center}
-.addr-chip{padding:8px 12px;border-radius:12px;background:rgba(255,255,255,0.03);font-weight:700;display:none}
-.connect-floating{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;padding:10px 14px;border-radius:12px;border:none;cursor:pointer;font-weight:800;box-shadow:0 10px 30px rgba(106,0,255,0.12)}
 
 /* FOOTER */
 .footer{position:fixed;left:0;right:0;bottom:12px;display:flex;flex-direction:column;gap:6px;align-items:center;justify-content:center;z-index:40;color:rgba(255,255,255,0.75);font-size:13px}
@@ -136,12 +137,11 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
 <!-- top-right connect -->
 <div class="top-right-connect">
   <div id="addrChip" class="addr-chip"></div>
-  <button id="connectFloating" class="connect-floating">Connect Wallet</button>
+  <button id="connectFloating" class="connect-floating"><span class="light" id="connectLight"></span><span id="connectLabel">Connect Wallet</span></button>
 </div>
 
 <!-- SECTION WRAPPER centers card and swap control -->
 <div class="section-wrapper">
-
   <div class="container" role="main" aria-label="NOLA Exchange">
     <h2>NOLA Exchange</h2>
 
@@ -153,21 +153,21 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
           <span class="token-chip" id="fromChip" style="display:none">---</span>
         </div>
 
-        <!-- token info: symbol + change (percent + timeframe) -->
+        <!-- token info: symbol + change (show only percent, no hours) -->
         <div class="token-info">
           <div class="token-symbol" id="fromSymbol">---</div>
-          <div class="token-change" id="fromChange" style="display:none">+0.00% (24h)</div>
+          <div class="token-change" id="fromChange" style="display:none">+0.00%</div>
         </div>
 
         <div class="input-field">
           <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
-        <div class="input-amount" style="min-width:120px;">
+        <div class="input-amount" style="min-width:140px;">
           <input id="fromAmount" placeholder="Amount" type="number" step="any">
         </div>
 
-        <!-- small price area under amount (aligned to right; won't overlap icon) -->
+        <!-- small price area under amount -->
         <div class="price-small">
           <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
           <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
@@ -185,17 +185,17 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
           <span class="token-chip" id="toChip" style="display:none">---</span>
         </div>
 
-        <!-- token info: symbol + change (percent + timeframe) -->
+        <!-- token info: symbol + change (show only percent, no hours) -->
         <div class="token-info">
           <div class="token-symbol" id="toSymbol">---</div>
-          <div class="token-change" id="toChange" style="display:none">+0.00% (24h)</div>
+          <div class="token-change" id="toChange" style="display:none">+0.00%</div>
         </div>
 
         <div class="input-field">
           <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
-        <div class="input-amount" style="min-width:120px;">
+        <div class="input-amount" style="min-width:140px;">
           <input id="toAmount" placeholder="Estimate" readonly>
         </div>
 
@@ -210,7 +210,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
     </div>
 
     <!-- CONTROLS: slippage minimal on right, swap icon moved here -->
-    <div class="controls" style="margin-top:14px;display:flex;align-items:center;gap:12px;">
+    <div class="controls" style="margin-top:12px;display:flex;align-items:center;gap:12px;">
       <div style="flex:1;display:flex;align-items:center;gap:10px">
         <div id="swapOutside" class="swap-outside" title="Swap From ↔ To">⇅</div>
       </div>
@@ -222,7 +222,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
       </div>
     </div>
 
-    <div class="swap-row" style="margin-top:14px">
+    <div class="swap-row" style="margin-top:12px">
       <!-- new electric pill swap button (id kept as swapBtn) -->
       <button id="swapBtn" class="electric-btn" title="Swap">
         <span class="electric-pill" role="button" aria-pressed="false">
@@ -252,7 +252,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
 
 <script>
 /* ================= PARTICLES */
-(function createParticles(){ for(let i=0;i<60;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
+(function createParticles(){ for(let i=0;i<40;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
 
 /* ================= CONFIG & STATE */
 const CHAIN_ID = 137;
@@ -265,26 +265,22 @@ const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
 const WALLETCONNECT_PROJECT_ID = "6557a92e3698182727669d41cbeb95a1";
 
-/* ========== USER-SUPPLIED 0x API KEY ========== */
-/* You provided: 099490ac-79a1-4416-a088-df38b6e0c384 */
+// 0x API key you provided
 const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384';
 
-/* ========== FEE SETTINGS ========== */
-/* Fee percentage (0.001% as requested => 0.00001 decimal) */
-let PLATFORM_FEE_PERCENT = 0.00001; // 0.001% (change if you'd like; extremely low already)
-const FEE_RECIPIENT = '0xYOUR_FEE_ADDRESS_HERE'; // <-- replace with your address
+// Fee settings
+const FEE_PERCENT = 0.00001; // 0.001%
+const FEE_RECIPIENT = '0xFEE_RECIPIENT_PLACEHOLDER'; // replace later
 
-/* ========== CACHE & INTERVALS ========== */
 let tokenList = [];
 let tokenMap = new Map();
 let cgStatsMap = new Map();
 const priceCache = new Map();
 const suggestionCache = new Map();
 const ACTIVE_PRICE_ADDRS = new Set();
-/* TTL and refresh now 10s per request as requested */
 const PRICE_TTL = 10000; // 10s TTL
 const SUGGEST_LIMIT = 12;
-const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="6" ry="6" fill="#151225"/></svg>`);
+const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
 
 /* ================= DOM REFS */
 const $ = id => document.getElementById(id);
@@ -300,6 +296,7 @@ const fromBox = $('fromBox'), toBox = $('toBox');
 const connectFloating = $('connectFloating'), addrChip = $('addrChip');
 const slippageSel = $('slippage');
 const fromChangeEl = $('fromChange'), toChangeEl = $('toChange');
+const connectLight = $('connectLight'), connectLabel = $('connectLabel');
 
 /* ================= HELPERS */
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
@@ -308,18 +305,7 @@ const nowTs = ()=> Date.now();
 function formatUSD(v){ if (v===null||v===undefined||!Number.isFinite(v)) return '—'; const n=Number(v); const opts={style:'currency',currency:'USD',maximumFractionDigits:2,minimumFractionDigits:2}; if(Math.abs(n)>0&&Math.abs(n)<0.01){opts.maximumFractionDigits=6;opts.minimumFractionDigits=4;} return new Intl.NumberFormat('en-US',opts).format(n); }
 function fetchWithTimeout(url,opts={},ms=5000){ const controller=new AbortController(); const id=setTimeout(()=>controller.abort(),ms); const init=Object.assign({},opts,{signal:controller.signal}); return fetch(url,init).finally(()=>clearTimeout(id)); }
 async function fetchJson(url,opts){ const r = await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
-
-/* quick glassy toast */
-function showToast(msg,ttl=3500){
-  const root = $('toastRoot');
-  const el=document.createElement('div');
-  el.className='toast';
-  el.textContent=msg;
-  el.style.pointerEvents='auto';
-  root.appendChild(el);
-  setTimeout(()=>{ el.style.opacity=1; },10);
-  setTimeout(()=>{ el.style.transition='opacity 300ms'; el.style.opacity=0; setTimeout(()=>el.remove(),300); },ttl);
-}
+function showToast(msg,ttl=3500){ const root = $('toastRoot'); const el=document.createElement('div'); el.className='toast'; el.textContent=msg; el.style.pointerEvents='auto'; root.appendChild(el); setTimeout(()=>{ el.style.opacity=1; },10); setTimeout(()=>{ el.style.transition='opacity 300ms'; el.style.opacity=0; setTimeout(()=>el.remove(),300); },ttl); }
 
 /* ================= LOAD TOKENS & COINGECKO MARKETS */
 async function loadTokensAndMarkets(){
@@ -336,7 +322,7 @@ async function loadTokensAndMarkets(){
       const jm = await rm.json();
       jm.forEach(c => {
         const sym = low(c.symbol||''), name = low(c.name||'');
-        const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null, timeframe:'24h' };
+        const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
         if (sym) cgStatsMap.set(sym, stat);
         if (name) cgStatsMap.set(name, stat);
       });
@@ -365,47 +351,47 @@ async function loadTokensAndMarkets(){
 let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
-/* ================= PRICE SOURCES (priority: 0x -> CoinGecko -> 1inch) */
-/* 0x price endpoint */
+/* ================= PRICE SOURCES (priority: 0x -> CoinGecko -> 1inch -> Dexscreener -> derive) */
+
+/* fetch 0x price robustly for one token unit */
 async function fetch0xPrice(addr, decimals=18){
   try {
-    // 0x price expects token addresses or symbols; include API key header
-    const sell = addr;
-    const url = `${ZEROX_BASE}/swap/v1/price?sellToken=${encodeURIComponent(sell)}&buyToken=${encodeURIComponent(USDC_ADDR)}&sellAmount=${ethers.utils.parseUnits('1', decimals).toString()}`;
-    const res = await fetch(url, { headers: { '0x-api-key': ZEROX_API_KEY }});
-    if (!res.ok) throw new Error('0x price non-ok');
-    const j = await res.json();
-    // 0x returns pricePerUnit in buyAmount/sellAmount. Normalize:
-    if (j && (j.price || j.buyAmount)) {
-      // If price field exists, use it. Otherwise compute.
-      if (typeof j.price === 'number') return { price: j.price, change:null, timeframe:'12h' };
-      if (j.buyAmount && j.sellAmount) {
-        const buy = Number(ethers.utils.formatUnits(ethers.BigNumber.from(j.buyAmount), 6)); // USDC decimals
-        const sell = Number(ethers.utils.formatUnits(ethers.BigNumber.from(j.sellAmount), decimals));
-        const price = buy / sell;
-        return { price, change:null, timeframe:'12h' };
-      }
+    const sellAmount = ethers.utils.parseUnits('1', decimals).toString();
+    const url = `${ZEROX_BASE}/swap/v1/price?sellToken=${encodeURIComponent(addr)}&buyToken=${encodeURIComponent(USDC_ADDR)}&sellAmount=${sellAmount}`;
+    const r = await fetchWithTimeout(url, { headers: { '0x-api-key': ZEROX_API_KEY } }, 3500);
+    if (!r.ok) throw new Error('0x price fail');
+    const j = await r.json();
+    // 0x returns price sometimes under 'price' or provides buyAmount
+    if (j && typeof j.price === 'string') {
+      const p = Number(j.price);
+      if (Number.isFinite(p) && p > 0) return p;
     }
-    throw new Error('0x price no price');
-  } catch(e){ throw e; }
+    if (j && j.buyAmount) {
+      // buyAmount is USDC minor units - convert
+      const buy = ethers.BigNumber.from(j.buyAmount);
+      const usdcDecimals = j.buyTokenDecimals || 6;
+      const usd = Number(ethers.utils.formatUnits(buy, usdcDecimals));
+      if (Number.isFinite(usd) && usd > 0) return usd;
+    }
+    return null;
+  } catch(e){ return null; }
 }
-/* 1inch quote-based price */
-async function fetch1InchSimplePrice(addr, decimals=18){
+
+async function fetch1InchQuotePrice(addr, decimals=18){
   try {
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
     const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${USDC_ADDR}&amount=${amountBN.toString()}`;
     const res = await fetchWithTimeout(qUrl,{},3000);
     if (!res.ok) throw new Error('1inch non-ok');
     const j = await res.json();
-    if (j && j.toTokenAmount) {
-      const usdcAmountBN = ethers.BigNumber.from(j.toTokenAmount);
-      const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j.toToken?.decimals ?? 6));
-      if (Number.isFinite(usdc) && usdc > 0) return usdc;
-    }
-    throw new Error('1inch no price');
-  } catch(e){ throw e; }
+    if (!j || !j.toTokenAmount) throw new Error('1inch no toTokenAmount');
+    const usdcAmountBN = ethers.BigNumber.from(j.toTokenAmount);
+    const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j.toToken?.decimals ?? 6));
+    if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('1inch invalid price');
+    return usdc;
+  } catch(e){ return null; }
 }
-/* CoinGecko contract price */
+
 async function fetchCoingeckoContractPrice(addr){
   try {
     const url = `https://api.coingecko.com/api/v3/coins/${COINGECKO_CHAIN}/contract/${addr}`;
@@ -414,10 +400,63 @@ async function fetchCoingeckoContractPrice(addr){
     const j = await res.json();
     const price = j?.market_data?.current_price?.usd;
     const change = j?.market_data?.price_change_percentage_24h;
-    const timeframe = '24h';
-    if (typeof price === 'number' && price > 0) return { price, change, timeframe };
+    if (typeof price === 'number' && price > 0) return { price, change, changePeriod:'24h', image:j?.image?.large || j?.image?.thumb || '' };
     throw new Error('cg no price');
-  } catch(e){ throw e; }
+  } catch(e){ return null; }
+}
+
+async function fetchCoingeckoSimple(addr){
+  try {
+    const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${addr}&vs_currencies=usd`;
+    const res = await fetchWithTimeout(url, {}, 3000);
+    if (!res.ok) throw new Error('cg simple non-ok');
+    const j = await res.json();
+    const v = j[low(addr)]?.usd ?? null;
+    if (v && typeof v === 'number' && v > 0) return v;
+    throw new Error('cg simple no price');
+  } catch(e){ return null; }
+}
+
+async function fetchDexscreenerPrice(addr){
+  try {
+    const url = `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
+    const res = await fetchWithTimeout(url,{},3000);
+    if (!res.ok) throw new Error('dexscreener non-ok');
+    const j = await res.json();
+    const pairs = j?.pairs || [];
+    for (const p of pairs){
+      if (p?.priceUsd){ const v = Number(p.priceUsd); if (Number.isFinite(v) && v>0) return v; }
+      if (p?.price){ const v = Number(p.price); if (Number.isFinite(v) && v>0) return v; }
+    }
+    throw new Error('dexscreener no price');
+  } catch(e){ return null; }
+}
+
+async function derivePriceViaWeth(addr, decimals=18){
+  try {
+    const amountBN = ethers.BigNumber.from(10).pow(decimals);
+    const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${addr}&toTokenAddress=${WETH_ADDR}&amount=${amountBN.toString()}`;
+    const res = await fetchWithTimeout(qUrl,{},3000);
+    if (!res.ok) throw new Error('1inch->weth non-ok');
+    const j = await res.json();
+    if (!j || !j.toTokenAmount) throw new Error('1inch->weth no toTokenAmount');
+    const wethAmountBN = ethers.BigNumber.from(j.toTokenAmount);
+    const weth = Number(ethers.utils.formatUnits(wethAmountBN, j.toToken?.decimals ?? 18));
+    if (!Number.isFinite(weth) || weth <= 0) throw new Error('1inch->weth invalid');
+
+    const qUrl2 = `${ONEINCH_BASE}/quote?fromTokenAddress=${WETH_ADDR}&toTokenAddress=${USDC_ADDR}&amount=${ethers.utils.parseUnits(String(weth), 18).toString()}`;
+    const res2 = await fetchWithTimeout(qUrl2, {}, 3000);
+    if (!res2.ok) throw new Error('weth->usdc non-ok');
+    const j2 = await res2.json();
+    if (!j2 || !j2.toTokenAmount) throw new Error('weth->usdc no toTokenAmount');
+    const usdcAmountBN = ethers.BigNumber.from(j2.toTokenAmount);
+    const usdc = Number(ethers.utils.formatUnits(usdcAmountBN, j2.toToken?.decimals ?? 6));
+    if (!Number.isFinite(usdc) || usdc <= 0) throw new Error('weth->usdc invalid');
+
+    const price = usdc * weth;
+    if (!Number.isFinite(price) || price <= 0) throw new Error('derived invalid');
+    return price;
+  } catch(e){ return null; }
 }
 
 async function getTokenPriceUSD(address, decimals=18){
@@ -426,41 +465,47 @@ async function getTokenPriceUSD(address, decimals=18){
   const cached = priceCache.get(addr);
   if (cached && (nowTs() - cached.ts) < PRICE_TTL) {
     if (cached.price === null || cached.price === 0 || (Math.abs(cached.price) < 1e-18 && cached.price !== null)) {
+      // fall through to try refresh
     } else {
       return cached.price;
     }
   }
 
-  // Try 0x price first (fast), then Coingecko, then 1inch
+  // Priority chain
   try {
     const p0 = await fetch0xPrice(addr, decimals);
-    if (p0 && p0.price && Number.isFinite(p0.price) && p0.price > 0) { priceCache.set(addr, {price:p0.price, ts:nowTs(), change:p0.change, timeframe:p0.timeframe}); return p0.price; }
+    if (p0 && Number.isFinite(p0) && p0 > 0) { priceCache.set(addr, {price:p0, ts:nowTs()}); return p0; }
   } catch(_) {}
-
   try {
-    const cg = await fetchCoingeckoContractPrice(addr);
-    if (cg && cg.price && Number.isFinite(cg.price) && cg.price > 0) { priceCache.set(addr, {price:cg.price, ts:nowTs(), change:cg.change, timeframe:cg.timeframe}); return cg.price; }
+    const cgC = await fetchCoingeckoContractPrice(addr);
+    if (cgC && cgC.price && Number.isFinite(cgC.price) && cgC.price > 0) { priceCache.set(addr, {price:cgC.price, ts:nowTs(), change:cgC.change, changePeriod:cgC.changePeriod}); return cgC.price; }
   } catch(_) {}
-
   try {
-    const v = await fetch1InchSimplePrice(addr, decimals);
+    const v = await fetchCoingeckoSimple(addr);
     if (v && Number.isFinite(v) && v > 0) { priceCache.set(addr, {price:v, ts:nowTs()}); return v; }
   } catch(_) {}
-
-  // fallback to cached mapped symbol from cgStatsMap
   try {
-    const t = tokenMap.get(addr);
-    if (t && t.symbol){
-      const stat = cgStatsMap.get(low(t.symbol));
-      if (stat && stat.price && Number.isFinite(stat.price) && stat.price > 0) { priceCache.set(addr, {price:stat.price, ts:nowTs()}); return stat.price; }
-    }
+    const p1 = await fetch1InchQuotePrice(addr, decimals);
+    if (p1 && Number.isFinite(p1) && p1 > 0) { priceCache.set(addr, {price:p1, ts:nowTs()}); return p1; }
+  } catch(_) {}
+  try {
+    const d = await fetchDexscreenerPrice(addr);
+    if (d && Number.isFinite(d) && d > 0) { priceCache.set(addr, {price:d, ts:nowTs()}); return d; }
+  } catch(_) {}
+  try {
+    const derived = await derivePriceViaWeth(addr, decimals);
+    if (derived && Number.isFinite(derived) && derived > 0) { priceCache.set(addr, {price:derived, ts:nowTs()}); return derived; }
   } catch(_) {}
 
+  // If all failed, set null in cache to avoid spam
   priceCache.set(addr, {price:null, ts:nowTs()});
   return null;
 }
 
-/* ================= SUGGESTION UI & PRIORITIZATION */
+/* ================= SUGGESTION UI & PRIORITIZATION
+   Only show tokens that we can fetch a price for (per your request).
+   We'll sample top candidates (by CG volume where available) and filter to those with prices.
+*/
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
@@ -471,46 +516,54 @@ function makeSuggestionItem(tokenObj, stats, priceUSD){
   const sym = document.createElement('div'); sym.className='suggestion-symbol'; sym.textContent = tokenObj.symbol || (tokenObj.address?tokenObj.address.slice(0,6):'');
   const nm = document.createElement('div'); nm.className='suggestion-name'; nm.textContent = tokenObj.name || '';
   main.appendChild(sym); main.appendChild(nm);
-  if (stats && (typeof stats.change24h === 'number' || typeof stats.change === 'number')) {
+  // suggestion list shows change + period (as requested earlier)
+  if (stats && (typeof stats.change === 'number')) {
     const ch = document.createElement('div'); ch.style.fontSize='11px'; ch.style.marginTop='6px'; ch.style.opacity='0.9';
-    const change = (typeof stats.change24h === 'number') ? stats.change24h : stats.change;
-    const timeframe = stats.timeframe || '24h';
-    ch.textContent = (change>=0?'+':'')+parseFloat(change||0).toFixed(2)+'% ('+timeframe+')';
-    ch.style.color = change >= 0 ? '#9ef39e' : '#ff9e9e';
+    const period = stats.changePeriod || '24h';
+    ch.textContent = (stats.change>=0?'+':'')+stats.change.toFixed(2)+'% ('+period+')';
+    ch.style.color = stats.change >= 0 ? '#9ef39e' : '#ff9e9e';
     main.appendChild(ch);
   }
   left.appendChild(main);
   row.appendChild(left);
   const right = document.createElement('div'); right.className='suggestion-price-pill';
-  if (priceUSD != null && Number.isFinite(priceUSD)) right.textContent = formatUSD(priceUSD);
-  else right.textContent = '—';
+  right.textContent = (priceUSD != null && Number.isFinite(priceUSD)) ? formatUSD(priceUSD) : '—';
   row.appendChild(right);
   return row;
 }
 
-/* Ranking: use CG 24h volume primarily and 0x/1inch recency where available */
-function showDefaultList(side){
+async function showDefaultList(side){
   const box = (side === 'from') ? fromSuggestions : toSuggestions;
   box.innerHTML = '';
-  const candidates = tokenList.filter(t => { const s = low(t.symbol), n = low(t.name); return cgStatsMap.has(s) || cgStatsMap.has(n); });
-  const withStats = candidates.map(t => { const s = low(t.symbol), n = low(t.name); const stat = cgStatsMap.get(s) || cgStatsMap.get(n) || {price:null,change24h:null,volume24h:0,image:''}; return {t,stat}; });
-  withStats.sort((a,b)=> (b.stat.volume24h||0) - (a.stat.volume24h||0));
-  const top = withStats.slice(0, Math.min(15, withStats.length));
-  (async ()=>{
-    for (const e of top){
-      const tk = e.t, stats = e.stat;
-      let price = stats.price ?? await getTokenPriceUSD(tk.address, tk.decimals);
-      // ensure fallback
-      if (!price) price = await getTokenPriceUSD(tk.address, tk.decimals);
-      const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, change: stats.change24h ?? null, timeframe:'24h', image: tk.logoURI || stats.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection((side==='from')?'from':'to', tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd((side==='from')?fromTokenInput:toTokenInput); });
-      box.appendChild(node);
-    }
-    box.style.display = top.length ? 'block' : 'none';
-  })();
+  await ensureTokensLoaded();
+
+  // Gather top candidates: prefer tokens that exist in cgStatsMap (high-volume)
+  const candidates = tokenList.filter(t => t && t.address).slice(0, 300); // sample first 300 to limit work
+  // Score using CG stats volume if available
+  const scored = await Promise.all(candidates.map(async t => {
+    const s = low(t.symbol), n = low(t.name);
+    const stat = cgStatsMap.get(s) || cgStatsMap.get(n) || {price:null,change:null,changePeriod:null,volume24h:0,image:''};
+    const score = (stat.volume24h || 0);
+    return {t, stat, score};
+  }));
+
+  scored.sort((a,b)=> b.score - a.score);
+  const chosen = [];
+  for (const item of scored) {
+    if (chosen.length >= 20) break;
+    const tk = item.t;
+    const decimals = tk.decimals || 18;
+    const price = await getTokenPriceUSD(tk.address, decimals);
+    if (price === null) continue; // required: only show tokens with a price
+    const node = makeSuggestionItem(tk, {change: item.stat.change, changePeriod: item.stat.changePeriod, image: tk.logoURI || item.stat.image}, price);
+    node.addEventListener('click', ()=>{ applyTokenSelection((side==='from')?'from':'to', tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd((side==='from')?fromTokenInput:toTokenInput); });
+    box.appendChild(node);
+    chosen.push(tk);
+  }
+  box.style.display = chosen.length ? 'block' : 'none';
 }
 
-/* AUTOCOMPLETE SETUP */
+/* AUTOCOMPLETE SETUP: when typing we will only render matches that have price */
 function setupAutocomplete(inputEl, boxEl, side){
   let timer = null;
   inputEl.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(inputEl.value.trim().toLowerCase()), 140); });
@@ -523,77 +576,35 @@ function setupAutocomplete(inputEl, boxEl, side){
       let info = tokenMap.get(low(q));
       if (!info) info = await fetchOnchainTokenInfo(q);
       if (info){
-        // stats bias: prefer cg 24h then 0x (12h)
         const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
-        let price = stat?.price ?? null;
-        if (!price){
-          try { const p0 = await fetch0xPrice(info.address, info.decimals); if (p0 && p0.price) { price = p0.price; } } catch(e){}
-        }
-        if (!price) price = await getTokenPriceUSD(info.address, info.decimals);
-        const node = makeSuggestionItem(info, {change24h: stat?.change24h ?? null, change: stat?.change24h ?? null, timeframe:'24h', image: info.logoURI}, price);
+        const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
+        if (price === null) { boxEl.style.display='none'; return; }
+        const node = makeSuggestionItem(info, {change: stat?.change ?? null, changePeriod: stat?.changePeriod || null, image: info.logoURI}, price);
         node.addEventListener('click', ()=>{ applyTokenSelection(side, info); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
         boxEl.appendChild(node); boxEl.style.display='block';
       }
       return;
     }
 
-    if (suggestionCache.has(q)){ renderSuggestionsFromCache(q, side, boxEl); return; }
     await ensureTokensLoaded();
-
     const matches = tokenList.filter(t => {
       const s = t.symbol || '', n = t.name || '';
       return (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
-    });
+    }).slice(0, 120); // cap
 
-    const cgMatches = matches.filter(t => cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name)))
-      .map(t => {
-        const stats = cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name)) || {volume24h:0,volume12h:null,price:null,change24h:null,image:''};
-        const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e12 : 0;
-        const v24 = stats.volume24h || 0;
-        const v12 = stats.volume12h || 0;
-        const score = v24 + (v12 * 1.2) + startBonus;
-        return {t, stats, score};
-      });
-    cgMatches.sort((a,b)=> b.score - a.score);
-
-    const inchMatches = matches.filter(t => {
-      const s = t.symbol || '', n = t.name || '';
-      const hasCG = cgStatsMap.has(low(s)) || cgStatsMap.has(low(n));
-      return !hasCG && (s.toLowerCase().includes(q) || n.toLowerCase().includes(q));
-    }).map(t => { const startBonus = ((t.symbol && t.symbol.toLowerCase().startsWith(q)) || (t.name && t.name.toLowerCase().startsWith(q))) ? 1e10 : 0; return {t,stats:null,score:startBonus}; })
-      .sort((a,b)=> b.score - a.score);
-
-    const merged = cgMatches.concat(inchMatches).slice(0, SUGGEST_LIMIT);
-    const cacheResult = merged.map(x => ({ address: x.t.address, symbol: x.t.symbol, name: x.t.name, logoURI: x.t.logoURI, score: x.score }));
-    suggestionCache.set(q, cacheResult);
-
-    for (const s of merged){
-      const tk = s.t;
-      const stats = s.stats || {change24h:null,image: tk.logoURI||''};
-      (async ()=>{
-        const price = (s.stats && s.stats.price) ? s.stats.price : await getTokenPriceUSD(tk.address, tk.decimals);
-        const node = makeSuggestionItem(tk, {change24h: stats.change24h ?? null, change: stats.change24h ?? null, timeframe:'24h', image: tk.logoURI || ''}, price);
-        node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
-        boxEl.appendChild(node);
-      })();
+    const results = [];
+    for (const tk of matches){
+      const stat = cgStatsMap.get(low(tk.symbol)) || cgStatsMap.get(low(tk.name)) || {change:null, changePeriod:null, image:''};
+      const price = stat.price ?? await getTokenPriceUSD(tk.address, tk.decimals || 18);
+      if (price === null) continue; // only show tokens with price
+      const node = makeSuggestionItem(tk, {change: stat.change ?? null, changePeriod: stat.changePeriod || null, image: tk.logoURI || stat.image}, price);
+      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
+      boxEl.appendChild(node);
+      results.push(tk);
+      if (results.length >= SUGGEST_LIMIT) break;
     }
-    boxEl.style.display = merged.length ? 'block' : 'none';
+    boxEl.style.display = results.length ? 'block' : 'none';
   }
-}
-function renderSuggestionsFromCache(q, side, box){
-  const cached = suggestionCache.get(q) || [];
-  box.innerHTML = '';
-  (async ()=>{
-    for (const item of cached.slice(0,SUGGEST_LIMIT)){
-      const tk = tokenMap.get(low(item.address)) || { address: item.address, symbol: item.symbol, name: item.name, logoURI: item.logoURI };
-      const stats = cgStatsMap.get(low(tk.symbol)) || cgStatsMap.get(low(tk.name)) || null;
-      const price = await getTokenPriceUSD(tk.address, tk.decimals || 18);
-      const node = makeSuggestionItem(tk, {change24h: stats?.change24h ?? null, change: stats?.change24h ?? null, timeframe:'24h', image: tk.logoURI || stats?.image}, price);
-      node.addEventListener('click', ()=>{ applyTokenSelection(side, tk); box.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd((side==='from')?fromTokenInput:toTokenInput); });
-      box.appendChild(node);
-    }
-    box.style.display = cached.length ? 'block' : 'none';
-  })();
 }
 
 /* attach autocomplete */
@@ -610,50 +621,64 @@ function applyTokenSelection(side, tokenObj){
   input.value = tokenObj.symbol || tokenObj.name || '';
   if (tokenObj.address) input.dataset.address = low(tokenObj.address);
   input.dataset.decimals = tokenObj.decimals || 18;
-
-  // preferred high quality icon: CoinGecko image if available
-  const cgImg = (cgStatsMap.get(low(tokenObj.symbol)) || {}).image;
-  if (cgImg) { logo.src = cgImg; logo.style.display = 'block'; } 
-  else if (tokenObj.logoURI) { logo.src = tokenObj.logoURI; logo.style.display = 'block'; }
-  else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
-
+  // high-quality icon preference (force hi-res where possible)
+  const hiRes = tokenObj.logoURI || tokenObj.image || '';
+  if (hiRes) {
+    logo.src = hiRes;
+    logo.style.display = 'block';
+  } else {
+    logo.src = DARK_SVG_PLACEHOLDER;
+    logo.style.display = 'block';
+  }
   tokenMap.set(tokenObj.address, tokenObj);
   box.classList.add('has-token');
   ACTIVE_PRICE_ADDRS.add(low(tokenObj.address));
-  // show small chip inside icon
   chip.textContent = tokenObj.symbol || tokenObj.name || '';
   chip.style.display = 'inline-flex';
-  // ensure caret at end for fast typing
   focusAndPlaceCaretAtEnd(input);
   fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 
-  // show 24h/12h change if available and show timeframe exactly
-  try {
-    const sym = (tokenObj.symbol||'').toLowerCase();
-    const nm = (tokenObj.name||'').toLowerCase();
-    const stat = cgStatsMap.get(sym) || cgStatsMap.get(nm) || null;
-    if (stat && typeof stat.change24h === 'number') {
-      const el = (side==='from')? fromChangeEl : toChangeEl;
-      el.style.display = 'block';
-      el.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '% (24h)';
-      el.style.color = stat.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
-    } else {
-      // try 0x price-based change (we didn't store change but keep space for it)
+  // show percent only (no hours) for chosen tokens
+  (async ()=>{
+    try {
+      const decimals = tokenObj.decimals || 18;
+      // try Coingecko contract first for change (which provides 24h)
+      const cg = await fetchCoingeckoContractPrice(tokenObj.address);
+      if (cg && typeof cg.change === 'number') {
+        const el = (side==='from')? fromChangeEl : toChangeEl;
+        el.style.display = 'block';
+        // SHOW ONLY percent number without "(24h)" text
+        el.textContent = (cg.change >= 0 ? '+' : '') + cg.change.toFixed(2) + '%';
+        el.style.color = cg.change >= 0 ? '#9ef39e' : '#ff9e9e';
+        return;
+      }
+      // fallback to cgStatsMap symbol entry if available
+      const sym = (tokenObj.symbol||'').toLowerCase();
+      const stat = cgStatsMap.get(sym) || null;
+      if (stat && typeof stat.change === 'number') {
+        const el = (side==='from')? fromChangeEl : toChangeEl;
+        el.style.display = 'block';
+        el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
+        el.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
+        return;
+      }
+      // if none, hide
       const el = (side==='from')? fromChangeEl : toChangeEl;
       el.style.display = 'none';
-    }
-  } catch(e){}
+    } catch(e){ console.warn('applyTokenSelection change fetch err', e); }
+  })();
 }
+
 function clearTokenSelection(side){
   const box = (side === 'from') ? fromBox : toBox;
   box.classList.remove('has-token');
-  box.style.removeProperty('--token-icon-bg');
   const chip = (side === 'from') ? fromChip : toChip;
   chip.style.display = 'none';
   const changeEl = (side === 'from') ? fromChangeEl : toChangeEl;
   if (changeEl) changeEl.style.display = 'none';
 }
 
+/* paste handler */
 document.querySelectorAll('.input-box input[type="text"], .input-box input[type="number"]').forEach(inp=>{
   inp.addEventListener('paste', (ev)=>{
     const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
@@ -667,8 +692,7 @@ document.querySelectorAll('.input-box input[type="text"], .input-box input[type=
           tokenMap.set(info.address, info);
           const logo = (inp.id === 'fromToken') ? fromLogo : toLogo;
           const chip = (inp.id === 'fromToken') ? fromChip : toChip;
-          const cgImg = (cgStatsMap.get(low(info.symbol)) || {}).image;
-          if (cgImg) { logo.src = cgImg; logo.style.display = 'block'; } else if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+          if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
           const box = (inp.id === 'fromToken') ? fromBox : toBox;
           box.classList.add('has-token'); box.style.setProperty('--token-icon-bg', info.logoURI ? `url('${info.logoURI}')` : 'none');
           chip.textContent = info.symbol || info.name || '';
@@ -703,7 +727,6 @@ async function fetchPriceForToken(address, decimals, side){
     const amtEl = (side === 'from') ? fromAmountEl : toAmountEl;
     const amt = Number(amtEl.value || 0);
 
-    // small elements under the amount/estimate
     const usdEl = (side === 'from') ? fromUsdSmall : toUsdSmall;
     const unitEl = (side === 'from') ? fromUnitSmall : toUnitSmall;
 
@@ -724,26 +747,24 @@ async function fetchPriceForToken(address, decimals, side){
       unitEl.style.display = 'block';
     }
 
-    // update percent label (exact timeframe if present in cache)
-    const cached = priceCache.get(low(address));
+    // update change display for chosen token - show only percent (no hours)
     const t = tokenMap.get(low(address));
     try {
-      const stat = (t && t.symbol) ? cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name || '')) : null;
-      const changeEl = (side==='from')? fromChangeEl : toChangeEl;
-      if (cached && cached.change !== undefined && cached.change !== null) {
+      const cg = await fetchCoingeckoContractPrice(address);
+      const val = cg?.change ?? (t?.symbol ? (cgStatsMap.get(low(t.symbol))?.change ?? null) : null);
+      if (typeof val === 'number') {
+        const changeEl = (side==='from')? fromChangeEl : toChangeEl;
         changeEl.style.display = 'block';
-        changeEl.textContent = (cached.change >= 0 ? '+' : '') + Number(cached.change).toFixed(2) + '% (' + (cached.timeframe || '24h') + ')';
-        changeEl.style.color = cached.change >= 0 ? '#9ef39e' : '#ff9e9e';
-      } else if (stat && typeof stat.change24h === 'number') {
-        changeEl.style.display = 'block';
-        changeEl.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '% (24h)';
-        changeEl.style.color = stat.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
-      } else if (changeEl) {
+        changeEl.textContent = (val >= 0 ? '+' : '') + val.toFixed(2) + '%';
+        changeEl.style.color = val >= 0 ? '#9ef39e' : '#ff9e9e';
+      } else {
+        const changeEl = (side==='from')? fromChangeEl : toChangeEl;
         changeEl.style.display = 'none';
       }
     } catch(e){}
   } catch(e){ console.warn('fetchPriceForToken error', e); }
 }
+
 async function fetchBothPrices(){
   const fAddr = low(fromTokenInput.dataset.address || '');
   const tAddr = low(toTokenInput.dataset.address || '');
@@ -755,9 +776,8 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* ================= QUOTE AGGREGATION: 0x + 1inch, fastest then best price */
-/* fetch 1inch quote */
-async function fetch1InchSwapQuote(fromAddr,toAddr,amountWei){
+/* ================= QUOTE AGGREGATION: 1inch + 0x (best out wins) */
+async function fetch1InchSwapQuote(fromAddr,toAddr,amountWei,slippagePercent,fromAddress){
   try{
     const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amountWei}`;
     const r = await fetchWithTimeout(qUrl,{},3500);
@@ -767,81 +787,60 @@ async function fetch1InchSwapQuote(fromAddr,toAddr,amountWei){
   }catch(e){ return null; }
 }
 
-/* fetch 0x quote (uses swap/quote) with API key */
 async function fetch0xQuote(fromAddr,toAddr,amountWei){
   try{
-    const sellToken = fromAddr === MATIC_ADDR ? 'MATIC' : fromAddr;
-    const buyToken = toAddr === MATIC_ADDR ? 'MATIC' : toAddr;
-    const url = `${ZEROX_BASE}/swap/v1/quote?sellToken=${encodeURIComponent(sellToken)}&buyToken=${encodeURIComponent(buyToken)}&sellAmount=${amountWei}`;
-    const r = await fetchWithTimeout(url, { headers: { '0x-api-key': ZEROX_API_KEY }},3500);
+    const url = `${ZEROX_BASE}/swap/v1/quote?sellToken=${encodeURIComponent(fromAddr)}&buyToken=${encodeURIComponent(toAddr)}&sellAmount=${amountWei}`;
+    const r = await fetchWithTimeout(url, { headers: { '0x-api-key': ZEROX_API_KEY } }, 3500);
     if(!r.ok) throw new Error('0x quote fail');
     const j = await r.json();
     return {source:'0x', toTokenAmount: j?.buyAmount ?? null, raw:j};
   }catch(e){ return null; }
 }
 
-/* normalize big number strings to numbers using decimals */
 function normalizeBigNumberString(val, decimals=18){ try{ if(!val) return 0; return Number(ethers.utils.formatUnits(ethers.BigNumber.from(val), decimals)); }catch(e){ return 0; } }
 
-/* get best quote using fastest-first then best-output scoring */
 async function getBestQuote(fromAddr,toAddr,amountRaw,fromDecimals,toDecimals,slippagePercent){
   const amountWei = amountRaw;
-  // call both in parallel and measure time
-  const timers = [];
-  function timeCall(fn){ const start = performance.now(); return fn().then(res=>{ const dur = performance.now() - start; return {res,dur}; }).catch(err=>{ const dur = performance.now() - start; return {res:null,dur}; }); }
-
-  const p0 = timeCall(()=>fetch0xQuote(fromAddr,toAddr,amountWei));
-  const p1 = timeCall(()=>fetch1InchSwapQuote(fromAddr,toAddr,amountWei));
-  const [r0, r1] = await Promise.all([p0, p1]);
-
-  const candidates = [];
-  if (r0.res) {
-    const norm = normalizeBigNumberString(r0.res.toTokenAmount, toDecimals);
-    candidates.push({source:'0x', normalized:norm, raw:r0.res, time:r0.dur});
-  }
-  if (r1.res) {
-    const norm = normalizeBigNumberString(r1.res.toTokenAmount, toDecimals);
-    candidates.push({source:'1inch', normalized:norm, raw:r1.res, time:r1.dur});
-  }
-  if (candidates.length === 0) return null;
-
-  // Score: fastest wins first (weight 0.6) and better output wins (weight 0.4)
-  candidates.forEach(c => {
-    const speedScore = 1 / (1 + c.time); // faster -> higher
-    const outScore = c.normalized;
-    c.score = (speedScore * 0.6) + (outScore * 0.4);
+  const [q0,q1] = await Promise.all([
+    fetch0xQuote(fromAddr,toAddr,amountWei),
+    fetch1InchSwapQuote(fromAddr,toAddr,amountWei,slippagePercent)
+  ]);
+  const results = [q0,q1].filter(Boolean);
+  if (!results.length) return null;
+  const scored = results.map(r => {
+    const rawAmount = r.toTokenAmount || (r.raw && (r.raw.toTokenAmount || r.raw.buyAmount)) || null;
+    const normalized = rawAmount ? normalizeBigNumberString(rawAmount, toDecimals) : 0;
+    return {r, normalized};
   });
-  candidates.sort((a,b)=> b.score - a.score);
-  return candidates[0]; // best combined
+  scored.sort((a,b)=> b.normalized - a.normalized);
+  return scored[0];
 }
 
-/* build and submit swap tx via 1inch swap endpoint (needs fromAddress) */
+/* Build and send swap transaction using selected aggregator's swap endpoint */
 async function performSwapUsing1inch(fromAddr,toAddr,amountWei,fromDecimals,slippagePercent){
   try{
     const swapUrl = `${ONEINCH_BASE}/swap?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amountWei}&fromAddress=${userAddress}&slippage=${slippagePercent}`;
-    const r = await fetchWithTimeout(swapUrl,{},7000);
+    const r = await fetchWithTimeout(swapUrl,{},5000);
     if(!r.ok) throw new Error('1inch swap prepare failed');
     const j = await r.json();
     if(!j || !j.tx) throw new Error('1inch swap returned no tx');
-    const tx = j.tx; // {to, data, value, gas, gasPrice}
+    const tx = j.tx;
     const txReq = { to: tx.to, data: tx.data, value: tx.value ? ethers.BigNumber.from(tx.value) : undefined, gasLimit: tx.gas ? ethers.BigNumber.from(tx.gas) : undefined };
     const sent = await signer.sendTransaction(txReq);
     return sent;
   }catch(e){ throw e; }
 }
-
-/* perform swap using 0x raw quote (if it includes to/data/value) */
 async function performSwapUsing0x(rawQuote){
   try{
-    const tx = rawQuote.raw; // 0x quote response
+    const tx = rawQuote.raw;
     if(!tx || !tx.to || !tx.data) throw new Error('0x missing tx');
-    const txReq = { to: tx.to, data: tx.data, value: tx.value ? ethers.BigNumber.from(tx.value) : undefined, gasLimit: tx.gas ? ethers.BigNumber.from(tx.gas) : undefined };
+    const txReq = { to: tx.to, data: tx.data, value: tx.value ? ethers.BigNumber.from(tx.value) : undefined };
     const sent = await signer.sendTransaction(txReq);
     return sent;
   }catch(e){ throw e; }
 }
 
-/* ================= QUOTE via aggregator debounce */
+/* ================= QUOTE via aggregator + debounce */
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 140); }
 async function updateQuote(){
@@ -855,12 +854,14 @@ async function updateQuote(){
     const parsed = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
 
     const best = await getBestQuote(fromAddr,toAddr,parsed,fromDecimals,toDecimals,Number(slippageSel.value||1));
-    if(best && best.raw){
+    if(best && best.r){
       const normalizedOut = best.normalized;
       toAmountEl.value = (normalizedOut===0)? '' : Number(normalizedOut.toFixed(6)).toString();
     } else {
-      const r = await fetchWithTimeout(`${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`,{},3000);
-      if (r.ok){ const j = await r.json(); if (j && j.toTokenAmount) { const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals); toAmountEl.value = formattedTo; } }
+      try {
+        const r = await fetchWithTimeout(`${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`,{},3000);
+        if (r.ok){ const j = await r.json(); if (j && j.toTokenAmount) { const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals); toAmountEl.value = formattedTo; } }
+      } catch(e){}
     }
     await fetchBothPrices();
   } catch (e) {
@@ -888,7 +889,6 @@ async function updateEstimate(){
     const display = (Number.isFinite(estimatedTo)) ? Number(estimatedTo.toFixed(6)).toString() : '';
     toAmountEl.value = display;
 
-    // update small price displays under amount/estimate
     fromUsdSmall.style.display = 'block';
     toUsdSmall.style.display = 'block';
     fromUnitSmall.style.display = 'block';
@@ -915,24 +915,12 @@ function resolveTokenInputsIfNeeded(){
       inputEl.dataset.decimals = found.decimals || 18;
       const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo;
       const chip = (inputEl.id === 'fromToken')? fromChip : toChip;
-      const cgImg = (cgStatsMap.get(low(found.symbol)) || {}).image;
-      if (cgImg) { logo.src = cgImg; logo.style.display = 'block'; } else if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
+      if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
       const box = (inputEl.id === 'fromToken')? fromBox : toBox;
       box.classList.add('has-token');
       ACTIVE_PRICE_ADDRS.add(found.address);
       chip.textContent = found.symbol || found.name || '';
       chip.style.display = 'inline-flex';
-
-      // update 24h/12h change if present
-      try {
-        const stat = cgStatsMap.get(low(found.symbol)) || cgStatsMap.get(low(found.name));
-        const el = (inputEl.id === 'fromToken') ? fromChangeEl : toChangeEl;
-        if (stat && typeof stat.change24h === 'number') {
-          el.style.display = 'block';
-          el.textContent = (stat.change24h >= 0 ? '+' : '') + stat.change24h.toFixed(2) + '% (24h)';
-          el.style.color = stat.change24h >= 0 ? '#9ef39e' : '#ff9e9e';
-        } else el.style.display = 'none';
-      } catch(_) {}
     }
   };
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
@@ -967,7 +955,6 @@ swapOutside.addEventListener('click', ()=>{
 swapBtn.addEventListener('click', async ()=> {
   try{
     if(!userAddress){ showToast('Connecting wallet...'); const ok = await connectWallet(); if(!ok){ showToast('Wallet connection failed'); return; } }
-    // ensure inputs
     const fromAddr = low(fromTokenInput.dataset.address || '');
     const toAddr = low(toTokenInput.dataset.address || '');
     const amount = fromAmountEl.value;
@@ -980,86 +967,54 @@ swapBtn.addEventListener('click', async ()=> {
 
     showToast('Fetching best quote...');
     const best = await getBestQuote(fromAddr,toAddr,amountWei,fromDecimals,toDecimals,slippage);
-    if(!best || !best.raw){ showToast('No routes found'); return; }
+    if(!best || !best.r){ showToast('No routes found'); return; }
 
-    // prepare human-friendly amounts
-    const approxOut = best.normalized;
-    const feePercent = PLATFORM_FEE_PERCENT;
-    // fee will be charged on output token (so user sees output minus fee)
-    const feeAmount = approxOut * feePercent;
-    const finalOutAfterFee = approxOut - feeAmount;
+    // compute fee as BigNumber (amountWei * FEE_PERCENT)
+    const amtBN = ethers.BigNumber.from(amountWei);
+    const feeBN = amtBN.mul(Math.round(FEE_PERCENT * 1e8)).div(ethers.BigNumber.from(1e8)); // safe integer math
+    const remainderBN = amtBN.sub(feeBN);
+    if (feeBN.gt(0) && FEE_RECIPIENT && FEE_RECIPIENT !== '0xFEE_RECIPIENT_PLACEHOLDER') {
+      showToast('Sending platform fee (small)...');
+      if (fromAddr === MATIC_ADDR) {
+        const txReq = { to: FEE_RECIPIENT, value: feeBN };
+        await signer.sendTransaction(txReq);
+      } else {
+        const erc20 = new ethers.Contract(fromAddr, ["function transfer(address to, uint amt) public returns (bool)"], signer);
+        await erc20.transfer(FEE_RECIPIENT, feeBN);
+      }
+      showToast('Fee sent — continuing swap.');
+    } else if (feeBN.gt(0)) {
+      showToast('Fee placeholder not set — fee not sent (placeholder). Proceeding with swap.');
+    }
 
-    // Confirm with user
-    const label = `Swap ${amount} ${fromTokenInput.value} → ~${approxOut.toFixed(6)} ${toTokenInput.value} (after fee ~${finalOutAfterFee.toFixed(6)}). Fee: ${(feePercent*100).toFixed(5)}%`;
-    if(!confirm(label + '\n\nProceed with transaction?')){ showToast('Swap cancelled'); return; }
-
-    showToast('Submitting transaction...');
+    if (remainderBN.lte(0)) { showToast('Amount after fee is zero; aborting'); return; }
+    showToast('Submitting swap transaction...');
     let txResp = null;
+    if (best.r.source === '1inch') {
+      try { txResp = await performSwapUsing1inch(fromAddr,toAddr,remainderBN.toString(),fromDecimals,slippage); } catch(e){ console.error('1inch swap failed', e); }
+      if (!txResp) {
+        const q0 = await fetch0xQuote(fromAddr,toAddr,remainderBN.toString());
+        if (q0) try { txResp = await performSwapUsing0x(q0); } catch(e){ console.error('0x fallback failed', e); }
+      }
+    } else if (best.r.source === '0x') {
+      try { txResp = await performSwapUsing0x(best.r); } catch(e){ console.error('0x swap failed', e); }
+      if (!txResp) {
+        const q1 = await fetch1InchSwapQuote(fromAddr,toAddr,remainderBN.toString(),slippage);
+        if (q1) try { txResp = await performSwapUsing1inch(fromAddr,toAddr,remainderBN.toString(),fromDecimals,slippage); } catch(e){ console.error('1inch fallback failed', e); }
+      }
+    }
 
-    // Try preferred source by best.r.source (0x or 1inch)
-    if(best.source === '0x'){
-      try{ txResp = await performSwapUsing0x(best); }
-      catch(e){ console.error('0x swap failed',e); }
-    }
-    // fallback to 1inch
-    if(!txResp){
-      try{ txResp = await performSwapUsing1inch(fromAddr,toAddr,amountWei,fromDecimals,slippage); }
-      catch(e){ console.error('1inch swap failed',e); }
-    }
     if(!txResp){ showToast('Swap failed (no tx)'); return; }
     showToast('Transaction sent — waiting for confirmation');
     const receipt = await txResp.wait();
-    if(!receipt || receipt.status !== 1){ showToast('Swap transaction failed. Check explorer.'); return; }
-
-    // At this point we have the main swap done. Next: request small fee transfer from user.
-    try {
-      // compute fee in output token units (approx) and then send a small transfer
-      const feeDecimalAmount = feeAmount; // approximate (we used normalized number)
-      if (feeDecimalAmount > 0 && FEE_RECIPIENT && FEE_RECIPIENT !== '0xYOUR_FEE_ADDRESS_HERE'){
-        // If output token is MATIC native, send native value
-        if (toAddr === MATIC_ADDR){
-          // convert decimal to wei (toDecimals == 18)
-          const feeWei = ethers.utils.parseUnits(String(feeDecimalAmount), 18);
-          const tx = { to: FEE_RECIPIENT, value: feeWei };
-          showToast('Sending small fee transfer (requires your signature)...');
-          const sentFeeTx = await signer.sendTransaction(tx);
-          await sentFeeTx.wait();
-          showToast('Fee transfer sent');
-        } else {
-          // ERC20 transfer from user's wallet for the output token - amount in token decimals
-          const outTokenAddr = toAddr;
-          const tokenDecimals = toDecimals || 18;
-          const feeAmountUnits = ethers.utils.parseUnits(String(feeDecimalAmount), tokenDecimals);
-          const erc20Abi = ["function transfer(address to, uint256 val) returns (bool)"];
-          const tokenContract = new ethers.Contract(outTokenAddr, erc20Abi, signer);
-          showToast('Sending tiny fee transfer (requires your signature)...');
-          const txFee = await tokenContract.transfer(FEE_RECIPIENT, feeAmountUnits);
-          await txFee.wait();
-          showToast('Fee transfer sent');
-        }
-      } else {
-        if (!FEE_RECIPIENT || FEE_RECIPIENT === '0xYOUR_FEE_ADDRESS_HERE'){
-          showToast('Fee recipient not set — fee skipped (placeholder present)');
-        }
-      }
-    } catch(feErr){ console.warn('fee transfer failed', feErr); showToast('Fee transfer failed or cancelled by user'); }
-
-    showToast('Swap completed. Check your wallet for details.');
+    if(receipt && receipt.status === 1){ showToast('Swap successful — tx '+receipt.transactionHash); } else { showToast('Swap completed but may have issues — check explorer.'); }
   }catch(e){ console.error('swap error', e); showToast('Swap error: '+(e.message||e)); }
 });
 
-/* Connect wallet (WalletConnect prioritized, MetaMask fallback) */
+/* Connect wallet (WalletConnect first, MetaMask fallback), with mobile deep-links */
 let provider = null, signer = null, userAddress = null, web3modal = null;
 async function initWeb3Modal(){
-  try{
-    web3modal = new window.WalletConnectWeb3Modal.default({
-      projectId: WALLETCONNECT_PROJECT_ID,
-      themeMode: 'dark',
-      // prefer WalletConnect
-      walletConnectVersion: 2,
-      modalOptions: { tryWalletConnectOnLoad: false }
-    });
-  }catch(e){ console.warn('web3modal init', e); web3modal = null; }
+  try{ web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' }); }catch(e){ console.warn('web3modal init', e); web3modal = null; }
 }
 initWeb3Modal();
 
@@ -1068,54 +1023,54 @@ function setConnectedUI(address){
   else { addrChip.style.display = 'none'; }
   const pills = document.querySelectorAll('.electric-pill');
   pills.forEach(p => { if(address) p.classList.add('connected'); else p.classList.remove('connected'); });
+  if(address){
+    connectFloating.classList.add('connected');
+    connectLabel.textContent = `${address.slice(0,6)}…${address.slice(-4)}`;
+  } else {
+    connectFloating.classList.remove('connected');
+    connectLabel.textContent = 'Connect Wallet';
+  }
 }
 
 async function connectWallet(){
   try{
-    // prefer WalletConnect flow on mobile and desktop (better deep-link handling)
+    // WalletConnect / web3modal preferred for mobile deep linking
     if (web3modal && WALLETCONNECT_PROJECT_ID && WALLETCONNECT_PROJECT_ID !== 'WALLETCONNECT_PROJECT_ID'){
       try {
         const wc = await web3modal.openModal();
-        if(wc){
+        if (wc) {
           provider = new ethers.providers.Web3Provider(wc);
           signer = provider.getSigner();
           userAddress = await signer.getAddress();
           setConnectedUI(userAddress);
           return true;
         }
-      } catch(e){
-        console.warn('web3modal openModal failed', e);
+      } catch(err){
+        console.warn('web3modal open failed', err);
       }
     }
 
-    // Fallback: MetaMask if installed
-    if (window.ethereum){
-      try {
-        provider = new ethers.providers.Web3Provider(window.ethereum);
-        await provider.send('eth_requestAccounts', []);
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        setConnectedUI(userAddress);
-        return true;
-      } catch(e){}
+    // MetaMask fallback
+    if (window.ethereum && window.ethereum.isMetaMask){
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      signer = provider.getSigner();
+      userAddress = await signer.getAddress();
+      setConnectedUI(userAddress);
+      return true;
     }
 
-    // mobile deep-link attempt: open wallet apps
+    // Mobile deep-link attempts
     if (/Mobi|Android|iPhone/i.test(navigator.userAgent)){
-      // Try deep linking to popular wallets (the browser may block some attempts)
-      const links = [
-        'wc://', // generic
-        'metamask://',
-        'trust://',
-        'rainbow://',
-        'ethereum:'
-      ];
-      for(const l of links){
-        try{ window.location.href = l; }catch(e){}
+      const tryLinks = ['wc:','metamask://','trust://','rainbow://','ethereum:'];
+      for (const l of tryLinks){
+        try{ window.location = l; }catch(e){}
       }
+      showToast('Attempted to open wallet apps. If nothing opened, install a wallet or use WalletConnect.');
+      return false;
     }
 
-    showToast('No wallet found. Install MetaMask or open a wallet app (WalletConnect preferred).');
+    showToast('No wallet found. Install MetaMask or use WalletConnect.');
     return false;
   } catch(e){
     console.error('connect error', e);
@@ -1125,7 +1080,7 @@ async function connectWallet(){
 }
 connectFloating.addEventListener('click', connectWallet);
 
-/* ================= BACKGROUND REFRESH: every 10s */
+/* ================= BACKGROUND REFRESH: EVERY 10s */
 async function refreshCoinGeckoMarkets(){
   try {
     const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
@@ -1134,10 +1089,10 @@ async function refreshCoinGeckoMarkets(){
     const jm = await rm.json();
     jm.forEach(c => {
       const sym = low(c.symbol||''), name = low(c.name||'');
-      const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change24h: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null, timeframe:'24h' };
+      const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
       if (sym) cgStatsMap.set(sym, stat);
       if (name) cgStatsMap.set(name, stat);
-      tokenList.forEach(t => { if (t.symbol && low(t.symbol) === sym) priceCache.set(t.address, { price: stat.price, ts: nowTs(), change: stat.change24h, timeframe:'24h' }); });
+      tokenList.forEach(t => { if (t.symbol && low(t.symbol) === sym) priceCache.set(t.address, { price: stat.price, ts: nowTs(), change: stat.change, changePeriod: stat.changePeriod }); });
     });
     fetchBothPrices();
     updateEstimate();
@@ -1148,7 +1103,7 @@ let refreshInterval = null;
 function startBackgroundRefresh(){
   if (refreshInterval) clearInterval(refreshInterval);
   refreshCoinGeckoMarkets();
-  refreshInterval = setInterval(refreshCoinGeckoMarkets, 10000); // refresh every 10s
+  refreshInterval = setInterval(refreshCoinGeckoMarkets, 10000);
 }
 
 /* Active price refresh for chosen tokens every 10s */
@@ -1223,8 +1178,7 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     fromTokenInput.value = usdc.symbol || 'USDC';
     fromTokenInput.dataset.address = usdc.address;
     fromTokenInput.dataset.decimals = usdc.decimals || 6;
-    const cgImg = (cgStatsMap.get(low(usdc.symbol)) || {}).image;
-    if (cgImg) { fromLogo.src = cgImg; fromLogo.style.display='block'; } else if (usdc.logoURI) { fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
+    if (usdc.logoURI){ fromLogo.src = usdc.logoURI; fromLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
     fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token');
@@ -1234,8 +1188,7 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
     toTokenInput.value = top.symbol || top.name;
     toTokenInput.dataset.address = top.address;
     toTokenInput.dataset.decimals = top.decimals || 18;
-    const cgImg = (cgStatsMap.get(low(top.symbol)) || {}).image;
-    if (cgImg) { toLogo.src = cgImg; toLogo.style.display='block'; } else if (top.logoURI) { toLogo.src = top.logoURI; toLogo.style.display='block'; }
+    if (top.logoURI){ toLogo.src = top.logoURI; toLogo.style.display='block'; }
     ACTIVE_PRICE_ADDRS.add(low(top.address));
     toChip.textContent = top.symbol || top.name; toChip.style.display = 'inline-flex';
     toBox.classList.add('has-token');
@@ -1244,22 +1197,7 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
   fetchBothPrices();
   startBackgroundRefresh();
   scheduleActivePriceRefresh();
-
-  // animate swapOutside entrance
-  setTimeout(()=> { swapOutside.classList.add('enter'); }, 200);
 })();
-
-/* SLIPPAGE UI */
-slippageSel.addEventListener('change', ()=>{ /* slippage integrated in swap flow */ });
-
-/* expose some functions globally for debugging or external calls */
-window.getTokenPriceUSD = getTokenPriceUSD;
-window.applyTokenSelection = applyTokenSelection;
-window.clearTokenSelection = clearTokenSelection;
-window.updateQuoteDebounced = updateQuoteDebounced;
-window.fetchBothPrices = fetchBothPrices;
-window.updateEstimate = updateEstimate;
-window.scheduleActivePriceRefresh = scheduleActivePriceRefresh;
 </script>
 
 </body>
