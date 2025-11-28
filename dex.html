@@ -14,8 +14,6 @@ body{overflow-x:hidden;background:radial-gradient(circle at center,#0c0014,#1a00
   --suggest-bg:rgba(25,0,50,0.98);
   --shadow:0 0 25px rgba(180,0,255,0.3);
   --container-max:480px;
-  --glass-btn-bg:rgba(255,255,255,0.03);
-  --glass-btn-border:rgba(255,255,255,0.06);
 }
 
 /* NEBULA + PARTICLES */
@@ -93,30 +91,33 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 20px rgba(120,0,255,0.06);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px)}
 .swap-outside:hover{transform:translateY(-4px) rotate(-10deg)}
 
-/* GLASSY BUTTON (replaces electric pill) */
-.glassy-btn{
-  display:inline-flex; align-items:center; gap:10px; padding:10px 20px; border-radius:12px;
-  background:var(--glass-btn-bg); border:1px solid var(--glass-btn-border);
-  color:#fff; font-weight:800; font-size:15px; cursor:pointer;
-  transition:transform 140ms ease,box-shadow 140ms ease,background 140ms ease; backdrop-filter: blur(6px);
-}
-.glassy-btn:hover{ transform:translateY(-3px); box-shadow:0 10px 30px rgba(106,0,255,0.06); }
-.glassy-btn .icon{ width:20px; height:20px; display:inline-flex; align-items:center; justify-content:center; font-weight:900; opacity:0.95; }
-
 /* SLIPPAGE THEME - now visually matches the app (styled select) */
 .slippage-min{
   appearance:none;padding:8px 10px;border-radius:10px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:0;font-weight:800;font-size:13px;box-shadow:0 8px 22px rgba(106,0,255,0.12);
   -webkit-appearance:none; -moz-appearance:none;
-  cursor:pointer;
 }
 .slippage-min option{background:transparent;color:#111}
 
-/* custom select wrapper arrow */
-.select-wrap{position:relative;display:inline-block}
-.select-wrap::after{content:"▾"; position:absolute; right:10px; top:50%; transform:translateY(-50%); pointer-events:none; opacity:0.9; font-size:12px}
-
 /* tiny glassy tooltip / toast */
 .toast{position:fixed;right:18px;bottom:90px;z-index:9999;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#fff;font-weight:700}
+
+/* ELECTRIC PILL SWAP BUTTON (replaces old .btn visually) */
+.electric-btn{display:inline-block;border:0;background:transparent;padding:0;cursor:pointer}
+.electric-pill{
+position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 26px;border-radius:999px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));box-shadow:0 12px 36px rgba(180,68,255,0.18);color:#fff;font-weight:800;font-size:15px;border:none;outline:none;overflow:hidden;transition:transform 140ms ease,box-shadow 140ms ease;}
+.electric-pill:active{transform:translateY(-1px) scale(.997)}
+.electric-pill .sweep{position:absolute;left:-30%;top:-10%;width:40%;height:120%;background:linear-gradient(90deg,rgba(255,255,255,0.5),rgba(255,255,255,0.12),rgba(255,255,255,0.02));transform:skewX(-18deg);opacity:0.18;filter:blur(10px);border-radius:12px;animation:slideSweep 2.1s linear infinite}
+@keyframes slideSweep{0%{transform:translateX(-160%) skewX(-18deg)}50%{transform:translateX(120%) skewX(-18deg)}100%{transform:translateX(360%) skewX(-18deg)}}
+.electric-pill .label{position:relative;z-index:2;pointer-events:none}
+.electric-pill .icon{width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,0.08);display:inline-flex;align-items:center;justify-content:center;font-weight:900;z-index:2;box-shadow:inset 0 -4px 8px rgba(0,0,0,0.18)}
+
+/* Connected state (lights up) */
+.electric-pill.connected{box-shadow:0 20px 60px rgba(180,68,255,0.28),0 0 60px rgba(180,68,255,0.12);transform:translateY(-2px)}
+.electric-pill.connected .icon{background:linear-gradient(180deg,#fff,#f5e7ff);color:#3b0066}
+
+/* SMALLER variant for the container's swap appearance */
+.swap-row{display:flex;gap:12px;align-items:center}
+.swap-row .electric-btn{flex:1}
 
 /* TOP-RIGHT CONNECT */
 .top-right-connect{position:fixed;right:18px;top:18px;z-index:70;display:flex;gap:10px;align-items:center}
@@ -138,7 +139,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 </head>
 <body>
 
-<!-- particles -->
+<!-- particles will be created by script -->
 <!-- floating logo uses logo.gif as requested -->
 <img id="logoFloat" class="logo" src="logo.gif" alt="NOLA Logo">
 
@@ -159,12 +160,12 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
       <div class="left">
         <div class="token-icon" id="fromIcon">
           <img id="fromLogo" src="" alt="" style="display:none">
-          <span class="token-chip" id="fromChip" style="display:none"></span>
+          <span class="token-chip" id="fromChip" style="display:none">---</span>
         </div>
 
         <!-- token info: symbol + change (percent only) -->
         <div class="token-info">
-          <div class="token-symbol" id="fromSymbol">Select</div>
+          <div class="token-symbol" id="fromSymbol">---</div>
           <div class="token-change" id="fromChange" style="display:none">+0.00%</div>
         </div>
 
@@ -191,12 +192,12 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
       <div class="left">
         <div class="token-icon" id="toIcon">
           <img id="toLogo" src="" alt="" style="display:none">
-          <span class="token-chip" id="toChip" style="display:none"></span>
+          <span class="token-chip" id="toChip" style="display:none">---</span>
         </div>
 
         <!-- token info: symbol + change (percent only) -->
         <div class="token-info">
-          <div class="token-symbol" id="toSymbol">Select</div>
+          <div class="token-symbol" id="toSymbol">---</div>
           <div class="token-change" id="toChange" style="display:none">+0.00%</div>
         </div>
 
@@ -225,28 +226,20 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
       </div>
 
       <div style="display:flex;align-items:center;gap:10px;">
-        <div class="select-wrap">
-          <select id="slippage" class="slippage-min" title="Select slippage">
-            <option value="0.5">0.5%</option>
-            <option value="1" selected>1%</option>
-            <option value="2">2%</option>
-            <option value="3">3%</option>
-          </select>
-        </div>
+        <select id="slippage" class="slippage-min" title="Select slippage">
+          <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="3">3%</option>
+        </select>
       </div>
     </div>
 
-    <div class="swap-row" style="margin-top:14px;display:flex;gap:12px;align-items:center;">
-      <!-- glassy swap button -->
-      <button id="swapBtn" class="glassy-btn" title="Swap">
-        <span class="icon">⇄</span>
-        <span class="label">Swap</span>
-      </button>
-
-      <!-- connect / action button (example small) -->
-      <button id="quickConnect" class="glassy-btn" style="padding:8px 12px;font-size:13px;">
-        <span class="icon">⧉</span>
-        <span>Connect</span>
+    <div class="swap-row" style="margin-top:14px">
+      <!-- new electric pill swap button (id kept as swapBtn) -->
+      <button id="swapBtn" class="electric-btn" title="Swap">
+        <span class="electric-pill" role="button" aria-pressed="false">
+          <span class="sweep" aria-hidden="true"></span>
+          <span class="icon">⇄</span>
+          <span class="label">Swap</span>
+        </span>
       </button>
     </div>
   </div>
@@ -280,10 +273,12 @@ const FALLBACK_RPC = "https://polygon-rpc.com";
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+// YOUR 0x API KEY (you provided)
 const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384';
 
-const FEE_PERCENT = 0.00001;
-const FEE_RECIPIENT = '0xFEE_RECIPIENT_PLACEHOLDER';
+// Fee settings (you can change)
+const FEE_PERCENT = 0.00001; // 0.001% (0.00001 decimal) — extremely user-friendly
+const FEE_RECIPIENT = '0xFEE_RECIPIENT_PLACEHOLDER'; // <-- replace with real address when ready
 
 let tokenList = [];
 let tokenMap = new Map();
@@ -309,7 +304,6 @@ const fromBox = $('fromBox'), toBox = $('toBox');
 const connectFloating = $('connectFloating'), addrChip = $('addrChip');
 const slippageSel = $('slippage');
 const fromChangeEl = $('fromChange'), toChangeEl = $('toChange');
-const connectQuick = $('quickConnect');
 
 /* ================= HELPERS */
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
@@ -317,6 +311,7 @@ const low = s => (s||'').toLowerCase();
 const nowTs = ()=> Date.now();
 function formatUSD(v){ if (v===null||v===undefined||!Number.isFinite(v)) return '—'; const n=Number(v); const opts={style:'currency',currency:'USD',maximumFractionDigits:2,minimumFractionDigits:2}; if(Math.abs(n)>0&&Math.abs(n)<0.01){opts.maximumFractionDigits=6;opts.minimumFractionDigits=4;} return new Intl.NumberFormat('en-US',opts).format(n); }
 function fetchWithTimeout(url,opts={},ms=5000){ const controller=new AbortController(); const id=setTimeout(()=>controller.abort(),ms); const init=Object.assign({},opts,{signal:controller.signal}); return fetch(url,init).finally(()=>clearTimeout(id)); }
+async function fetchJson(url,opts){ const r = await fetch(url,opts); if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }
 
 /* ================= THEMED SINGLE-TOAST QUEUE (prevents overlapping) */
 let _toastQueue = [];
@@ -336,6 +331,7 @@ function _processToastQueue(){
   el.style.pointerEvents = 'auto';
   el.style.opacity = '0';
   root.appendChild(el);
+  // entrance
   requestAnimationFrame(()=>{ el.style.transition = 'opacity 180ms ease, transform 180ms ease'; el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
   setTimeout(()=> {
     el.style.transition = 'opacity 220ms'; el.style.opacity = '0';
@@ -378,6 +374,7 @@ async function loadTokensAndMarkets(){
       }
     } catch(e){ /* ignore */ }
 
+    // dedupe
     const seen = new Set();
     tokenList = tokenList.filter(t => { if(!t||!t.address) return false; if(seen.has(t.address)) return false; seen.add(t.address); return true; });
     console.log('Loaded tokens:', tokenList.length);
@@ -387,6 +384,7 @@ let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
 /* ================= PRICE SOURCES (priority + fast-first heuristic) */
+
 async function fetch0xPrice(addr){
   try {
     const sellToken = addr;
@@ -454,6 +452,7 @@ async function fetchDexscreenerPrice(addr){
     return null;
   } catch(e){ return null; }
 }
+/* derive price via WETH route: token -> WETH (1inch) then WETH->USDC price (1inch) */
 async function derivePriceViaWeth(addr, decimals=18){
   try {
     const amountBN = ethers.BigNumber.from(10).pow(decimals);
@@ -481,7 +480,11 @@ async function derivePriceViaWeth(addr, decimals=18){
   } catch(e){ return null; }
 }
 
-/* SMART PRICE: parallel + priority heuristic */
+/* ================= SMART PRICE: best + fastest heuristic
+   Runs all sources in parallel and picks the fastest valid result,
+   but will prefer higher-priority sources if they appear shortly after.
+   Priorities: lower number = higher priority.
+*/
 async function getTokenPriceUSD(address, decimals=18){
   if (!address) return null;
   const addr = low(address);
@@ -493,6 +496,7 @@ async function getTokenPriceUSD(address, decimals=18){
     }
   }
 
+  // Define prioritized sources
   const sources = [
     { name:'0x', fn: async ()=> await fetch0xPrice(addr), priority:1 },
     { name:'coingecko_contract', fn: async ()=> { const r = await fetchCoingeckoContractPrice(addr); return r && r.price ? r.price : null; }, priority:1 },
@@ -502,7 +506,8 @@ async function getTokenPriceUSD(address, decimals=18){
     { name:'derive_weth', fn: async ()=> await derivePriceViaWeth(addr, decimals), priority:5 }
   ];
 
-  const TIME_WINDOW = 700;
+  // Start all fetches in parallel with independent handling
+  const TIME_WINDOW = 700; // ms to wait for higher-priority sources after first hit
   let best = null;
   const start = Date.now();
   let completed = 0;
@@ -515,22 +520,28 @@ async function getTokenPriceUSD(address, decimals=18){
           completed++;
           if (val && Number.isFinite(val) && val > 0) {
             const result = { source: s.name, price: Number(val), priority: s.priority, ts: Date.now() };
+            // choose best by priority; if first result has top priority (1) resolve immediately
             if (!best) best = result;
             else {
               if (result.priority < best.priority) best = result;
+              // if equal, prefer earlier timestamp
               else if (result.priority === best.priority && result.ts < best.ts) best = result;
             }
             if (result.priority === 1) {
+              // top priority arrived — resolve immediately with it
               if (!settled){ settled = true; priceCache.set(addr, {price: result.price, ts: nowTs()}); resolve(result.price); }
               return;
             }
+            // otherwise wait TIME_WINDOW to see if a higher-priority arrives
             if (Date.now() - start > TIME_WINDOW || completed === sources.length) {
               if (!settled){ settled = true; priceCache.set(addr, {price: best.price, ts: nowTs()}); resolve(best.price); }
               return;
             } else {
+              // set a short timer to resolve after window unless a top-priority overrides
               setTimeout(()=>{ if (!settled){ settled = true; priceCache.set(addr, {price: best.price, ts: nowTs()}); resolve(best.price); } }, TIME_WINDOW - (Date.now() - start));
             }
           } else {
+            // no value from this source
             if (completed === sources.length && !best && !settled) { settled = true; priceCache.set(addr, {price:null, ts: nowTs()}); resolve(null); }
           }
         } catch(e){
@@ -540,6 +551,7 @@ async function getTokenPriceUSD(address, decimals=18){
       })();
     });
 
+    // absolute safety fallback
     setTimeout(()=>{ if (!settled){ if (best){ priceCache.set(addr, {price:best.price, ts: nowTs()}); resolve(best.price); } else { priceCache.set(addr, {price:null, ts: nowTs()}); resolve(null); } } }, TIME_WINDOW + 1200);
   });
 }
@@ -608,7 +620,7 @@ function setupAutocomplete(inputEl, boxEl, side){
       if (info){
         const stat = cgStatsMap.get(low(info.symbol)) || cgStatsMap.get(low(info.name)) || null;
         const price = stat?.price ?? await getTokenPriceUSD(info.address, info.decimals);
-        const node = makeSuggestionItem(info, {change: stat?.change ?? null, changePeriod: stat?.changePeriod ?? null, image: info.logoURI}, price);
+        const node = makeSuggestionItem(info, {change: stat?.change ?? null, changePeriod: stat?.changePeriod || null, image: info.logoURI}, price);
         node.addEventListener('click', ()=>{ applyTokenSelection(side, info); boxEl.style.display='none'; updateEstimate(); scheduleActivePriceRefresh(); focusAndPlaceCaretAtEnd(inputEl); });
         boxEl.appendChild(node); boxEl.style.display='block';
       }
@@ -688,6 +700,7 @@ function applyTokenSelection(side, tokenObj){
   input.value = tokenObj.symbol || tokenObj.name || '';
   if (tokenObj.address) input.dataset.address = low(tokenObj.address);
   input.dataset.decimals = tokenObj.decimals || 18;
+  // high-quality icon preference
   const hiRes = tokenObj.logoURI || tokenObj.image || '';
   if (hiRes) {
     logo.src = hiRes;
@@ -699,6 +712,7 @@ function applyTokenSelection(side, tokenObj){
   tokenMap.set(tokenObj.address, tokenObj);
   box.classList.add('has-token');
   ACTIVE_PRICE_ADDRS.add(low(tokenObj.address));
+  // show small chip inside icon
   chip.textContent = tokenObj.symbol || tokenObj.name || '';
   chip.style.display = 'inline-flex';
   focusAndPlaceCaretAtEnd(input);
@@ -712,6 +726,7 @@ function applyTokenSelection(side, tokenObj){
     if (stat && typeof stat.change === 'number') {
       const el = (side==='from')? fromChangeEl : toChangeEl;
       el.style.display = 'block';
+      // percent only (no "(24h)" suffix) — keeps spacing tight
       el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
       el.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
     } else {
@@ -744,7 +759,7 @@ document.querySelectorAll('.input-box input[type="text"], .input-box input[type=
           const chip = (inp.id === 'fromToken') ? fromChip : toChip;
           if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
           const box = (inp.id === 'fromToken') ? fromBox : toBox;
-          box.classList.add('has-token');
+          box.classList.add('has-token'); box.style.setProperty('--token-icon-bg', info.logoURI ? `url('${info.logoURI}')` : 'none');
           chip.textContent = info.symbol || info.name || '';
           chip.style.display = 'inline-flex';
           updateUsdVisibility();
@@ -777,6 +792,7 @@ async function fetchPriceForToken(address, decimals, side){
     const amtEl = (side === 'from') ? fromAmountEl : toAmountEl;
     const amt = Number(amtEl.value || 0);
 
+    // small elements under the amount/estimate
     const usdEl = (side === 'from') ? fromUsdSmall : toUsdSmall;
     const unitEl = (side === 'from') ? fromUnitSmall : toUnitSmall;
 
@@ -797,6 +813,7 @@ async function fetchPriceForToken(address, decimals, side){
       unitEl.style.display = 'block';
     }
 
+    // show change under token (PERCENT ONLY)
     const t = tokenMap.get(low(address));
     try {
       const stat = (t && t.symbol) ? cgStatsMap.get(low(t.symbol)) || cgStatsMap.get(low(t.name || '')) : null;
@@ -847,6 +864,7 @@ function normalizeBigNumberString(val, decimals=18){ try{ if(!val) return 0; ret
 
 async function getBestQuote(fromAddr,toAddr,amountRaw,fromDecimals,toDecimals,slippagePercent){
   const amountWei = amountRaw;
+  // parallel queries (0x typically faster)
   const [q0,q1] = await Promise.all([
     fetch0xQuote(fromAddr,toAddr,amountWei),
     fetch1InchSwapQuote(fromAddr,toAddr,amountWei,slippagePercent)
@@ -855,12 +873,13 @@ async function getBestQuote(fromAddr,toAddr,amountRaw,fromDecimals,toDecimals,sl
   const results = [q0,q1].filter(Boolean);
   if (!results.length) return null;
 
+  // compute normalized to-token amounts
   const scored = results.map(r => {
     const rawAmount = r.toTokenAmount || (r.raw && (r.raw.toTokenAmount || r.raw.buyAmount)) || null;
     const normalized = rawAmount ? normalizeBigNumberString(rawAmount, toDecimals) : 0;
     return {r, normalized};
   });
-  scored.sort((a,b)=> b.normalized - a.normalized);
+  scored.sort((a,b)=> b.normalized - a.normalized); // higher output better
   return scored[0];
 }
 
@@ -888,7 +907,7 @@ async function performSwapUsing0x(rawQuote){
   }catch(e){ throw e; }
 }
 
-/* ================= QUOTE via 1inch + debounce */
+/* ================= QUOTE via 1inch + debounce (keeps existing behaviour) */
 let quoteTimer = null;
 function updateQuoteDebounced(){ clearTimeout(quoteTimer); quoteTimer = setTimeout(()=> updateQuote(), 140); }
 async function updateQuote(){
@@ -906,6 +925,7 @@ async function updateQuote(){
       const normalizedOut = best.normalized;
       toAmountEl.value = (normalizedOut===0)? '' : Number(normalizedOut.toFixed(6)).toString();
     } else {
+      // fallback to 1inch quote endpoint for output
       try {
         const r = await fetchWithTimeout(`${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${parsed}`,{},3000);
         if (r.ok){ const j = await r.json(); if (j && j.toTokenAmount) { const formattedTo = ethers.utils.formatUnits(ethers.BigNumber.from(j.toTokenAmount), toDecimals); toAmountEl.value = formattedTo; } }
@@ -937,6 +957,7 @@ async function updateEstimate(){
     const display = (Number.isFinite(estimatedTo)) ? Number(estimatedTo.toFixed(6)).toString() : '';
     toAmountEl.value = display;
 
+    // update small price displays under amount/estimate
     fromUsdSmall.style.display = 'block';
     toUsdSmall.style.display = 'block';
     fromUnitSmall.style.display = 'block';
@@ -970,6 +991,7 @@ function resolveTokenInputsIfNeeded(){
       chip.textContent = found.symbol || found.name || '';
       chip.style.display = 'inline-flex';
 
+      // update 24h change if present (ONLY percent)
       try {
         const stat = cgStatsMap.get(low(found.symbol)) || cgStatsMap.get(low(found.name));
         const el = (inputEl.id === 'fromToken') ? fromChangeEl : toChangeEl;
@@ -984,10 +1006,11 @@ function resolveTokenInputsIfNeeded(){
   tryResolve(fromTokenInput); tryResolve(toTokenInput);
 }
 
-/* ================= SWAP ICON BEHAVIOR */
+/* ================= SWAP ICON BEHAVIOR (now in controls) */
 swapOutside.addEventListener('click', ()=>{
   swapOutside.classList.add('pressed');
   setTimeout(()=> swapOutside.classList.remove('pressed'), 300);
+  // swap values
   const fVal = fromTokenInput.value, tVal = toTokenInput.value;
   const fAddr = fromTokenInput.dataset.address, tAddr = toTokenInput.dataset.address;
   const fDec = fromTokenInput.dataset.decimals, tDec = toTokenInput.dataset.decimals;
@@ -1008,10 +1031,11 @@ swapOutside.addEventListener('click', ()=>{
   try{ typeof updateEstimate === 'function' && updateEstimate(); }catch(e){}
 });
 
-/* SWAP BUTTON behaviour */
+/* SWAP BUTTON behaviour: connect if needed then aggregate quotes and perform swap */
 swapBtn.addEventListener('click', async ()=> {
   try{
     if(!userAddress){ showToast('Connecting wallet...'); const ok = await connectWallet(); if(!ok){ showToast('Wallet connection failed'); return; } }
+    // ensure inputs
     const fromAddr = low(fromTokenInput.dataset.address || '');
     const toAddr = low(toTokenInput.dataset.address || '');
     const amount = fromAmountEl.value;
@@ -1026,14 +1050,20 @@ swapBtn.addEventListener('click', async ()=> {
     const best = await getBestQuote(fromAddr,toAddr,amountWei,fromDecimals,toDecimals,slippage);
     if(!best || !best.r){ showToast('No routes found'); return; }
 
+    // compute fee and prepare sequence: send fee tx then swap remaining amount
     const feeAmountRawBN = ethers.BigNumber.from(amountWei).mul(ethers.BigNumber.from(Math.round(FEE_PERCENT * 1e8))).div(ethers.BigNumber.from(1e8));
     const feeBN = feeAmountRawBN;
     const remainderBN = ethers.BigNumber.from(amountWei).sub(feeBN);
+    if (feeBN.lte(0)){
+      // fee rounds to 0, set feeBN=0 and remainder unchanged
+    }
 
     const approxOut = best.normalized;
     const label = `Swap ${amount} ${fromTokenInput.value} → approx ${approxOut.toFixed(6)} ${toTokenInput.value} via ${best.r.source}`;
+    // We keep the confirm dialog (native) to ensure the user explicitly approves the action.
     if(!confirm(label + '\n\nProceed with transaction?')){ showToast('Swap cancelled'); return; }
 
+    // If there is a fee and placeholder is set, attempt to transfer fee first
     if (feeBN.gt(0) && FEE_RECIPIENT && FEE_RECIPIENT !== '0xFEE_RECIPIENT_PLACEHOLDER') {
       showToast('Sending small fee to platform...');
       if (fromAddr === MATIC_ADDR) {
@@ -1048,6 +1078,7 @@ swapBtn.addEventListener('click', async ()=> {
       showToast('Fee placeholder not set — fee reserved off-chain; swap continues.');
     }
 
+    // perform actual swap for remainderBN
     if (remainderBN.lte(0)) { showToast('Amount after fee is zero; aborting'); return; }
     showToast('Submitting swap transaction...');
     let txResp = null;
@@ -1080,7 +1111,7 @@ swapBtn.addEventListener('click', async ()=> {
   }catch(e){ console.error('swap error', e); showToast('Swap error: '+(e.message||e)); }
 });
 
-/* Connect wallet (WalletConnect first, MetaMask fallback) */
+/* Connect wallet (WalletConnect first, MetaMask fallback), with mobile deep-links */
 let provider = null, signer = null, userAddress = null, web3modal = null;
 async function initWeb3Modal(){
   try{ web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' }); }catch(e){ console.warn('web3modal init', e); web3modal = null; }
@@ -1090,11 +1121,11 @@ initWeb3Modal();
 function setConnectedUI(address){
   if(address){ addrChip.style.display = 'inline-block'; addrChip.textContent = `${address.slice(0,6)}…${address.slice(-4)}`; }
   else { addrChip.style.display = 'none'; }
-  const pills = document.querySelectorAll('.glassy-btn');
+  const pills = document.querySelectorAll('.electric-pill');
   pills.forEach(p => { if(address) p.classList.add('connected'); else p.classList.remove('connected'); });
 }
 
-/* caret helpers */
+/* ================= CARET HELPERS: focus + place caret at end for faster typing */
 function placeCaretAtEnd(inputEl){
   try{
     const len = (inputEl.value || '').length;
@@ -1108,7 +1139,7 @@ function focusAndPlaceCaretAtEnd(inputEl){
   }catch(e){}
 }
 
-/* make left area clickable to show suggestions */
+/* Make whole left area clickable to focus the input and position caret at end for faster editing */
 fromBox.querySelector('.left').addEventListener('click', (e)=>{
   if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
   focusAndPlaceCaretAtEnd(fromTokenInput);
@@ -1120,17 +1151,19 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
   showDefaultList('to');
 });
 
-/* background refresh */
+/* ================= BACKGROUND PRICE REFRESH (keeps existing behaviour) */
 function startBackgroundRefresh(){
   setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 7000);
 }
 function scheduleActivePriceRefresh(){
+  // refresh prices for active tokens more frequently
   setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 900);
 }
 
-/* init */
+/* ================= INIT */
 (async function init(){
   await ensureTokensLoaded();
+  // preselect USDC as from if available
   const usdc = tokenList.find(t => t.address && t.address.toLowerCase() === USDC_ADDR.toLowerCase());
   if (usdc) {
     fromTokenInput.value = usdc.symbol || 'USDC';
@@ -1140,9 +1173,9 @@ function scheduleActivePriceRefresh(){
     ACTIVE_PRICE_ADDRS.add(low(usdc.address));
     fromChip.textContent = usdc.symbol || 'USDC'; fromChip.style.display = 'inline-flex';
     fromBox.classList.add('has-token');
+    // show percent if available
     const st = cgStatsMap.get(low(usdc.symbol)) || null;
     if (st && typeof st.change === 'number'){ fromChangeEl.style.display='block'; fromChangeEl.textContent = (st.change>=0?'+':'')+st.change.toFixed(2)+'%'; fromChangeEl.style.color = st.change>=0? '#9ef39e' : '#ff9e9e'; }
-    $('fromSymbol').textContent = usdc.symbol || 'USDC';
   }
   const top = tokenList.find(t => cgStatsMap.has(low(t.symbol)));
   if (top) {
@@ -1155,24 +1188,20 @@ function scheduleActivePriceRefresh(){
     toBox.classList.add('has-token');
     const st2 = cgStatsMap.get(low(top.symbol)) || null;
     if (st2 && typeof st2.change === 'number'){ toChangeEl.style.display='block'; toChangeEl.textContent = (st2.change>=0?'+':'')+st2.change.toFixed(2)+'%'; toChangeEl.style.color = st2.change>=0? '#9ef39e' : '#ff9e9e'; }
-    $('toSymbol').textContent = top.symbol || top.name;
   }
   updateUsdVisibility();
   fetchBothPrices();
   startBackgroundRefresh();
   scheduleActivePriceRefresh();
+
+  // animate swapOutside entrance
+  setTimeout(()=> { swapOutside.classList.add('enter'); }, 200);
 })();
 
-/* slippage change handled as part of swap flow */
-slippageSel.addEventListener('change', ()=>{ showToast('Slippage set to ' + slippageSel.value + '%', 1200); });
+/* SLIPPAGE UI */
+slippageSel.addEventListener('change', ()=>{ /* slippage integrated in swap flow */ });
 
-/* update small usd visibility helper */
-function updateUsdVisibility(){
-  if (fromTokenInput.dataset.address) fromUsdSmall.style.display = 'block';
-  if (toTokenInput.dataset.address) toUsdSmall.style.display = 'block';
-}
-
-/* expose debug */
+/* expose some functions globally for debugging or external calls */
 window.getTokenPriceUSD = getTokenPriceUSD;
 window.applyTokenSelection = applyTokenSelection;
 window.clearTokenSelection = clearTokenSelection;
@@ -1180,37 +1209,6 @@ window.updateQuoteDebounced = updateQuoteDebounced;
 window.fetchBothPrices = fetchBothPrices;
 window.updateEstimate = updateEstimate;
 window.scheduleActivePriceRefresh = scheduleActivePriceRefresh;
-
-/* quick connect demo binding (calls main connect) */
-connectQuick.addEventListener('click', async ()=>{ await connectWallet(); });
-
-/* minimal wallet connect stub (replace with real implementation) */
-async function connectWallet(){
-  try{
-    // try web3modal first (if configured)
-    if (web3modal){
-      const w = await web3modal.connect();
-      provider = new ethers.providers.Web3Provider(w);
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
-      setConnectedUI(userAddress);
-      showToast('Wallet connected');
-      return true;
-    }
-    // fallback to window.ethereum
-    if (window.ethereum){
-      provider = new ethers.providers.Web3Provider(window.ethereum);
-      await provider.send("eth_requestAccounts", []);
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress();
-      setConnectedUI(userAddress);
-      showToast('Wallet connected');
-      return true;
-    }
-    showToast('No wallet available');
-    return false;
-  }catch(e){ console.warn('connectWallet', e); showToast('Wallet connect failed'); return false; }
-}
 </script>
 
 </body>
