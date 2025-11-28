@@ -89,15 +89,55 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* SWAP OUTSIDE CONTROL moved into controls area */
 .swap-outside{
   width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.06);box-shadow:0 8px 20px rgba(120,0,255,0.06);cursor:pointer;font-size:20px;color:#fff;transition:transform 160ms ease,box-shadow 160ms ease;backdrop-filter:blur(6px)}
-.swap-outside:hover{transform:translateY(-4px) rotate(-10deg)}
+.swap-outside:hover{transform:translateY(-4px) rotate(0deg)}
 
-/* SLIPPAGE THEME - now visually matches the app (styled select) */
+/* SLIPPAGE THEME - NOLA styled select (replace old .slippage-min) */
+.select-wrap.slippage-wrap{position:relative;display:inline-block;min-width:92px}
 .slippage-min{
-  appearance:none;padding:8px 10px;border-radius:10px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:0;font-weight:800;font-size:13px;box-shadow:0 8px 22px rgba(106,0,255,0.12);
-  -webkit-appearance:none; -moz-appearance:none;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  padding:8px 38px 8px 12px;
+  border-radius:12px;
+  background:linear-gradient(90deg,var(--accent-1),var(--accent-2));
+  color:#fff;
+  border:1px solid rgba(255,255,255,0.10);
+  font-weight:800;
+  font-size:13px;
+  box-shadow:0 10px 30px rgba(112,19,255,0.10);
+  cursor:pointer;
+  text-align:left;
+  min-width:84px;
+  transition:transform 120ms ease,box-shadow 120ms ease,opacity 120ms ease;
+  backdrop-filter: blur(6px);
 }
-.slippage-min option{background:transparent;color:#111}
+.slippage-min:hover{ transform:translateY(-2px); box-shadow:0 14px 36px rgba(112,19,255,0.14); }
+.slippage-min:focus{ outline:none; box-shadow:0 18px 44px rgba(180,68,255,0.18); }
 
+/* hide native arrow in IE/Edge */
+.slippage-min::-ms-expand{ display:none; }
+
+/* custom arrow (SVG embedded) */
+.select-wrap.slippage-wrap::after{
+  content:"";
+  position:absolute;
+  right:12px;
+  top:50%;
+  transform:translateY(-50%);
+  width:14px;height:14px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path fill='%23ffffff' fill-opacity='0.95' d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat:no-repeat;
+  background-position:center;
+  opacity:0.95;
+  pointer-events:none;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+}
+
+/* Try to improve option styling where supported (some browsers ignore) */
+.slippage-min option{
+  padding:8px;
+  background:transparent;
+  color:#151225; /* options display on light bg in native UI */
+  font-weight:800;
+}
 /* tiny glassy tooltip / toast */
 .toast{position:fixed;right:18px;bottom:90px;z-index:9999;padding:12px 18px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02));backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(0,0,0,0.5);color:#fff;font-weight:700}
 
@@ -141,7 +181,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
 
 <!-- particles will be created by script -->
 <!-- floating logo uses logo.gif as requested -->
-<img id="logoFloat" class="logo" src="logo.gif" alt="NOLA Logo">
+<img id="logoFloat" class="logo" src="Logo.gif" alt="NOLA Logo">
 
 <!-- top-right connect -->
 <div class="top-right-connect">
@@ -225,11 +265,14 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
         <div id="swapOutside" class="swap-outside" title="Swap From ↔ To">⇅</div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:10px;">
-        <select id="slippage" class="slippage-min" title="Select slippage">
-          <option value="0.1">0.1%</option><option value="0.5">0.5%</option><option value="1" selected>1%</option><option value="2">2%</option><option value="3">3%</option>
-        </select>
-      </div>
+      <div class="select-wrap slippage-wrap">
+  <select id="slippage" class="slippage-min" title="Select slippage">
+    <option value="0.5">0.5%</option>
+    <option value="1" selected>1%</option>
+    <option value="2">2%</option>
+    <option value="3">3%</option>
+  </select>
+</div>
     </div>
 
     <div class="swap-row" style="margin-top:14px">
@@ -251,7 +294,7 @@ position:relative;display:inline-flex;align-items:center;gap:12px;padding:10px 2
 <!-- footer -->
 <div class="footer">
   <div>© 2025 NOLA — All rights reserved</div>
-  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
+  <div><a href="PrivacyTerms.html" id="privacyTerms">Terms & Privacy</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
 </div>
 
 <!-- LIBS -->
