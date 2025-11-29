@@ -447,6 +447,12 @@ let chatUser = localStorage.getItem("chatUser") || null;
 let renderedIds = new Set(); // prevent duplicates
 let subscription = null;
 
+/* NEW: track the highest id we've rendered so we can poll only new rows */
+let lastId = 0;
+
+/* NEW: if realtime is working we can skip polling */
+let isRealtimeSubscribed = false;
+
 /* ====== UI: show modal if username missing ====== */
 if(!chatUser){
   usernameModal.style.display = "flex";
@@ -499,6 +505,10 @@ function renderMessage(msg){
   if(renderedIds.has(String(msg.id))) return; // prevent duplicates
   renderedIds.add(String(msg.id));
 
+  // update lastId safely (msg.id might be a string for bigints)
+  const numericId = Number(msg.id);
+  if(!Number.isNaN(numericId) && numericId > lastId) lastId = numericId;
+
   const el = document.createElement('div');
   el.className = 'chat-msg';
 
@@ -515,7 +525,7 @@ function renderMessage(msg){
   `;
 
   chatMessages.appendChild(el);
-  // keep only last 400 DOM nodes to avoid bloat
+  // keep only last 500 DOM nodes to avoid bloat
   while(chatMessages.children.length > 500){
     chatMessages.removeChild(chatMessages.firstChild);
   }
@@ -546,9 +556,18 @@ async function loadHistory(){
     chatMessages.innerHTML = '';
     if(!data || !data.length){
       showPlaceholder();
+      lastId = 0;
       return;
     }
+
     data.forEach(renderMessage);
+
+    // ensure lastId matches the last item from history (safe fallback)
+    const last = data[data.length - 1];
+    if(last && last.id){
+      const numericLast = Number(last.id);
+      if(!Number.isNaN(numericLast) && numericLast > lastId) lastId = numericLast;
+    }
   }catch(err){
     console.error('loadHistory exception', err);
     chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Chat unavailable</div>`;
@@ -568,8 +587,14 @@ function subscribeRealtime(){
       }
     })
     .subscribe(status => {
-      // optional: status could be 'SUBSCRIBED'
-      // console.log('subscription status', status);
+      // status might be 'SUBSCRIBED' when active
+      if(status === 'SUBSCRIBED'){
+        isRealtimeSubscribed = true;
+      } else {
+        // if subscription closed/fails, we'll fall back to polling
+        isRealtimeSubscribed = false;
+      }
+      // optional: console.log('subscription status', status);
     });
 }
 
@@ -578,6 +603,45 @@ async function initChatIfNeeded(){
   await loadHistory();
   subscribeRealtime();
 }
+
+/* ====== Polling fallback: fetch new messages every interval if realtime is not active ====== */
+async function pollNewMessages(){
+  // if realtime is working, skip polling to avoid duplication
+  if(isRealtimeSubscribed) return;
+
+  try{
+    // only fetch messages with id > lastId
+    // if lastId is 0, this will fetch all (up to 200) but you usually have history already
+    const q = supabase
+      .from('chat_messages')
+      .select('id, user, text, created_at')
+      .order('id', { ascending: true })
+      .limit(200);
+
+    // apply filter only if we have a lastId > 0
+    let res;
+    if(lastId > 0){
+      res = await q.gt('id', lastId);
+    } else {
+      res = await q;
+    }
+
+    const { data, error } = await res;
+    if(error){
+      console.warn('polling fetch error', error);
+      return;
+    }
+    if(data && data.length){
+      data.forEach(renderMessage);
+    }
+  }catch(e){
+    console.error('pollNewMessages exception', e);
+  }
+}
+
+/* Start polling every 1500ms (1.5s). Change intervalMs if you prefer 1000 or 2000. */
+const pollingIntervalMs = 1500;
+setInterval(pollNewMessages, pollingIntervalMs);
 
 /* ====== Send message logic (small debounce) ====== */
 let sending = false;
@@ -601,8 +665,7 @@ sendChatBtn.addEventListener('click', async () => {
       console.error('Insert error', error);
       alert('Send failed. Check console.');
     } else {
-      // we rely on realtime subscription to render the message
-      // but render immediately for low-latency UX (local echo)
+      // local echo (DB may return the row with id)
       if(data && data[0]){
         renderMessage(data[0]);
       }
@@ -634,7 +697,6 @@ chatToggle && chatToggle.addEventListener('click', () => {
 if(chatUser){
   initChatIfNeeded();
 }
-
 </script>
 <script>
 /* =================== CONFIG & STATE =================== */
