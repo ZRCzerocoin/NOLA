@@ -373,6 +373,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
     <!-- quick swap placed visually under slippage (still within same container) -->
     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
       <button id="quickSwapBtn" class="quick-cta" title="Quick Swap (uses cached quote)">
+        <span class="icon">⚡</span>
         <span id="quickLabel">Quick Swap</span>
         <span id="quickSpinner" style="display:none" class="btn-spinner"></span>
       </button>
@@ -630,6 +631,9 @@ async function initChat(){
 }
 </script>
 <script>
+  /* ================= PARTICLES */
+(function createParticles(){ for(let i=0;i<60;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
+
 /* =================== CONFIG & STATE =================== */
 const CHAIN_ID = 137;
 const CHAIN_ID_HEX = '0x89';
