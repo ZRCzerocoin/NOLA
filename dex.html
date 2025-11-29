@@ -424,11 +424,14 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+/* ====== CONFIG ====== */
 const SUPABASE_URL = "https://qnpeauoskuipzcoaqbpy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucGVhdW9za3VpcHpjb2FxYnB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDU2MjksImV4cCI6MjA3OTk4MTYyOX0.zduOSQAt7FALN61IIEZiQDEcJjHu7vZ2STufC5laDcg";
 
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+/* ====== INIT CLIENT ====== */
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ====== ELEMENTS ====== */
 const chatSidebar = document.getElementById("chatSidebar");
 const chatToggle   = document.getElementById("chatToggle");
 const chatMessages = document.getElementById("chatMessages");
@@ -439,80 +442,198 @@ const usernameModal = document.getElementById("usernameModal");
 const modalUsername = document.getElementById("modalUsername");
 const confirmUsername = document.getElementById("confirmUsername");
 
+/* ====== STATE ====== */
 let chatUser = localStorage.getItem("chatUser") || null;
-if (!chatUser) usernameModal.style.display = "flex";
+let renderedIds = new Set(); // prevent duplicates
+let subscription = null;
 
-// Colors only on usernames
-const userColors = {};
-function getColor(name) {
-  if (userColors[name]) return userColors[name];
-  const color = "#" + Math.floor(Math.random()*16777215).toString(16);
-  userColors[name] = color;
-  return color;
+/* ====== UI: show modal if username missing ====== */
+if(!chatUser){
+  usernameModal.style.display = "flex";
+} else {
+  // prefill modal input for convenience
+  if(modalUsername) modalUsername.value = chatUser;
 }
 
-// Confirm username
-confirmUsername.onclick = () => {
-  chatUser = modalUsername.value.trim() || "User" + Math.floor(Math.random()*999);
-  localStorage.setItem("chatUser", chatUser);
-  usernameModal.style.display = "none";
-};
+/* ====== username logic ====== */
+confirmUsername && (confirmUsername.onclick = async () => {
+  const v = (modalUsername.value || '').trim();
+  chatUser = v || ('User' + Math.floor(Math.random()*9999));
+  localStorage.setItem('chatUser', chatUser);
+  usernameModal.style.display = 'none';
 
-// Toggle chat panel horizontally
-chatToggle.onclick = () => {
-  chatSidebar.classList.toggle("open");
-};
+  // after username chosen, ensure history/sub is live
+  await initChatIfNeeded();
+});
 
-// Send message
-sendChatBtn.onclick = async () => {
-  const text = chatInput.value.trim();
-  if (!text) return;
+/* if user provides a username previously, init immediately */
+if(chatUser){
+  initChatIfNeeded();
+}
 
-  await db.from("chat_messages").insert({
-    user: chatUser,
-    text: text
-  });
+/* ====== Help: color only usernames ====== */
+const userColors = {};
+function getColor(name){
+  if(userColors[name]) return userColors[name];
+  // generate visually pleasing palette (limit brightness)
+  const r = Math.floor(100 + Math.random()*120);
+  const g = Math.floor(50 + Math.random()*140);
+  const b = Math.floor(100 + Math.random()*120);
+  const col = `rgb(${r},${g},${b})`;
+  userColors[name] = col;
+  return col;
+}
 
-  chatInput.value = "";
-};
+/* ====== Render message safely ====== */
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 
-// Render a message
-function renderMessage(msg) {
-  const el = document.createElement("div");
-  el.className = "chat-msg";
+function renderMessage(msg){
+  if(!msg || !msg.id) return;
+  if(renderedIds.has(String(msg.id))) return; // prevent duplicates
+  renderedIds.add(String(msg.id));
+
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+
+  const userEsc = escapeHtml(msg.user || 'Anon');
+  const textEsc = escapeHtml(msg.text || '');
+  const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : '';
 
   el.innerHTML = `
-    <b style="color:${getColor(msg.user)}">${msg.user}</b><br>
-    <span>${msg.text}</span>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="color:${getColor(userEsc)};font-weight:800">${userEsc}</b>
+      <span style="font-size:11px;color:rgba(255,255,255,0.5);margin-left:auto">${time}</span>
+    </div>
+    <div style="margin-top:6px;white-space:pre-wrap">${textEsc}</div>
   `;
 
   chatMessages.appendChild(el);
+  // keep only last 400 DOM nodes to avoid bloat
+  while(chatMessages.children.length > 500){
+    chatMessages.removeChild(chatMessages.firstChild);
+  }
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Load previous 200 messages
-async function loadHistory() {
-  const { data } = await db
-    .from("chat_messages")
-    .select("*")
-    .order("id", { ascending: true })
-    .limit(200);
-
-  chatMessages.innerHTML = "";
-  data.forEach(renderMessage);
+/* show placeholder when empty */
+function showPlaceholder(){
+  chatMessages.innerHTML = `<div style="opacity:0.7;text-align:center;margin-top:20px">No messages yet — be first!</div>`;
 }
 
-loadHistory();
+/* ====== Load history (200 messages) ====== */
+async function loadHistory(){
+  try{
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('id, user, text, created_at')
+      .order('id', { ascending: true })
+      .limit(200);
 
-// Realtime updates
-db.channel("public_chat")
-  .on("postgres_changes", 
-    { event: "INSERT", schema: "public", table: "chat_messages" }, 
-    payload => {
-      renderMessage(payload.new);
+    if(error){
+      console.error('History load error', error);
+      chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Failed to load chat history</div>`;
+      return;
     }
-  )
-  .subscribe();
+
+    renderedIds.clear();
+    chatMessages.innerHTML = '';
+    if(!data || !data.length){
+      showPlaceholder();
+      return;
+    }
+    data.forEach(renderMessage);
+  }catch(err){
+    console.error('loadHistory exception', err);
+    chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Chat unavailable</div>`;
+  }
+}
+
+/* ====== Subscribe to realtime inserts ====== */
+function subscribeRealtime(){
+  // avoid multiple subscriptions
+  if(subscription) return;
+
+  subscription = supabase
+    .channel('public:chat_messages')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
+      if(payload && payload.new){
+        renderMessage(payload.new);
+      }
+    })
+    .subscribe(status => {
+      // optional: status could be 'SUBSCRIBED'
+      // console.log('subscription status', status);
+    });
+}
+
+/* ====== Initialize chat if needed (after username chosen) ====== */
+async function initChatIfNeeded(){
+  await loadHistory();
+  subscribeRealtime();
+}
+
+/* ====== Send message logic (small debounce) ====== */
+let sending = false;
+sendChatBtn.addEventListener('click', async () => {
+  const text = (chatInput.value || '').trim();
+  if(!text) return;
+  if(!chatUser){
+    usernameModal.style.display = 'flex';
+    return;
+  }
+  if(sending) return;
+  sending = true;
+  sendChatBtn.disabled = true;
+
+  try{
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({ user: chatUser, text });
+
+    if(error){
+      console.error('Insert error', error);
+      alert('Send failed. Check console.');
+    } else {
+      // we rely on realtime subscription to render the message
+      // but render immediately for low-latency UX (local echo)
+      if(data && data[0]){
+        renderMessage(data[0]);
+      }
+      chatInput.value = '';
+    }
+  }catch(e){
+    console.error('Send exception', e);
+    alert('Send failed');
+  } finally {
+    // small cooldown
+    setTimeout(()=>{ sending=false; sendChatBtn.disabled=false; }, 500);
+  }
+});
+
+/* support pressing Enter to send */
+chatInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendChatBtn.click();
+  }
+});
+
+/* Toggle panel (horizontal slide) */
+chatToggle && chatToggle.addEventListener('click', () => {
+  chatSidebar.classList.toggle('open');
+});
+
+/* ensure we initialize if user already set at load */
+if(chatUser){
+  initChatIfNeeded();
+}
 
 </script>
 <script>
