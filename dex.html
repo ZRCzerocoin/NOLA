@@ -421,9 +421,8 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
 <script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
   <!-- chat -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 /* ====== CONFIG ====== */
 const SUPABASE_URL = "https://qnpeauoskuipzcoaqbpy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucGVhdW9za3VpcHpjb2FxYnB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDU2MjksImV4cCI6MjA3OTk4MTYyOX0.zduOSQAt7FALN61IIEZiQDEcJjHu7vZ2STufC5laDcg";
@@ -444,21 +443,14 @@ const confirmUsername = document.getElementById("confirmUsername");
 
 /* ====== STATE ====== */
 let chatUser = localStorage.getItem("chatUser") || null;
-let renderedIds = new Set(); // prevent duplicates
-let subscription = null;
-
-/* NEW: track the highest id we've rendered so we can poll only new rows */
-let lastId = 0;
-
-/* NEW: if realtime is working we can skip polling */
-let isRealtimeSubscribed = false;
+let renderedIds = new Set(); 
+let lastId = 0; // track highest id rendered
 
 /* ====== UI: show modal if username missing ====== */
 if(!chatUser){
   usernameModal.style.display = "flex";
-} else {
-  // prefill modal input for convenience
-  if(modalUsername) modalUsername.value = chatUser;
+} else if(modalUsername) {
+  modalUsername.value = chatUser;
 }
 
 /* ====== username logic ====== */
@@ -467,21 +459,18 @@ confirmUsername && (confirmUsername.onclick = async () => {
   chatUser = v || ('User' + Math.floor(Math.random()*9999));
   localStorage.setItem('chatUser', chatUser);
   usernameModal.style.display = 'none';
-
-  // after username chosen, ensure history/sub is live
-  await initChatIfNeeded();
+  await initChat();
 });
 
-/* if user provides a username previously, init immediately */
+/* if username already exists */
 if(chatUser){
-  initChatIfNeeded();
+  initChat();
 }
 
 /* ====== Help: color only usernames ====== */
 const userColors = {};
 function getColor(name){
   if(userColors[name]) return userColors[name];
-  // generate visually pleasing palette (limit brightness)
   const r = Math.floor(100 + Math.random()*120);
   const g = Math.floor(50 + Math.random()*140);
   const b = Math.floor(100 + Math.random()*120);
@@ -502,10 +491,9 @@ function escapeHtml(s){
 
 function renderMessage(msg){
   if(!msg || !msg.id) return;
-  if(renderedIds.has(String(msg.id))) return; // prevent duplicates
+  if(renderedIds.has(String(msg.id))) return; 
   renderedIds.add(String(msg.id));
 
-  // update lastId safely (msg.id might be a string for bigints)
   const numericId = Number(msg.id);
   if(!Number.isNaN(numericId) && numericId > lastId) lastId = numericId;
 
@@ -525,19 +513,18 @@ function renderMessage(msg){
   `;
 
   chatMessages.appendChild(el);
-  // keep only last 500 DOM nodes to avoid bloat
+
   while(chatMessages.children.length > 500){
     chatMessages.removeChild(chatMessages.firstChild);
   }
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-/* show placeholder when empty */
 function showPlaceholder(){
   chatMessages.innerHTML = `<div style="opacity:0.7;text-align:center;margin-top:20px">No messages yet — be first!</div>`;
 }
 
-/* ====== Load history (200 messages) ====== */
+/* ====== Load history ====== */
 async function loadHistory(){
   try{
     const { data, error } = await supabase
@@ -561,89 +548,36 @@ async function loadHistory(){
     }
 
     data.forEach(renderMessage);
-
-    // ensure lastId matches the last item from history (safe fallback)
-    const last = data[data.length - 1];
-    if(last && last.id){
-      const numericLast = Number(last.id);
-      if(!Number.isNaN(numericLast) && numericLast > lastId) lastId = numericLast;
-    }
   }catch(err){
     console.error('loadHistory exception', err);
     chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Chat unavailable</div>`;
   }
 }
 
-/* ====== Subscribe to realtime inserts ====== */
-function subscribeRealtime(){
-  // avoid multiple subscriptions
-  if(subscription) return;
+/* ====== Polling: fetch new messages every 1.5s ====== */
+async function fetchNewMessages() {
+    try {
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .select('id, user, text, created_at')
+            .gt('id', lastId)
+            .order('id', { ascending: true });
 
-  subscription = supabase
-    .channel('public:chat_messages')
-    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, payload => {
-      if(payload && payload.new){
-        renderMessage(payload.new);
-      }
-    })
-    .subscribe(status => {
-      // status might be 'SUBSCRIBED' when active
-      if(status === 'SUBSCRIBED'){
-        isRealtimeSubscribed = true;
-      } else {
-        // if subscription closed/fails, we'll fall back to polling
-        isRealtimeSubscribed = false;
-      }
-      // optional: console.log('subscription status', status);
-    });
-}
+        if(error){
+            console.error('Fetch new messages error:', error);
+            return;
+        }
 
-/* ====== Initialize chat if needed (after username chosen) ====== */
-async function initChatIfNeeded(){
-  await loadHistory();
-  subscribeRealtime();
-}
-
-/* ====== Polling fallback: fetch new messages every interval if realtime is not active ====== */
-async function pollNewMessages(){
-  // if realtime is working, skip polling to avoid duplication
-  if(isRealtimeSubscribed) return;
-
-  try{
-    // only fetch messages with id > lastId
-    // if lastId is 0, this will fetch all (up to 200) but you usually have history already
-    const q = supabase
-      .from('chat_messages')
-      .select('id, user, text, created_at')
-      .order('id', { ascending: true })
-      .limit(200);
-
-    // apply filter only if we have a lastId > 0
-    let res;
-    if(lastId > 0){
-      res = await q.gt('id', lastId);
-    } else {
-      res = await q;
+        if(data && data.length){
+            data.forEach(renderMessage);
+        }
+    } catch (e) {
+        console.error('fetchNewMessages exception:', e);
     }
-
-    const { data, error } = await res;
-    if(error){
-      console.warn('polling fetch error', error);
-      return;
-    }
-    if(data && data.length){
-      data.forEach(renderMessage);
-    }
-  }catch(e){
-    console.error('pollNewMessages exception', e);
-  }
 }
+setInterval(fetchNewMessages, 1500);
 
-/* Start polling every 1500ms (1.5s). Change intervalMs if you prefer 1000 or 2000. */
-const pollingIntervalMs = 1500;
-setInterval(pollNewMessages, pollingIntervalMs);
-
-/* ====== Send message logic (small debounce) ====== */
+/* ====== Send message ====== */
 let sending = false;
 sendChatBtn.addEventListener('click', async () => {
   const text = (chatInput.value || '').trim();
@@ -664,23 +598,20 @@ sendChatBtn.addEventListener('click', async () => {
     if(error){
       console.error('Insert error', error);
       alert('Send failed. Check console.');
-    } else {
-      // local echo (DB may return the row with id)
-      if(data && data[0]){
-        renderMessage(data[0]);
-      }
+    } else if(data && data[0]){
+      // local echo
+      renderMessage(data[0]);
       chatInput.value = '';
     }
   }catch(e){
     console.error('Send exception', e);
     alert('Send failed');
   } finally {
-    // small cooldown
     setTimeout(()=>{ sending=false; sendChatBtn.disabled=false; }, 500);
   }
 });
 
-/* support pressing Enter to send */
+/* ====== Send on Enter ====== */
 chatInput.addEventListener('keydown', (e)=>{
   if(e.key === 'Enter' && !e.shiftKey){
     e.preventDefault();
@@ -688,14 +619,14 @@ chatInput.addEventListener('keydown', (e)=>{
   }
 });
 
-/* Toggle panel (horizontal slide) */
+/* ====== Toggle chat sidebar ====== */
 chatToggle && chatToggle.addEventListener('click', () => {
   chatSidebar.classList.toggle('open');
 });
 
-/* ensure we initialize if user already set at load */
-if(chatUser){
-  initChatIfNeeded();
+/* ====== Init chat ====== */
+async function initChat(){
+  await loadHistory();
 }
 </script>
 <script>
