@@ -642,7 +642,7 @@ document.querySelectorAll('.section-wrapper, .container').forEach(el=>{
     const insideSuggestion = !!e.target.closest('.suggestions');
     const insideInput = !!e.target.closest('input, button, .glassy-btn, .quick-cta');
     if (insideSuggestion || insideInput) return;
-    chatSidebar.classList.add('close');
+    chatSidebar.classList.add('open');
   });
 });
 
