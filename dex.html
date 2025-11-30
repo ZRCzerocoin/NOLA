@@ -429,7 +429,6 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
 <script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
   <!-- chat -->
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 /* ====== CONFIG ====== */
 const SUPABASE_URL = "https://qnpeauoskuipzcoaqbpy.supabase.co";
@@ -493,7 +492,7 @@ function escapeHtml(s){
     .replace(/&/g,'&amp;')
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;')
+    .replace(/\"/g,'&quot;')
     .replace(/'/g,'&#39;');
 }
 
@@ -822,7 +821,7 @@ let tokensLoadedPromise = loadTokensAndMarkets();
 async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
 
 /* =================== PRICING SOURCES & SMART PRICE (unchanged core) =================== */
-async function fetch0xPrice(addr){
+async function fetch0xPrice(addr, decimals=18){
   try {
     const sellToken = addr;
     const buyToken = USDC_ADDR;
@@ -851,7 +850,7 @@ async function fetch1InchQuotePrice(addr, decimals=18){
     return usdc;
   } catch(e){ return null; }
 }
-async function fetchCoingeckoSimple(addr){
+async function fetchCoingeckoSimple(addr, decimals=18){
   try {
     const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${addr}&vs_currencies=usd`;
     const res = await fetchWithTimeout(url, {}, 3000);
@@ -862,7 +861,7 @@ async function fetchCoingeckoSimple(addr){
     return null;
   } catch(e){ return null; }
 }
-async function fetchDexscreenerPrice(addr){
+async function fetchDexscreenerPrice(addr, decimals=18){
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
     const res = await fetchWithTimeout(url,{},3000);
@@ -1478,12 +1477,13 @@ async function initWalletModal(){
   try{
     // Attempt a generic initialization using the provided scripts. API shape may vary by library version.
     if(window.Web3Modal && window.Web3Modal.default){
-      // If using a bundled Web3Modal export
       web3modal = new window.Web3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, theme: 'dark' });
     } else if(window.Web3Modal){
       web3modal = window.Web3Modal;
-    } else if(window.WalletConnectModal){
-      web3modal = new window.WalletConnectModal({ projectId: WALLETCONNECT_PROJECT_ID });
+    } else if(window.WalletConnectModal && window.WalletConnectModal.default){
+      web3modal = new window.WalletConnectModal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' });
+    } else if(window.WalletConnectWeb3Modal && window.WalletConnectWeb3Modal.default){
+      web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' });
     } else {
       console.warn('Web3Modal library not found; wallet modal will be degraded.');
       web3modal = null;
