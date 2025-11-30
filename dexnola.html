@@ -287,6 +287,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 #walletFallbackModal .wallet-list { display:flex;gap:10px;flex-wrap:wrap;margin-top:12px; }
 .wallet-btn { padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:pointer;font-weight:800 }
 </style>
+</style>
 </head>
 <body>
 
@@ -471,6 +472,11 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <!-- try to include the latest Web3Modal v3 and WalletConnect v2 script if present (developer will swap versions if different) -->
 <script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
 <script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
+<script>
+/* ================= PARTICLES */
+(function createParticles(){ for(let i=0;i<60;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
+
+/* =================
   <!-- chat -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
