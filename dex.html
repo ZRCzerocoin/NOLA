@@ -1467,7 +1467,8 @@ connectFloating.addEventListener('click', async ()=>{
     setBusy(connectFloating, true);
     try { await connectWallet(); } finally { setBusy(connectFloating, false); }
   }
-});
+}););
+
 
 /* =================== SUGGESTIONS / DEFAULTS / INIT (kept) =================== */
 async function ensureTokensLoaded(){
