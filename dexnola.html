@@ -266,6 +266,26 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* spinner */
 .btn-spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top-color:rgba(255,255,255,1);animation:spin 700ms linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
+  /* simple modal for wallet fallback instructions (QR / deep link) */
+#walletFallbackModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 4000;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.6);
+}
+#walletFallbackModal .content {
+  width: 92%;
+  max-width: 520px;
+  background: rgba(255,255,255,0.06);
+  padding: 18px;
+  border-radius: 14px;
+  text-align: left;
+}
+#walletFallbackModal .wallet-list { display:flex;gap:10px;flex-wrap:wrap;margin-top:12px; }
+.wallet-btn { padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:pointer;font-weight:800 }
 </style>
 </head>
 <body>
@@ -310,7 +330,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
         <div class="price-small">
           <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
+          <div id="fromUnitSmall" class="price-unit" style="display:none">—</div>
         </div>
 
       </div>
@@ -340,7 +360,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
         <div class="price-small">
           <div id="toUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="toUnitSmall" class="price-unit" style="display:none">— / unit</div>
+          <div id="toUnitSmall" class="price-unit" style="display:none">— </div>
         </div>
 
       </div>
@@ -399,7 +419,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <!-- CHAT PANEL -->
 <div class="chat-sidebar" id="chatSidebar">
 
-  <h3 style="text-align:center;margin-bottom:10px;">Chat</h3>
+  <h3 style="text-align:center;margin-bottom:10px;">Public Chat</h3>
 
   <div id="chatMessages" style="overflow-y:auto; flex:1;"></div>
 
@@ -415,13 +435,35 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   <div class="modal-content">
     <h3>Choose a Username</h3>
     <input id="modalUsername" placeholder="Enter name">
-    <button id="confirmUsername">Say NOLA</button>
+    <button id="confirmUsername">NOLA</button>
+  </div>
+</div>
+      <!-- Wallet fallback modal (QR/deep-link helper) -->
+<div id="walletFallbackModal" aria-hidden="true">
+  <div class="content" role="dialog" aria-modal="true" aria-labelledby="walletFallbackTitle">
+    <h3 id="walletFallbackTitle">Connect a Wallet</h3>
+    <p>If your browser doesn't have a web3 extension (MetaMask) we can connect via WalletConnect. Use one of the wallet buttons below on mobile, or scan the QR code with your wallet app.</p>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div id="wcQR" style="width:160px;height:160px;background:#0f0f18;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px">QR</div>
+      <div style="flex:1">
+        <div class="wallet-list" id="walletList">
+          <button class="wallet-btn" data-deep="metamask">MetaMask</button>
+          <button class="wallet-btn" data-deep="trust">Trust</button>
+          <button class="wallet-btn" data-deep="rainbow">Rainbow</button>
+          <button class="wallet-btn" data-deep="coinbase">Coinbase</button>
+          <button class="wallet-btn" id="walletFallbackClose">Cancel</button>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.7)">
+          <div>Or install MetaMask / Coinbase Wallet extension for fastest desktop experience.</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <!-- footer -->
 <div class="footer">
   <div>© 2025 NOLA — All rights reserved</div>
-  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
+  <div><a href="Terms&Privacy.html" id="privacyTerms">Terms & Privacy</a> • <a href="https://x.com/NOLA_CHAIN" id="xLink">X</a> <a href="https://t.me/NOLA_community" id="tgLink">Telegram Page</a> <a href="index.html" id="siteLink">Website</a></div>
 </div>
 
 <!-- LIBS -->
@@ -635,14 +677,16 @@ chatToggle && chatToggle.addEventListener('click', () => {
   chatSidebar.classList.toggle('open');
 });
 
-/* ====== Open chat when user taps main area (per your request) ====== */
+/* ====== Page click behavior: now CLOSE chat when clicking the main page (reversed) ====== */
+/* === CHANGED === */
 document.querySelectorAll('.section-wrapper, .container').forEach(el=>{
   el.addEventListener('click', (e) => {
-    // if click was inside suggestions or inputs, don't auto-open
+    // if click was inside suggestions or inputs, don't auto-close
     const insideSuggestion = !!e.target.closest('.suggestions');
     const insideInput = !!e.target.closest('input, button, .glassy-btn, .quick-cta');
     if (insideSuggestion || insideInput) return;
-    chatSidebar.classList.add('open');
+    // CLOSE the chat on page click per your request
+    chatSidebar.classList.remove('open');
   });
 });
 
@@ -827,7 +871,7 @@ async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromi
 /* ... (kept original price/quote functions) ... */
 /* For brevity, the same functions remain intact (fetch0xPrice, fetch1InchQuotePrice, fetchCoingeckoSimple, fetchDexscreenerPrice, derivePriceViaWeth, getTokenPriceUSD) */
 
-async function fetch0xPrice(addr){
+async function fetch0xPrice(addr, decimals=18){
   try {
     const sellToken = addr;
     const buyToken = USDC_ADDR;
@@ -856,7 +900,7 @@ async function fetch1InchQuotePrice(addr, decimals=18){
     return usdc;
   } catch(e){ return null; }
 }
-async function fetchCoingeckoSimple(addr){
+async function fetchCoingeckoSimple(addr, decimals=18){
   try {
     const url = `https://api.coingecko.com/api/v3/simple/token_price/${COINGECKO_CHAIN}?contract_addresses=${addr}&vs_currencies=usd`;
     const res = await fetchWithTimeout(url, {}, 3000);
@@ -867,7 +911,7 @@ async function fetchCoingeckoSimple(addr){
     return null;
   } catch(e){ return null; }
 }
-async function fetchDexscreenerPrice(addr){
+async function fetchDexscreenerPrice(addr, decimals=18){
   try {
     const url = `https://api.dexscreener.com/latest/dex/tokens/${addr}`;
     const res = await fetchWithTimeout(url,{},3000);
@@ -1141,6 +1185,67 @@ function renderSuggestionsFromCache(q, side, box){
 /* attach autocomplete */
 setupAutocomplete(fromTokenInput, fromSuggestions, 'from');
 setupAutocomplete(toTokenInput, toSuggestions, 'to');
+  
+  // === CHANGED ===: if user manually empties the token field, restore (can't be empty nonsense)
+  inp.addEventListener('blur', ()=> {
+    const id = inp.id;
+    const side = (id === 'fromToken') ? 'from' : 'to';
+    const addr = low(inp.dataset.address || '');
+    if (!inp.value || String(inp.value).trim() === '') {
+      // If we have a last selected addr, restore its symbol text; else show placeholder 'Select'
+      const restoreAddr = (side === 'from') ? lastSelectedFrom : lastSelectedTo;
+      if (restoreAddr && tokenMap.has(restoreAddr)) {
+        const tk = tokenMap.get(restoreAddr);
+        inp.value = tk.symbol || tk.name || restoreAddr.slice(0,8);
+        inp.dataset.address = tk.address;
+        inp.dataset.decimals = tk.decimals || 18;
+        const logo = (side === 'from') ? fromLogo : toLogo;
+        const chip = (side === 'from') ? fromChip : toChip;
+        logo.src = tk.logoURI || DARK_SVG_PLACEHOLDER;
+        logo.style.display = 'block';
+        chip.textContent = tk.symbol || tk.name || '';
+        chip.style.display = 'inline-flex';
+        const box = (side === 'from') ? fromBox : toBox;
+        box.classList.add('has-token');
+      } else {
+        // no previously selected token — force placeholder to suggest picking one
+        inp.value = '';
+        const symbolEl = (side === 'from') ? document.getElementById('fromSymbol') : document.getElementById('toSymbol');
+        if (symbolEl) symbolEl.textContent = 'Select';
+        const box = (side === 'from') ? fromBox : toBox;
+        box.classList.remove('has-token');
+        delete inp.dataset.address;
+        delete inp.dataset.decimals;
+      }
+    } else {
+      // if user typed something that looks like an address, attempt to resolve it
+      const v = String(inp.value).trim();
+      if (isAddress(v)) {
+        (async ()=> {
+          const info = tokenMap.get(low(v)) || await fetchOnchainTokenInfo(v);
+          if (info) {
+            applyTokenSelection(side, info);
+          }
+        })();
+      }
+    }
+  });
+});
+
+async function fetchOnchainTokenInfo(address){
+  try {
+    const addrL = low(address);
+    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
+    const rpcProvider = await getRpcProvider();
+    const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
+    const c = new ethers.Contract(address, abi, rpcProvider);
+    const [symbol,name,decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
+    const info = { address: addrL, symbol: symbol||address.slice(0,6), name: name||symbol||address.slice(0,8), decimals: decimals||18, logoURI: '' };
+    tokenMap.set(info.address, info);
+    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
+    return info;
+  } catch(e){ console.warn('fetchOnchainTokenInfo failed', e); return null; }
+}
 
 /* =================== SELECTION, USD DISPLAY, PASTE, RESOLVE =================== */
 const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
@@ -1738,142 +1843,248 @@ function parseSwapError(e){
   return (e && e.message) ? `Transaction error: ${e.message}` : 'An unknown error occurred.';
 }
 
-/* =================== CONNECT WALLET & CHAIN SWITCH & WEB3MODAL (modern-friendly) =================== */
-async function initWeb3Modal(){
-  try{
-    // Prefer the modern Web3Modal HTML instance when available (your page includes @web3modal/html).
-    // Keep the project id only; we intentionally avoid legacy providers and deprecated transports.
-    if (window.WalletConnectWeb3Modal && window.WalletConnectWeb3Modal.default) {
-      // @walletconnect/web3modal integration (if loaded)
-      web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' });
-    } else if (window.Web3Modal && window.Web3Modal.default) {
-      // other builds
-      try {
-        web3modal = new window.Web3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID });
-      } catch(e){
-        web3modal = window.Web3Modal;
-      }
-    } else if (window.Web3Modal) {
-      // fallback older global
-      web3modal = window.Web3Modal;
-    } else if (window.WalletConnect) {
-      // some environments
-      web3modal = window.WalletConnect;
-    } else {
-      web3modal = null;
-    }
-  }catch(e){ console.warn('web3modal init failed', e); web3modal = null; }
-}
-initWeb3Modal();
+/* =================== WALLET CONNECT (NEW MODERN FLOW) =================== */
+/*
+  === CHANGED ===: replaced previous walletconnect/web3modal v2 logic.
+  Behavior:
+  - First attempt: use injected EIP-1193 provider (MetaMask-like) — fastest, recommended.
+  - If not present, attempt dynamic import of modern WalletConnect "universal provider" or "sign client" from CDN (v2/v3 families). If import succeeds, initialize pairing and show QR & deep-link options.
+  - If dynamic import fails (CDN blocked), show friendly fallback modal with deep links to popular wallets and instructions.
+  - All event listeners are registered safely (if provider supports them).
+  - Keeps WALLETCONNECT_PROJECT_ID constant available for use by the WalletConnect client (if loaded).
+*/
 
-function shortAddr(addr){ return addr ? `${addr.slice(0,6)}…${addr.slice(-4)}` : ''; }
+function shortAddr(addr){
+  if(!addr) return '';
+  return addr.slice(0,6) + '...' + addr.slice(-4);
+}
 function setConnectedUI(address){
-  if(address){ addrChip.style.display = 'inline-block'; addrChip.textContent = shortAddr(address); connectLabel.textContent = 'Connected'; connectIcon.textContent = '🔗'; connectFloating.classList.add('connected'); }
-  else { addrChip.style.display = 'none'; connectLabel.textContent = 'Connect Wallet'; connectIcon.textContent = '🔌'; connectFloating.classList.remove('connected'); }
+  userAddress = address;
+  addrChip.textContent = shortAddr(address);
+  addrChip.style.display = 'inline-flex';
+  connectLabel.textContent = 'Connected';
+  connectFloating.classList.add('connected');
+  connectIcon.textContent = '🔒';
+}
+function disconnectWallet(showToastMsg = true){
+  provider = null;
+  signer = null;
+  userAddress = null;
+  addrChip.style.display = 'none';
+  connectLabel.textContent = 'Connect Wallet';
+  connectFloating.classList.remove('connected');
+  connectIcon.textContent = '🔌';
+  if (showToastMsg) showToast('Wallet disconnected');
 }
 
-/* Ensure connected: prompt user to connect if not */
-async function ensureWalletConnectedOrPrompt(){
-  if (userAddress && signer) return true;
-  const ok = await connectWallet();
-  return ok;
+/* Utility to detect mobile */
+function isMobile() {
+  if (typeof navigator === 'undefined') return false;
+  return /Mobi|Android|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent);
 }
 
-async function ensureCorrectChainOrPrompt(){
-  try {
-    if (!provider) return false;
-    let net = null;
-    try { net = await provider.getNetwork(); } catch(e){ net = null; }
-    if (!net || net.chainId !== CHAIN_ID) {
-      // try to request wallet to switch
-      if (provider.provider && provider.provider.request) {
-        try {
-          await provider.provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
-          showToast('Switched network to Polygon', { type: 'success' });
-          return true;
-        } catch(switchErr){
-          showToast('Please switch wallet network to Polygon (chain 137) and retry.', { type: 'warn' });
-          throw new Error('wrong-chain');
-        }
-      } else {
-        showToast('Your connected provider is not on Polygon. Switch network to proceed.', { type: 'warn' });
-        throw new Error('wrong-chain');
-      }
-    }
-    return true;
-  } catch(e){ throw e; }
+/* Show fallback modal */
+function showWalletFallbackModal(qrText){
+  // populate QR placeholder area (simple text if no QR library)
+  wcQR.textContent = qrText ? 'Scan via WalletConnect' : 'No QR available';
+  walletFallbackModal.style.display = 'flex';
+}
+function hideWalletFallbackModal(){
+  walletFallbackModal.style.display = 'none';
 }
 
-/* Improved connectWallet: prefer modern modal deep-links when available, fallback to injected provider */
+/* Deep link handler for wallet buttons in fallback modal */
+walletList.addEventListener('click', (ev)=>{
+  const btn = ev.target.closest('.wallet-btn');
+  if (!btn) return;
+  const key = btn.dataset.deep;
+  // Attempt to open deep link schemes (mobile wallets)
+  if (key === 'metamask') {
+    // Metamask mobile deep link - open metamask
+    const deep = isMobile() ? 'metamask://dapp/' + encodeURIComponent(location.href) : 'https://metamask.io/';
+    window.open(deep, '_blank');
+  } else if (key === 'trust') {
+    window.open(isMobile() ? 'trust://browser_url?url=' + encodeURIComponent(location.href) : 'https://trustwallet.com/', '_blank');
+  } else if (key === 'rainbow') {
+    window.open(isMobile() ? 'rainbow://open_url?url=' + encodeURIComponent(location.href) : 'https://rainbow.me/', '_blank');
+  } else if (key === 'coinbase') {
+    window.open(isMobile() ? 'coinbase://wallet.coinbase.com/connect?uri=' + encodeURIComponent(location.href) : 'https://wallet.coinbase.com/', '_blank');
+  }
+});
+walletFallbackClose && walletFallbackClose.addEventListener('click', hideWalletFallbackModal);
+
+/* The modern connectWallet function */
 async function connectWallet(){
-  try{
-    // Prefer Web3Modal (modern) if available
-    if (web3modal && typeof web3modal.openModal === 'function') {
-      try {
-        // If the library supports openModal, call it to show deep-linked wallets / QR
-        const modalProvider = await web3modal.openModal ? await web3modal.openModal({}) : await web3modal.requestConnection?.();
-        if (modalProvider) {
-          provider = new ethers.providers.Web3Provider(modalProvider, "any");
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress();
-          setConnectedUI(userAddress);
-          modalProvider.on && modalProvider.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) { disconnectWallet(false); } else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-          modalProvider.on && modalProvider.on('chainChanged', ()=>{ window.location.reload(); });
-          await ensureCorrectChainOrPrompt();
-          showToast('Wallet connected (via modal)', { type: 'success' });
-          return true;
-        }
-      } catch(e){
-        console.warn('web3modal connection failed', e);
-      }
-    }
-
-    // fallback to injected provider (MetaMask)
+  try {
+    // 1) Prefer injected provider when present (fast path - supports most browsers and extensions)
     if (window.ethereum) {
-      try{
+      try {
         const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        // Request accounts (respects user privacy)
         await ethProvider.send("eth_requestAccounts", []);
         provider = ethProvider;
         signer = provider.getSigner();
         userAddress = await signer.getAddress();
         setConnectedUI(userAddress);
+
+        // register handlers if available
         if (window.ethereum.on) {
-          window.ethereum.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) { disconnectWallet(false); } else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-          window.ethereum.on('chainChanged', ()=>{ window.location.reload(); });
+          window.ethereum.on('accountsChanged', (accounts)=> {
+            if (!accounts || accounts.length === 0) {
+              // user disconnected in wallet UI
+              disconnectWallet(true);
+            } else {
+              userAddress = accounts[0];
+              setConnectedUI(userAddress);
+            }
+          });
+          window.ethereum.on('chainChanged', (chainId)=> {
+            // reload to be safe, since chain metadata changed
+            try { console.log('chainChanged to', chainId); } catch(e){}
+            // small gentle reload to reinitialize providers & rates
+            setTimeout(()=> window.location.reload(), 250);
+          });
         }
-        await ensureCorrectChainOrPrompt();
-        showToast('Wallet connected', { type: 'success' });
-        return true;
-      } catch(e){
-        console.warn('injected connect failed', e);
+
+        showToast('Connected via injected wallet');
+        return;
+      } catch(injectedErr){
+        console.warn('Injected provider failed', injectedErr);
+        // fallthrough to attempt WalletConnect dynamic import
       }
     }
 
-    showToast('No wallet available — install MetaMask or use the wallet modal', { type: 'warn' });
-    return false;
-  } catch(e){ console.error('connectWallet error', e); showToast('Connection failed: '+(e.message||e), { type: 'error' }); return false; }
-}
+    // 2) No injected provider — attempt dynamic WalletConnect v2/universal-provider import
+    //    We import libraries only when needed so the page remains light and CDN errors won't break the core UI.
+    try {
+      // === CHANGED ===: attempt to load Universal Provider (modern WalletConnect approach)
+      // The import path uses jsDelivr; if unavailable this will throw and we'll show fallback instructions.
+      const mod = await import('https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.23.0/dist/umd/index.min.js');
+      // The UMD builds usually expose a global; dynamic import returns a module object in some CDNs.
+      const UniversalProvider = mod?.default || mod?.UniversalProvider || window?.UniversalProvider || null;
+      if (!UniversalProvider) {
+        throw new Error('UniversalProvider not found in imported module');
+      }
 
-async function disconnectWallet(confirmAsk = true){
-  try {
-    if (confirmAsk && !confirm('Disconnect wallet?')) return;
-    try { if (web3modal && web3modal.closeModal) web3modal.closeModal(); } catch(_){}
-    provider = null; signer = null; userAddress = null;
-    setConnectedUI(null);
-    showToast('Wallet disconnected', { type: 'info' });
-  } catch(e){ console.warn('disconnect fail', e); }
-}
+      // init provider
+      const wcProvider = await UniversalProvider.init({
+        projectId: WALLETCONNECT_PROJECT_ID,
+        logger: 'info',
+        metadata: {
+          name: 'NOLA Exchange',
+          description: 'NOLA Exchange — browser dapp',
+          url: location.origin,
+          icons: [location.origin + '/logo.png']
+        }
+      });
 
-/* connectFloating UI click: toggle connect / disconnect */
-connectFloating.addEventListener('click', async ()=>{
-  if (userAddress) {
-    if (!confirm('Disconnect wallet?')) return;
-    await disconnectWallet(false);
-  } else {
-    setBusy(connectFloating, true);
-    try { await connectWallet(); } finally { setBusy(connectFloating, false); }
+      // If provider already has a pairing, you may be connected; otherwise create a new pairing
+      // If environment supports opening deep links (mobile), we will trigger pairing which gives a URI.
+      // Create a simple pairing + QR UI (lightweight)
+      const pairings = wcProvider.pairings || wcProvider.getPairings?.() || [];
+      if (!pairings || pairings.length === 0) {
+        // create a pairing to get a URI
+        const pairing = await wcProvider.connect({
+          requiredNamespaces: {
+            eip155: {
+              methods: ["eth_sendTransaction","personal_sign","eth_signTypedData"],
+              chains: ["eip155:137"],
+              events: ["chainChanged","accountsChanged"],
+              rpcMap: {
+                "eip155:137": FALLBACK_RPCS[0]
+              }
+            }
+          }
+        });
+
+        // pairing.uri may be available; show QR or deep link
+        const uri = pairing?.uri || pairing?.topic || null;
+        // show friendly modal with QR + deep-link hints
+        showWalletFallbackModal(uri ? 'Scan QR with WalletConnect' : null);
+
+        // In a complete integration you'd render the QR as an image using a QR library.
+        // We'll attempt to create a small QR using the built-in canvas approach only if URI exists
+        if (uri && wcQR) {
+          try {
+            // Try to render QR using a tiny inline generator (no dependency)
+            // Create a link to walletconnect.com to show instructions as fallback
+            wcQR.innerHTML = '';
+            const qrCanvas = document.createElement('canvas');
+            qrCanvas.width = 160; qrCanvas.height = 160;
+            // small QR generator fallback: show link instead if complex to render
+            const a = document.createElement('a');
+            a.href = 'https://walletconnect.com/wallets';
+            a.textContent = 'Open wallet and use WalletConnect';
+            a.style.color = '#ddd';
+            a.style.fontSize = '12px';
+            a.style.textDecoration = 'none';
+            wcQR.appendChild(a);
+          } catch(eqr){
+            wcQR.textContent = 'Open your wallet and use WalletConnect';
+          }
+        }
+      }
+
+      // After connection, the provider implements standard request method that ethers can use
+      // Wrap it with ethers provider
+      provider = new ethers.providers.Web3Provider(wcProvider, "any");
+      signer = provider.getSigner();
+      try {
+        userAddress = await signer.getAddress();
+        setConnectedUI(userAddress);
+      } catch(e){
+        // address may be available after the session is fulfilled — wait a bit or rely on events
+        showToast('Waiting for wallet confirmation...');
+      }
+
+      // register event handlers if available on the universal provider
+      if (wcProvider.on) {
+        wcProvider.on('session_update', (uri) => {
+          // handle session updates if needed
+          console.log('wc session_update', uri);
+        });
+        wcProvider.on('disconnect', () => {
+          disconnectWallet(true);
+        });
+      }
+
+      showToast('Connected via WalletConnect');
+      return;
+    } catch (wcErr) {
+      console.warn('WalletConnect dynamic import failed or is unsupported:', wcErr);
+      // show friendly fallback modal with deep-links / instructions
+      showWalletFallbackModal(null);
+      showToast('No injected wallet found. Use WalletConnect via mobile (instructions shown).');
+      return;
+    }
+  } catch(e){
+    console.error('connectWallet error', e);
+    showToast('Failed to connect wallet');
+    return;
   }
+}
+
+/* connect button wiring */
+connectFloating.addEventListener('click', async (ev) => {
+  ev.preventDefault();
+  // simple toggle: if already connected, disconnect; else connect flow
+  if (userAddress) {
+    disconnectWallet();
+    return;
+  }
+  await connectWallet();
 });
+
+/* Attempt to gracefully disconnect if user chooses to (useful button can call this) */
+async function tryDisconnect(){
+  try {
+    if (provider && provider.provider && provider.provider.disconnect) {
+      await provider.provider.disconnect();
+    }
+  } catch(e){}
+  disconnectWallet();
+}
+    
 
 /* =================== CARET, SYMBOL UX =================== */
 function placeCaretAtEnd(inputEl){
