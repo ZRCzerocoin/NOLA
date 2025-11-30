@@ -90,7 +90,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* custom slippage dropdown */
 .slippage-wrap{position:relative;display:inline-block}
 .slippage-display{
-  padding:8px 12px;border-radius:10px;background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;border:0;font-weight:800;font-size:13px;box-shadow:0 8px 22px rgba(106,0,255,0.12);cursor:pointer;display:flex;align-items:center;gap:8px;
+  padding:8px 12px;border-radius:10px;background:var(--glass);color:#fff;border:0;font-weight:800;font-size:13px;box-shadow:0 8px 22px rgba(106,0,255,0.12);cursor:pointer;display:flex;align-items:center;gap:8px;
 }
 .slippage-list{position:absolute;right:0;top:calc(100% + 8px);background:var(--glass);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:6px;box-shadow:var(--shadow);min-width:120px;display:none;z-index:400}
 .slippage-item{padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700;white-space:nowrap}
@@ -143,7 +143,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   position: fixed;
   right: 20px;
   bottom: 20px;
-  background: #b445ff;
+  background: #7A4988;
   padding: 10px 14px;
   border-radius: 20px;
   cursor: pointer;
@@ -206,7 +206,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   padding: 8px 12px;
   border-radius: 12px;
   border: none;
-  background: #b445ff;
+  background: #7A4988;
   color: white;
   cursor: pointer;
 }
@@ -349,7 +349,6 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
         <div class="slippage-wrap" id="slippageWrap" aria-label="Slippage">
           <div id="slippageDisplay" class="slippage-display" role="button" aria-haspopup="listbox" aria-expanded="false">
             <span id="slippageLabel">1%</span>
-            <span style="margin-left:6px">⚙️</span>
           </div>
           <div id="slippageList" class="slippage-list" role="listbox" tabindex="-1">
             <div class="slippage-item" data-value="0.5">0.5%</div>
@@ -373,7 +372,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
     <!-- quick swap placed visually under slippage (still within same container) -->
     <div style="display:flex;justify-content:flex-end;margin-top:10px;">
       <button id="quickSwapBtn" class="quick-cta" title="Quick Swap (uses cached quote)">
-        <span class="icon">⚡</span>
+    
         <span id="quickLabel">Quick Swap</span>
         <span id="quickSpinner" style="display:none" class="btn-spinner"></span>
       </button>
@@ -386,18 +385,18 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 <div id="toastRoot" style="pointer-events:none;position:fixed;right:18px;bottom:90px;z-index:9999"></div>
   
 <!-- CHAT TOGGLE BUTTON -->
-<div class="chat-toggle" id="chatToggle">💬 Chat</div>
+<div class="chat-toggle" id="chatToggle">Public Chat🔘</div>
 
 <!-- CHAT PANEL -->
 <div class="chat-sidebar" id="chatSidebar">
 
-  <h3 style="text-align:center;margin-bottom:10px;">Public Chat</h3>
+  <h3 style="text-align:center;margin-bottom:10px;">Chat</h3>
 
   <div id="chatMessages" style="overflow-y:auto; flex:1;"></div>
 
   <div class="chat-input">
-    <input id="chatInput" placeholder="Type a message...">
-    <button id="sendChat">Send</button>
+    <input id="chatInput" placeholder="Drop your alpha...">
+    <button id="sendChat">NOLA</button>
   </div>
 
 </div>
@@ -407,7 +406,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   <div class="modal-content">
     <h3>Choose a Username</h3>
     <input id="modalUsername" placeholder="Enter name">
-    <button id="confirmUsername">Enter Chat</button>
+    <button id="confirmUsername">Say NOLA</button>
   </div>
 </div>
 <!-- footer -->
