@@ -330,7 +330,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
         <div class="price-small">
           <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="fromUnitSmall" class="price-unit" style="display:none">—</div>
+          <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
         </div>
 
       </div>
@@ -360,7 +360,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
         <div class="price-small">
           <div id="toUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="toUnitSmall" class="price-unit" style="display:none">— </div>
+          <div id="toUnitSmall" class="price-unit" style="display:none">— / unit</div>
         </div>
 
       </div>
@@ -962,10 +962,10 @@ async function getTokenPriceUSD(address, decimals=18){
   }
 
   const sources = [
-    { name:'0x', fn: async ()=> await fetch0xPrice(addr), priority:1 },
+    { name:'0x', fn: async ()=> await fetch0xPrice(addr, decimals), priority:1 },
     { name:'1inch', fn: async ()=> await fetch1InchQuotePrice(addr, decimals), priority:2 },
-    { name:'coingecko_simple', fn: async ()=> await fetchCoingeckoSimple(addr), priority:3 },
-    { name:'dexscreener', fn: async ()=> await fetchDexscreenerPrice(addr), priority:4 },
+    { name:'coingecko_simple', fn: async ()=> await fetchCoingeckoSimple(addr, decimals), priority:3 },
+    { name:'dexscreener', fn: async ()=> await fetchDexscreenerPrice(addr, decimals), priority:4 },
     { name:'derive_weth', fn: async ()=> await derivePriceViaWeth(addr, decimals), priority:5 }
   ];
 
@@ -1854,6 +1854,10 @@ function parseSwapError(e){
   - Keeps WALLETCONNECT_PROJECT_ID constant available for use by the WalletConnect client (if loaded).
 */
 
+
+/* =================== WALLET / CONNECT LOGIC - FIXED & HARDENED =================== */
+
+/* short address helper (kept) */
 function shortAddr(addr){
   if(!addr) return '';
   return addr.slice(0,6) + '...' + addr.slice(-4);
@@ -1867,6 +1871,12 @@ function setConnectedUI(address){
   connectIcon.textContent = '🔒';
 }
 function disconnectWallet(showToastMsg = true){
+  try {
+    // attempt to disconnect provider if it supports programmatic disconnect
+    if (provider && provider.provider && typeof provider.provider.disconnect === 'function') {
+      provider.provider.disconnect().catch(()=>{});
+    }
+  } catch(e){}
   provider = null;
   signer = null;
   userAddress = null;
@@ -1883,24 +1893,45 @@ function isMobile() {
   return /Mobi|Android|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent);
 }
 
-/* Show fallback modal */
-function showWalletFallbackModal(qrText){
-  // populate QR placeholder area (simple text if no QR library)
-  wcQR.textContent = qrText ? 'Scan via WalletConnect' : 'No QR available';
+/* Show fallback modal (QR + URI) */
+function showWalletFallbackModal(uri){
+  // Show QR and copyable uri
+  if (uri) {
+    // Try to render QR via qrserver free API for quick QR display (if blocked, at least show URI)
+    try {
+      wcQR.innerHTML = '';
+      const img = document.createElement('img');
+      img.alt = 'WC QR';
+      img.style.width = '160px';
+      img.style.height = '160px';
+      img.style.borderRadius = '8px';
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?data=' + encodeURIComponent(uri) + '&size=160x160';
+      wcQR.appendChild(img);
+    } catch(e){
+      wcQR.textContent = 'Scan QR';
+    }
+    wcUriBox.style.display = 'block';
+    wcUriBox.textContent = uri;
+  } else {
+    wcQR.textContent = 'QR';
+    wcUriBox.style.display = 'none';
+    wcUriBox.textContent = '';
+  }
   walletFallbackModal.style.display = 'flex';
 }
 function hideWalletFallbackModal(){
   walletFallbackModal.style.display = 'none';
+  wcQR.innerHTML = 'QR';
+  wcUriBox.style.display = 'none';
+  wcUriBox.textContent = '';
 }
 
-/* Deep link handler for wallet buttons in fallback modal */
+/* deep link handler for wallet buttons in fallback modal (keeps original behavior) */
 walletList.addEventListener('click', (ev)=>{
   const btn = ev.target.closest('.wallet-btn');
   if (!btn) return;
   const key = btn.dataset.deep;
-  // Attempt to open deep link schemes (mobile wallets)
   if (key === 'metamask') {
-    // Metamask mobile deep link - open metamask
     const deep = isMobile() ? 'metamask://dapp/' + encodeURIComponent(location.href) : 'https://metamask.io/';
     window.open(deep, '_blank');
   } else if (key === 'trust') {
@@ -1913,25 +1944,28 @@ walletList.addEventListener('click', (ev)=>{
 });
 walletFallbackClose && walletFallbackClose.addEventListener('click', hideWalletFallbackModal);
 
-/* The modern connectWallet function */
+/* Connect flow (robust):
+   1) prefer injected provider
+   2) if not available, try ESM import of UniversalProvider (WalletConnect v2)
+   3) if imported, connect -> produce uri -> show QR/URI -> wrap provider for ethers
+   4) fallback to friendly modal if any step fails
+*/
 async function connectWallet(){
   try {
-    // 1) Prefer injected provider when present (fast path - supports most browsers and extensions)
+    // 1) Injected provider fast path
     if (window.ethereum) {
       try {
         const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
-        // Request accounts (respects user privacy)
         await ethProvider.send("eth_requestAccounts", []);
         provider = ethProvider;
         signer = provider.getSigner();
         userAddress = await signer.getAddress();
         setConnectedUI(userAddress);
 
-        // register handlers if available
+        // register events
         if (window.ethereum.on) {
           window.ethereum.on('accountsChanged', (accounts)=> {
             if (!accounts || accounts.length === 0) {
-              // user disconnected in wallet UI
               disconnectWallet(true);
             } else {
               userAddress = accounts[0];
@@ -1939,37 +1973,49 @@ async function connectWallet(){
             }
           });
           window.ethereum.on('chainChanged', (chainId)=> {
-            // reload to be safe, since chain metadata changed
             try { console.log('chainChanged to', chainId); } catch(e){}
-            // small gentle reload to reinitialize providers & rates
             setTimeout(()=> window.location.reload(), 250);
           });
         }
-
         showToast('Connected via injected wallet');
         return;
       } catch(injectedErr){
         console.warn('Injected provider failed', injectedErr);
-        // fallthrough to attempt WalletConnect dynamic import
+        // fallthrough to WalletConnect
       }
     }
 
-    // 2) No injected provider — attempt dynamic WalletConnect v2/universal-provider import
-    //    We import libraries only when needed so the page remains light and CDN errors won't break the core UI.
-    try {
-      // === CHANGED ===: attempt to load Universal Provider (modern WalletConnect approach)
-      // The import path uses jsDelivr; if unavailable this will throw and we'll show fallback instructions.
-      const mod = await import('https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.23.0/dist/umd/index.min.js');
-      // The UMD builds usually expose a global; dynamic import returns a module object in some CDNs.
-      const UniversalProvider = mod?.default || mod?.UniversalProvider || window?.UniversalProvider || null;
-      if (!UniversalProvider) {
-        throw new Error('UniversalProvider not found in imported module');
-      }
+    // 2) Attempt ESM import of WalletConnect UniversalProvider (try multiple possible ESM URLs)
+    let UniversalProvider = null;
+    const esmCandidates = [
+      // typical ESM builds (try them; some CDNs expose these)
+      'https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2/dist/esm/index.min.js',
+      'https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.6.9/dist/esm/index.min.js',
+      'https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.23.0/dist/esm/index.min.js'
+    ];
+    for (const url of esmCandidates) {
+      try {
+        const mod = await import(url);
+        UniversalProvider = mod?.default || mod?.UniversalProvider || mod?.Universal || mod?.UniversalProvider?.default || null;
+        if (UniversalProvider) break;
+      } catch(e){}
+    }
 
-      // init provider
-      const wcProvider = await UniversalProvider.init({
+    // if ESM import failed, try global (if a UMD script was included elsewhere)
+    if (!UniversalProvider && window.UniversalProvider) UniversalProvider = window.UniversalProvider;
+
+    if (!UniversalProvider) {
+      // can't import the library — show fallback instructions
+      showToast('WalletConnect libraries not available — showing fallback.', { type: 'warn' });
+      showWalletFallbackModal(null);
+      return;
+    }
+
+    // initialize UniversalProvider
+    let wcProvider = null;
+    try {
+      const wc = await UniversalProvider.init({
         projectId: WALLETCONNECT_PROJECT_ID,
-        logger: 'info',
         metadata: {
           name: 'NOLA Exchange',
           description: 'NOLA Exchange — browser dapp',
@@ -1977,97 +2023,142 @@ async function connectWallet(){
           icons: [location.origin + '/logo.png']
         }
       });
-
-      // If provider already has a pairing, you may be connected; otherwise create a new pairing
-      // If environment supports opening deep links (mobile), we will trigger pairing which gives a URI.
-      // Create a simple pairing + QR UI (lightweight)
-      const pairings = wcProvider.pairings || wcProvider.getPairings?.() || [];
-      if (!pairings || pairings.length === 0) {
-        // create a pairing to get a URI
-        const pairing = await wcProvider.connect({
-          requiredNamespaces: {
-            eip155: {
-              methods: ["eth_sendTransaction","personal_sign","eth_signTypedData"],
-              chains: ["eip155:137"],
-              events: ["chainChanged","accountsChanged"],
-              rpcMap: {
-                "eip155:137": FALLBACK_RPCS[0]
-              }
-            }
-          }
-        });
-
-        // pairing.uri may be available; show QR or deep link
-        const uri = pairing?.uri || pairing?.topic || null;
-        // show friendly modal with QR + deep-link hints
-        showWalletFallbackModal(uri ? 'Scan QR with WalletConnect' : null);
-
-        // In a complete integration you'd render the QR as an image using a QR library.
-        // We'll attempt to create a small QR using the built-in canvas approach only if URI exists
-        if (uri && wcQR) {
-          try {
-            // Try to render QR using a tiny inline generator (no dependency)
-            // Create a link to walletconnect.com to show instructions as fallback
-            wcQR.innerHTML = '';
-            const qrCanvas = document.createElement('canvas');
-            qrCanvas.width = 160; qrCanvas.height = 160;
-            // small QR generator fallback: show link instead if complex to render
-            const a = document.createElement('a');
-            a.href = 'https://walletconnect.com/wallets';
-            a.textContent = 'Open wallet and use WalletConnect';
-            a.style.color = '#ddd';
-            a.style.fontSize = '12px';
-            a.style.textDecoration = 'none';
-            wcQR.appendChild(a);
-          } catch(eqr){
-            wcQR.textContent = 'Open your wallet and use WalletConnect';
-          }
-        }
-      }
-
-      // After connection, the provider implements standard request method that ethers can use
-      // Wrap it with ethers provider
-      provider = new ethers.providers.Web3Provider(wcProvider, "any");
-      signer = provider.getSigner();
-      try {
-        userAddress = await signer.getAddress();
-        setConnectedUI(userAddress);
-      } catch(e){
-        // address may be available after the session is fulfilled — wait a bit or rely on events
-        showToast('Waiting for wallet confirmation...');
-      }
-
-      // register event handlers if available on the universal provider
-      if (wcProvider.on) {
-        wcProvider.on('session_update', (uri) => {
-          // handle session updates if needed
-          console.log('wc session_update', uri);
-        });
-        wcProvider.on('disconnect', () => {
-          disconnectWallet(true);
-        });
-      }
-
-      showToast('Connected via WalletConnect');
-      return;
-    } catch (wcErr) {
-      console.warn('WalletConnect dynamic import failed or is unsupported:', wcErr);
-      // show friendly fallback modal with deep-links / instructions
+      wcProvider = wc;
+    } catch(e){
+      console.warn('UniversalProvider.init failed', e);
+      showToast('WalletConnect init failed — showing fallback.', { type: 'error' });
       showWalletFallbackModal(null);
-      showToast('No injected wallet found. Use WalletConnect via mobile (instructions shown).');
       return;
     }
-  } catch(e){
-    console.error('connectWallet error', e);
-    showToast('Failed to connect wallet');
+
+    // create a pairing / connect request
+    let pairingResult = null;
+    try {
+      pairingResult = await wcProvider.connect({
+        requiredNamespaces: {
+          eip155: {
+            methods: ["eth_sendTransaction","personal_sign","eth_signTypedData"],
+            chains: ["eip155:137"],
+            events: ["chainChanged","accountsChanged"],
+            rpcMap: {
+              "eip155:137": FALLBACK_RPCS[0]
+            }
+          }
+        }
+      });
+    } catch(e) {
+      console.warn('wcProvider.connect threw', e);
+      // If connect failed but provider has pairings, try to use existing pairings
+      pairingResult = null;
+    }
+
+    const uri = (pairingResult && (pairingResult.uri || pairingResult[0]?.uri || pairingResult.topic)) ? (pairingResult.uri || pairingResult[0]?.uri || pairingResult.topic) : null;
+
+    // show QR + URI for the user to scan/click
+    showWalletFallbackModal(uri);
+
+    // If we don't get a uri but the provider is already connected (e.g., mobile deep link opened it), continue
+    // wait for 'connect' event or accounts to appear
+    let connectedAccount = null;
+    const waitForConnect = new Promise((resolve, reject) => {
+      let settled = false;
+      const onConnect = (payload) => {
+        if (settled) return;
+        settled = true;
+        try { wcProvider.removeListener('connect', onConnect); } catch(e){}
+        resolve(payload);
+      };
+      const onAccounts = async () => {
+        try {
+          const accts = await wcProvider.request({ method: 'eth_accounts' });
+          if (accts && accts.length) {
+            if (!settled) { settled = true; resolve({ accounts: accts }); }
+          }
+        } catch(e){}
+      };
+      // listen for connect and session updates
+      try {
+        wcProvider.on('connect', onConnect);
+        wcProvider.on('session_update', onAccounts);
+        wcProvider.on('disconnect', (code, reason) => {
+          if (!settled) { settled = true; reject(new Error('WalletConnect disconnected')); }
+        });
+      } catch(e){}
+      // also poll a few times for accounts
+      let attempts = 0;
+      const poll = setInterval(async () => {
+        attempts++;
+        try {
+          const accts = await wcProvider.request({ method: 'eth_accounts' }).catch(()=>null);
+          if (accts && accts.length) {
+            clearInterval(poll);
+            if (!settled) { settled = true; resolve({ accounts: accts }); }
+          } else if (attempts > 12) {
+            clearInterval(poll);
+            if (!settled) { settled = true; resolve(null); }
+          }
+        } catch(e){
+          // ignore
+        }
+      }, 700);
+      // timeout fallback
+      setTimeout(()=>{ if (!settled) { settled = true; resolve(null); } }, 15000);
+    });
+
+    const conn = await waitForConnect.catch(()=>null);
+
+    // If provider has request method, wrap it for ethers
+    // Create a minimal EIP-1193 provider wrapper to satisfy ethers
+    if (wcProvider && typeof wcProvider.request === 'function') {
+      const eip1193 = {
+        // ethers will call request({ method, params })
+        request: (args) => wcProvider.request(args),
+        on: (ev, cb) => { try { wcProvider.on(ev, cb); } catch(e){} },
+        removeListener: (ev, cb) => { try { wcProvider.removeListener(ev, cb); } catch(e){} },
+        disconnect: async () => { try { if (wcProvider.disconnect) await wcProvider.disconnect(); } catch(e){} }
+      };
+
+      provider = new ethers.providers.Web3Provider(eip1193, 'any');
+      signer = provider.getSigner();
+
+      try {
+        const accounts = await provider.send('eth_accounts', []);
+        if (accounts && accounts.length) {
+          userAddress = accounts[0];
+          setConnectedUI(userAddress);
+          hideWalletFallbackModal();
+          showToast('Connected via WalletConnect');
+          // register chain/account change reactivity
+          try {
+            wcProvider.on('session_update', async () => {
+              const a = await provider.send('eth_accounts', []).catch(()=>[]);
+              if (!a || a.length === 0) disconnectWallet();
+              else { userAddress = a[0]; setConnectedUI(userAddress); }
+            });
+            wcProvider.on('disconnect', ()=> disconnectWallet(true));
+          } catch(e){}
+          return;
+        }
+      } catch(e){
+        console.warn('provider.send eth_accounts failed', e);
+      }
+    }
+
+    // If we got here we either couldn't wrap the provider or no accounts showed up yet
+    // Keep the modal open (URI visible) so the user can scan / open in mobile wallet
+    showToast('Waiting for wallet pairing (scan QR or open deep link)', { ttl: 6000 });
     return;
+
+  } catch(e){
+    console.error('connectWallet top-level error', e);
+    showToast('Connection failed — showing fallback', { type: 'error' });
+    showWalletFallbackModal(null);
   }
 }
 
 /* connect button wiring */
 connectFloating.addEventListener('click', async (ev) => {
   ev.preventDefault();
-  // simple toggle: if already connected, disconnect; else connect flow
   if (userAddress) {
     disconnectWallet();
     return;
@@ -2075,7 +2166,37 @@ connectFloating.addEventListener('click', async (ev) => {
   await connectWallet();
 });
 
-/* Attempt to gracefully disconnect if user chooses to (useful button can call this) */
+/* helper used by swap logic to ensure user connected */
+async function ensureWalletConnectedOrPrompt(){
+  if (userAddress && signer) return true;
+  await connectWallet();
+  return !!(userAddress && signer);
+}
+
+/* helper to ensure correct chain */
+async function ensureCorrectChainOrPrompt(){
+  if (!provider) return false;
+  try {
+    const network = await provider.getNetwork();
+    if (network && network.chainId === CHAIN_ID) return true;
+    // attempt to request switch (works for injected providers)
+    try {
+      await provider.send('wallet_switchEthereumChain', [{ chainId: CHAIN_ID_HEX }]);
+      // small delay to allow chain change
+      await new Promise(r => setTimeout(r, 600));
+      return true;
+    } catch(switchErr){
+      // show user friendly instruction if cannot switch programmatically
+      showToast('Please switch your wallet to Polygon (Chain ID 137).', { type: 'warn', ttl: 5000 });
+      return false;
+    }
+  } catch(e){
+    console.warn('ensureCorrectChainOrPrompt error', e);
+    return false;
+  }
+}
+
+/* Attempt to gracefully disconnect if user chooses to */
 async function tryDisconnect(){
   try {
     if (provider && provider.provider && provider.provider.disconnect) {
@@ -2084,7 +2205,11 @@ async function tryDisconnect(){
   } catch(e){}
   disconnectWallet();
 }
-    
+
+
+      
+
+      
 
 /* =================== CARET, SYMBOL UX =================== */
 function placeCaretAtEnd(inputEl){
