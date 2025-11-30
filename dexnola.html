@@ -1500,11 +1500,20 @@ quickSwapBtn.addEventListener('click', async ()=>{
 
 /* =================== ERROR PARSING =================== */
 function parseSwapError(e){
-  const s = (e && e.message) ? e.message.toLowerCase() : '';
-  if (s.includes('user-rejected') || s.includes('user rejected') || s.includes('request rejected') || s.includes('user denied')) return 'You rejected the wallet request. Please confirm the transaction in your wallet.';
-  if (s.includes('insufficient funds') || s.includes('insufficient balance')) return 'Insufficient funds for this transaction (including gas). Check wallet balance.';
-  if (s.includes('allowance') || s.includes('approve') || s.includes('insufficient allowance')) return 'Token allowance is missing. Please approve the token in your wallet (we attempt this automatically).';
-  if (s.includes('network') || s.includes('wrong-chain') || s.includes('chain')) return 'Wrong network — switch your wallet to Polygon (chain 137).';
+  if (!e) return 'Unknown error';
+  const s = (e && e.message) ? e.message.toLowerCase() : (String(e).toLowerCase ? String(e).toLowerCase() : '');
+  if (s.includes('user-rejected') || s.includes('user rejected') || s.includes('request rejected') || s.includes('user denied')) {
+    return 'You rejected the wallet request. Please confirm the transaction in your wallet.';
+  }
+  if (s.includes('insufficient funds') || s.includes('insufficient balance')) {
+    return 'Insufficient funds for this transaction (including gas). Check wallet balance.';
+  }
+  if (s.includes('allowance') || s.includes('approve') || s.includes('insufficient allowance')) {
+    return 'Token allowance is missing. Please approve the token in your wallet (we attempt this automatically).';
+  }
+  if (s.includes('network') || s.includes('wrong-chain') || s.includes('chain')) {
+    return 'Wrong network — switch your wallet to Polygon (chain 137).';
+  }
   return (e && e.message) ? `Transaction error: ${e.message}` : 'An unknown error occurred.';
 }
 
@@ -1522,53 +1531,56 @@ function parseSwapError(e){
 
 /* small helper that normalizes a provider-like object into an EIP-1193 compatible provider for ethers */
 function normalizeToEIP1193(rawProvider){
-  // If already implements request, assume it's EIP-1193-ish
+function normalizeToEIP1193(rawProvider){
   if (!rawProvider) return null;
+
+  // If it already speaks EIP-1193
   if (typeof rawProvider.request === 'function') {
-    // attach minimal event passthrough if available
     const obj = rawProvider;
-    // ensure on/removeListener compatibility for listeners used in the app
     obj.on = obj.on || function(){};
     obj.removeListener = obj.removeListener || obj.off || function(){};
     return obj;
   }
 
-  // If object exposes connector methods (very common with some bundles), wrap into { request }
+  // Otherwise try to wrap common shapes
   if (typeof rawProvider === 'object') {
     const wrapper = {
       request: async (args) => {
-        // try common variations
+        // try common variations in a safe order
+        if (!args || !args.method) throw new Error('Invalid request args');
         if (typeof rawProvider.request === 'function') return rawProvider.request(args);
         if (typeof rawProvider.send === 'function') {
-          // for some providers send(method, params)
           if (Array.isArray(args.params)) return rawProvider.send(args.method, args.params);
           return rawProvider.send(args.method, args.params || []);
         }
-        // continue from where it stopped in your file (part 2) — exact continuation starts here
-
-if (Array.isArray(args.params)) return rawProvider.send(args.method, args.params);
-          return rawProvider.send(args.method, args.params || []);
+        if (rawProvider.connector && typeof rawProvider.connector.request === 'function') {
+          return rawProvider.connector.request(args);
         }
-        // some providers expose `connector.send` or `connector.request`
         if (rawProvider.connector && typeof rawProvider.connector.send === 'function') {
           if (Array.isArray(args.params)) return rawProvider.connector.send(args.method, args.params);
           return rawProvider.connector.send(args.method, args.params || []);
         }
-        // some global wrappers place the actual RPC under .ethereum
         if (rawProvider.ethereum && typeof rawProvider.ethereum.request === 'function') {
           return rawProvider.ethereum.request(args);
         }
+        // as last resort, try window.ethereum shape
+        if (window.ethereum && typeof window.ethereum.request === 'function') {
+          return window.ethereum.request(args);
+        }
         throw new Error('Provider does not support request/send API');
       },
-      // lightweight event passthroughs so ethers/listeners behave
-      on: rawProvider.on ? rawProvider.on.bind(rawProvider) : (ev,cb)=>{ if(rawProvider.addEventListener) rawProvider.addEventListener(ev,cb); },
-      removeListener: rawProvider.removeListener ? rawProvider.removeListener.bind(rawProvider) : (ev,cb)=>{ if(rawProvider.removeEventListener) rawProvider.removeEventListener(ev,cb); }
+      on: rawProvider.on ? rawProvider.on.bind(rawProvider) : (ev, cb) => {
+        if (typeof rawProvider.addEventListener === 'function') rawProvider.addEventListener(ev, cb);
+      },
+      removeListener: rawProvider.removeListener ? rawProvider.removeListener.bind(rawProvider) : (ev, cb) => {
+        if (typeof rawProvider.removeEventListener === 'function') rawProvider.removeEventListener(ev, cb);
+      }
     };
     return wrapper;
   }
+
   return null;
 }
-
 /* =================== WalletConnect (dynamic, modern, robust) =================== */
 
 /*
@@ -1709,74 +1721,6 @@ async function connectUsingUniversalProvider() {
 
 /* =================== Overwrite/upgrade connectWallet with a modern robust flow =================== */
 /* We'll override previously-defined connectWallet so your app uses this improved flow without altering other logic. */
-connectWallet = async function() {
-  try {
-    // 1) try injected (fast path) - prefer user-installed extensions for fastest UX
-    if (window.ethereum) {
-      try {
-        const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
-        await ethProvider.send("eth_requestAccounts", []);
-        provider = ethProvider;
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        setConnectedUI(userAddress);
-        if (window.ethereum.on) {
-          window.ethereum.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) { disconnectWallet(false); } else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-          window.ethereum.on('chainChanged', ()=>{ window.location.reload(); });
-        }
-        await ensureCorrectChainOrPrompt();
-        showToast('Wallet connected (injected)', { type: 'success' });
-        return true;
-      } catch (e) {
-        console.warn('Injected provider request failed, falling back.', e);
-      }
-    }
-
-    // 2) try modern modal (if present) — this maintains previous modal usage when available
-    if (web3modal && typeof web3modal.openModal === 'function') {
-      try {
-        const modalProvider = await web3modal.openModal ? await web3modal.openModal({}) : await web3modal.requestConnection?.();
-        if (modalProvider) {
-          // normalize if needed
-          const eip = normalizeToEIP1193(modalProvider) || modalProvider;
-          provider = new ethers.providers.Web3Provider(eip, "any");
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress();
-          setConnectedUI(userAddress);
-          if (modalProvider.on) {
-            modalProvider.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) disconnectWallet(false); else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-            modalProvider.on('chainChanged', ()=>{ window.location.reload(); });
-          }
-          await ensureCorrectChainOrPrompt();
-          showToast('Wallet connected (modal)', { type: 'success' });
-          return true;
-        }
-      } catch (e) { console.warn('web3modal connection failed', e); }
-    }
-
-    // 3) attempt WalletConnect UniversalProvider dynamic import + pairing (robust)
-    try {
-      const eipProvider = await connectUsingUniversalProvider();
-      if (eipProvider) {
-        provider = new ethers.providers.Web3Provider(eipProvider, "any");
-        signer = provider.getSigner();
-        try { userAddress = await signer.getAddress(); } catch(e){ userAddress = null; }
-        setConnectedUI(userAddress);
-        await ensureCorrectChainOrPrompt();
-        showToast('Wallet connected (WalletConnect)', { type: 'success' });
-        return true;
-      }
-    } catch(e){ console.warn('UniversalProvider path failed', e); }
-
-    // 4) final friendly fallback — show simple instructions/modal if nothing worked
-    showToast('No wallet available — install MetaMask, Coinbase Wallet extension, or use the wallet modal on mobile.', { type: 'warn' });
-    return false;
-  } catch (e) {
-    console.error('connectWallet error (final):', e);
-    showToast('Connection failed: '+(e && e.message ? e.message : String(e)), { type: 'error' });
-    return false;
-  }
-};
 
 /* =================== Extra UX fixes requested =================== */
 
@@ -2069,75 +2013,7 @@ async function ensureCorrectChainOrPrompt(){
 }
 
 /* Improved connectWallet: prefer modern modal deep-links when available, fallback to injected provider */
-async function connectWallet(){
-  try{
-    // Prefer Web3Modal (modern) if available
-    if (web3modal && typeof web3modal.openModal === 'function') {
-      try {
-        // If the library supports openModal, call it to show deep-linked wallets / QR
-        const modalProvider = await web3modal.openModal ? await web3modal.openModal({}) : await web3modal.requestConnection?.();
-        if (modalProvider) {
-          provider = new ethers.providers.Web3Provider(modalProvider, "any");
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress();
-          setConnectedUI(userAddress);
-          modalProvider.on && modalProvider.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) { disconnectWallet(false); } else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-          modalProvider.on && modalProvider.on('chainChanged', ()=>{ window.location.reload(); });
-          await ensureCorrectChainOrPrompt();
-          showToast('Wallet connected (via modal)', { type: 'success' });
-          return true;
-        }
-      } catch(e){
-        console.warn('web3modal connection failed', e);
-      }
-    }
 
-    // fallback to injected provider (MetaMask)
-    if (window.ethereum) {
-      try{
-        const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
-        await ethProvider.send("eth_requestAccounts", []);
-        provider = ethProvider;
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress();
-        setConnectedUI(userAddress);
-        if (window.ethereum.on) {
-          window.ethereum.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) { disconnectWallet(false); } else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-          window.ethereum.on('chainChanged', ()=>{ window.location.reload(); });
-        }
-        await ensureCorrectChainOrPrompt();
-        showToast('Wallet connected', { type: 'success' });
-        return true;
-      } catch(e){
-        console.warn('injected connect failed', e);
-      }
-    }
-
-    showToast('No wallet available — install MetaMask or use the wallet modal', { type: 'warn' });
-    return false;
-  } catch(e){ console.error('connectWallet error', e); showToast('Connection failed: '+(e.message||e), { type: 'error' }); return false; }
-}
-
-async function disconnectWallet(confirmAsk = true){
-  try {
-    if (confirmAsk && !confirm('Disconnect wallet?')) return;
-    try { if (web3modal && web3modal.closeModal) web3modal.closeModal(); } catch(_){}
-    provider = null; signer = null; userAddress = null;
-    setConnectedUI(null);
-    showToast('Wallet disconnected', { type: 'info' });
-  } catch(e){ console.warn('disconnect fail', e); }
-}
-
-/* connectFloating UI click: toggle connect / disconnect */
-connectFloating.addEventListener('click', async ()=>{
-  if (userAddress) {
-    if (!confirm('Disconnect wallet?')) return;
-    await disconnectWallet(false);
-  } else {
-    setBusy(connectFloating, true);
-    try { await connectWallet(); } finally { setBusy(connectFloating, false); }
-  }
-});
 
 /* =================== CARET, SYMBOL UX =================== */
 function placeCaretAtEnd(inputEl){
