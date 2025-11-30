@@ -1025,8 +1025,7 @@ function attachSuggestionScrollSafety(box){
   const wheelHandler = e => {
     // allow inner scroll but prevent the event from bubbling to page
     e.stopPropagation();
-    // If the element can scroll, allow default; otherwise prevent default to avoid overscroll on some devices
-    // do not call preventDefault unconditionally (so inner scrolling still works)
+
   };
   const touchHandler = e => { e.stopPropagation(); };
   box._wheel = wheelHandler;
@@ -1326,42 +1325,7 @@ function restoreSymbolOnBlur(side){
     }
     sym.style.visibility = 'visible';
   }
-}
 
-/* ensure that typed text attempts automatic resolution to tokens (keeps fields meaningful) */
-function resolveTokenInputsIfNeeded(){
-  const tryResolve = (inputEl) => {
-    const val = (inputEl.value || '').trim(); if (!val || inputEl.dataset.address) return;
-    const q = val.toLowerCase();
-    let found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
-    if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase() === q);
-    if (!found) found = tokenList.find(t => t.symbol && t.symbol.toLowerCase().startsWith(q));
-    if (!found) found = tokenList.find(t => t.name && t.name.toLowerCase().includes(q));
-    if (found){
-      inputEl.dataset.address = found.address;
-      inputEl.dataset.decimals = found.decimals || 18;
-      const logo = (inputEl.id === 'fromToken')? fromLogo : toLogo;
-      const chip = (inputEl.id === 'fromToken')? fromChip : toChip;
-      if (found.logoURI){ logo.src = found.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
-      const box = (inputEl.id === 'fromToken')? fromBox : toBox;
-      box.classList.add('has-token');
-      ACTIVE_PRICE_ADDRS.add(found.address);
-      chip.textContent = found.symbol || found.name || '';
-      chip.style.display = 'inline-flex';
-
-      try {
-        const stat = cgStatsMap.get(low(found.symbol)) || cgStatsMap.get(low(found.name));
-        const el = (inputEl.id === 'fromToken') ? fromChangeEl : toChangeEl;
-        if (stat && typeof stat.change === 'number') {
-          el.style.display = 'block';
-          el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
-          el.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
-        } else el.style.display = 'none';
-      } catch(_) {}
-    }
-  };
-  tryResolve(fromTokenInput); tryResolve(toTokenInput);
-}
 
 /* =================== SWAP BUTTON behaviour (with allowance/chain checks) =================== */
 /* full swap handler kept intact (unchanged except minor UX touches) */
@@ -1530,7 +1494,7 @@ function parseSwapError(e){
 */
 
 /* small helper that normalizes a provider-like object into an EIP-1193 compatible provider for ethers */
-function normalizeToEIP1193(rawProvider){
+
 function normalizeToEIP1193(rawProvider){
   if (!rawProvider) return null;
 
@@ -1592,137 +1556,7 @@ function normalizeToEIP1193(rawProvider){
     then pass it to ethers.providers.Web3Provider so signer works correctly.
 */
 
-async function tryCreateUniversalProvider() {
-  try {
-    // Try dynamic ESM import first (works in modern builds that expose ESM)
-    let UniversalProvider = null;
-    try {
-      // Common package name for WC universal provider (may be resolved by bundlers or available via CDN)
-      const mod = await import('@walletconnect/universal-provider');
-      UniversalProvider = mod && (mod.default || mod.UniversalProvider || mod.Universal);
-    } catch (e) {
-      // ESM import failed — try accessing a UMD/global fallback commonly used by CDNs
-      UniversalProvider = window.UniversalProvider || window.WalletConnectUniversalProvider || window.WalletConnect?.UniversalProvider || null;
-    }
 
-    if (!UniversalProvider) {
-      console.warn('UniversalProvider not found (dynamic import and global checks failed).');
-      return null;
-    }
-
-    // initialize with projectId and friendly metadata
-    const up = await UniversalProvider.init({
-      projectId: WALLETCONNECT_PROJECT_ID,
-      metadata: {
-        name: 'NOLA Exchange',
-        description: 'NOLA DEX Aggregator — connect your wallet',
-        url: window.location.origin,
-        icons: [window.location.origin + '/logo.png']
-      }
-    });
-
-    // up is the provider-like object from WalletConnect v2 universal-provider
-    // it often emits 'display_uri' (or 'pairing_uri' in some builds) with the pairing URI for QR/deeplink flows
-    return up;
-  } catch (e) {
-    console.warn('tryCreateUniversalProvider failed', e);
-    return null;
-  }
-}
-
-/* Small UI helper to render pairing QR + copy button (non-blocking) */
-function showWalletConnectQR(pairingUri){
-  // reuse a simple modal element if exists, otherwise create ephemeral
-  let modal = document.getElementById('wcmPairingModal');
-  if (!modal) {
-    modal = document.createElement('div');
-    modal.id = 'wcmPairingModal';
-    modal.style.position = 'fixed';
-    modal.style.left = '50%';
-    modal.style.top = '50%';
-    modal.style.transform = 'translate(-50%,-50%)';
-    modal.style.background = 'rgba(10,6,18,0.95)';
-    modal.style.padding = '18px';
-    modal.style.borderRadius = '12px';
-    modal.style.zIndex = 99999;
-    modal.style.boxShadow = '0 20px 60px rgba(0,0,0,0.6)';
-    modal.style.textAlign = 'center';
-    modal.innerHTML = `
-      <div style="font-weight:900;margin-bottom:10px;color:#e9d5ff">Open wallet to connect</div>
-      <img id="wcmQRImg" alt="WalletConnect QR" style="width:220px;height:220px;border-radius:12px;margin-bottom:12px;display:block;margin-left:auto;margin-right:auto" />
-      <div style="display:flex;gap:8px;justify-content:center">
-        <input id="wcmUriInput" readonly style="width:320px;padding:8px;border-radius:8px;border:none;background:rgba(255,255,255,0.04);color:#fff" />
-        <button id="wcmCopyBtn" class="glassy-btn" style="padding:8px 10px">Copy</button>
-      </div>
-      <div style="margin-top:12px"><button id="wcmCloseBtn" class="quick-cta">Close</button></div>
-    `;
-    document.body.appendChild(modal);
-
-    document.getElementById('wcmCopyBtn').addEventListener('click', ()=>{
-      const v = document.getElementById('wcmUriInput').value || '';
-      navigator.clipboard && navigator.clipboard.writeText(v).then(()=> showToast('Pairing URI copied', { ttl: 1600 }));
-    });
-    document.getElementById('wcmCloseBtn').addEventListener('click', ()=>{ modal.remove(); });
-  }
-
-  const img = document.getElementById('wcmQRImg');
-  const inp = document.getElementById('wcmUriInput');
-  // Use robust QR generator (qrserver) as fallback — simple img src
-  try {
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(pairingUri)}`;
-    img.src = qrUrl;
-  } catch(e){
-    img.src = '';
-  }
-  inp.value = pairingUri;
-  modal.style.display = 'block';
-}
-
-/* Attempt to connect using UniversalProvider, returning an EIP-1193 wrapper or null */
-async function connectUsingUniversalProvider() {
-  try {
-    const up = await tryCreateUniversalProvider();
-    if (!up) return null;
-
-    // Some universal providers emit a display_uri event with the pairing URI
-    // Listen for it to show the QR & deep-link UI
-    let pairingShown = false;
-    try {
-      up.on && up.on('display_uri', (uri) => { pairingShown = true; showWalletConnectQR(uri); });
-      up.on && up.on('pairing_proposal', (uri) => { if (!pairingShown) showWalletConnectQR(uri?.uri || uri); pairingShown = true; });
-    } catch(e){ /* non-fatal */ }
-
-    // If init returned an active pairing URI immediately, show it
-    try {
-      if (up?.pairing && up.pairing.uri) { showWalletConnectQR(up.pairing.uri); pairingShown = true; }
-      // some builds expose .session or .connector with .uri
-      if (!pairingShown && up?.session?.uri) { showWalletConnectQR(up.session.uri); pairingShown = true; }
-    } catch(e){}
-
-    // Normalize to EIP-1193 wrapper so ethers can consume it
-    const eip = normalizeToEIP1193(up);
-    if (!eip) return null;
-
-    // Hook up some convenience events to refresh UI
-    try {
-      eip.on && eip.on('accountsChanged', (accounts)=> {
-        if (!accounts || accounts.length === 0) { disconnectWallet(false); }
-        else { userAddress = accounts[0]; setConnectedUI(userAddress); }
-      });
-      eip.on && eip.on('chainChanged', ()=> { window.location.reload(); });
-    } catch(e){}
-
-    return eip;
-  } catch(e){
-    console.warn('connectUsingUniversalProvider error', e);
-    return null;
-  }
-}
-
-/* =================== Overwrite/upgrade connectWallet with a modern robust flow =================== */
-/* We'll override previously-defined connectWallet so your app uses this improved flow without altering other logic. */
-
-/* =================== Extra UX fixes requested =================== */
 
 /* 2) Prevent selecting the same token for both fields
    (applyTokenSelection already checks this but add a last-resort guard before swapping/quotes) */
@@ -1806,9 +1640,7 @@ sendChatBtn.addEventListener('click', async ()=>{
 window.ensureWalletConnectedOrPrompt = ensureWalletConnectedOrPrompt;
 window.ensureCorrectChainOrPrompt = ensureCorrectChainOrPrompt;
 
-/* Keep the rest of the file intact — accessory helpers and listeners are unchanged below this point. */
-/* =================== END OF PART 2 CONTINUATION =================== */
-/* =================== RESOLVE TYPED TOKENS HEURISTICALLY =================== */
+
 function resolveTokenInputsIfNeeded(){
   const tryResolve = (inputEl) => {
     const val = (inputEl.value || '').trim(); if (!val || inputEl.dataset.address) return;
