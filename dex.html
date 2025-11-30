@@ -9,7 +9,6 @@
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Arial',sans-serif}
 html,body{height:100%}
 body{
-  /* keep page scrolling disabled by default; inner panels manage their own scroll */
   overflow:hidden;
   background:radial-gradient(circle at center,#0c0014,#1a002b 80%);
   color:#fff;scroll-behavior:smooth;min-height:100vh;
@@ -109,7 +108,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   color:#fff; font-weight:800; font-size:15px; cursor:pointer;
   transition:transform 120ms ease,box-shadow 120ms ease,background 120ms ease; backdrop-filter: blur(6px);
 }
-.glassy-btn:active{transform:translateY(0.6px);box-shadow:none}
+.glassy-btn:active{transform:translateY(1px);box-shadow:none}
 .glassy-btn[disabled]{opacity:0.45;cursor:not-allowed;box-shadow:none;border:1px solid rgba(255,255,255,0.02);background:var(--disabled-glass)}
 .glassy-btn.connected{background:linear-gradient(90deg,var(--accent-1),var(--accent-2));color:#fff;}
 
@@ -123,7 +122,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   display:inline-flex; gap:8px; align-items:center;
   box-shadow: 0 10px 30px rgba(255,200,50,0.12);
 }
-.quick-cta:active{transform:translateY(0.6px);box-shadow:none}
+.quick-cta:active{transform:translateY(1px);box-shadow:none}
 .quick-cta[disabled]{opacity:0.5;cursor:not-allowed}
 
 /* tiny glassy tooltip / toast */
@@ -266,6 +265,28 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* spinner */
 .btn-spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top-color:rgba(255,255,255,1);animation:spin 700ms linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* wallet fallback modal */
+#walletFallbackModal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 4000;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.6);
+}
+#walletFallbackModal .content {
+  width: 92%;
+  max-width: 520px;
+  background: rgba(255,255,255,0.06);
+  padding: 18px;
+  border-radius: 14px;
+  text-align: left;
+}
+#walletFallbackModal .wallet-list { display:flex;gap:10px;flex-wrap:wrap;margin-top:12px; }
+.wallet-btn { padding:10px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);cursor:pointer;font-weight:800 }
+#wcQR{width:160px;height:160px;background:#0f0f18;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px}
 </style>
 </head>
 <body>
@@ -310,7 +331,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
         <div class="price-small">
           <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
+          <div id="fromUnitSmall" class="price-unit" style="display:none">—</div>
         </div>
 
       </div>
@@ -340,7 +361,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
         <div class="price-small">
           <div id="toUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="toUnitSmall" class="price-unit" style="display:none">— / unit</div>
+          <div id="toUnitSmall" class="price-unit" style="display:none">— </div>
         </div>
 
       </div>
@@ -397,16 +418,12 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
 <!-- CHAT PANEL -->
 <div class="chat-sidebar" id="chatSidebar">
-
-  <h3 style="text-align:center;margin-bottom:10px;">Chat</h3>
-
+  <h3 style="text-align:center;margin-bottom:10px;">Public Chat</h3>
   <div id="chatMessages" style="overflow-y:auto; flex:1;"></div>
-
   <div class="chat-input">
     <input id="chatInput" placeholder="Drop your alpha...">
     <button id="sendChat">NOLA</button>
   </div>
-
 </div>
 
 <!-- USERNAME POPUP -->
@@ -414,245 +431,54 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   <div class="modal-content">
     <h3>Choose a Username</h3>
     <input id="modalUsername" placeholder="Enter name">
-    <button id="confirmUsername">Say NOLA</button>
+    <button id="confirmUsername">NOLA</button>
   </div>
 </div>
+
+<!-- Wallet fallback modal (QR/deep-link helper) -->
+<div id="walletFallbackModal" aria-hidden="true">
+  <div class="content" role="dialog" aria-modal="true" aria-labelledby="walletFallbackTitle">
+    <h3 id="walletFallbackTitle">Connect a Wallet</h3>
+    <p>If your browser doesn't have a web3 extension (MetaMask) we can connect via WalletConnect. Use one of the wallet buttons below on mobile, or scan the QR code with your wallet app.</p>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <div id="wcQR">QR</div>
+      <div style="flex:1">
+        <div class="wallet-list" id="walletList">
+          <button class="wallet-btn" data-deep="metamask">MetaMask</button>
+          <button class="wallet-btn" data-deep="trust">Trust</button>
+          <button class="wallet-btn" data-deep="rainbow">Rainbow</button>
+          <button class="wallet-btn" data-deep="coinbase">Coinbase</button>
+          <button class="wallet-btn" id="walletFallbackClose">Cancel</button>
+        </div>
+        <div style="margin-top:10px;font-size:13px;color:rgba(255,255,255,0.7)">
+          <div>Or install MetaMask / Coinbase Wallet extension for fastest desktop experience.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- footer -->
 <div class="footer">
   <div>© 2025 NOLA — All rights reserved</div>
-  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
+  <div><a href="Terms&Privacy.html" id="privacyTerms">Terms & Privacy</a> • <a href="https://x.com/NOLA_CHAIN" id="xLink">X</a> <a href="https://t.me/NOLA_community" id="tgLink">Telegram Page</a> <a href="index.html" id="siteLink">Website</a></div>
 </div>
 
 <!-- LIBS -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
-<!-- Web3Modal v3 attempt — keep this but initialization is done below in JS (may require version tweak) -->
 <script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
 <script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
-  <!-- chat -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
 /* ====== CONFIG ====== */
 const SUPABASE_URL = "https://qnpeauoskuipzcoaqbpy.supabase.co";
-const SUPABASE_KEY = "REDACTED_FOR_CANVAS"; // keep secret in production
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFucGVhdW9za3VpcHpjb2FxYnB5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ0MDU2MjksImV4cCI6MjA3OTk4MTYyOX0.zduOSQAt7FALN61IIEZiQDEcJjHu7vZ2STufC5laDcg";
 
 /* ====== INIT CLIENT ====== */
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* ====== ELEMENTS ====== */
-const chatSidebar = document.getElementById("chatSidebar");
-const chatToggle   = document.getElementById("chatToggle");
-const chatMessages = document.getElementById("chatMessages");
-const chatInput    = document.getElementById("chatInput");
-const sendChatBtn  = document.getElementById("sendChat");
-
-const usernameModal = document.getElementById("usernameModal");
-const modalUsername = document.getElementById("modalUsername");
-const confirmUsername = document.getElementById("confirmUsername");
-
-/* ====== STATE ====== */
-let chatUser = localStorage.getItem("chatUser") || null;
-let renderedIds = new Set(); 
-let lastId = 0; // track highest id rendered
-
-/* ====== UI: show modal if username missing ====== */
-if(!chatUser){
-  usernameModal.style.display = "flex";
-} else if(modalUsername) {
-  modalUsername.value = chatUser;
-}
-
-/* ====== username logic ====== */
-confirmUsername && (confirmUsername.onclick = async () => {
-  const v = (modalUsername.value || '').trim();
-  chatUser = v || ('User' + Math.floor(Math.random()*9999));
-  localStorage.setItem('chatUser', chatUser);
-  usernameModal.style.display = 'none';
-  await initChat();
-});
-
-/* if username already exists */
-if(chatUser){
-  initChat();
-}
-
-/* ====== Help: color only usernames ====== */
-const userColors = {};
-function getColor(name){
-  if(userColors[name]) return userColors[name];
-  const r = Math.floor(100 + Math.random()*120);
-  const g = Math.floor(50 + Math.random()*140);
-  const b = Math.floor(100 + Math.random()*120);
-  const col = `rgb(${r},${g},${b})`;
-  userColors[name] = col;
-  return col;
-}
-
-/* ====== Render message safely ====== */
-function escapeHtml(s){
-  return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/\"/g,'&quot;')
-    .replace(/'/g,'&#39;');
-}
-
-function renderMessage(msg){
-  if(!msg || !msg.id) return;
-  if(renderedIds.has(String(msg.id))) return; 
-  renderedIds.add(String(msg.id));
-
-  const numericId = Number(msg.id);
-  if(!Number.isNaN(numericId) && numericId > lastId) lastId = numericId;
-
-  const el = document.createElement('div');
-  el.className = 'chat-msg';
-
-  const userEsc = escapeHtml(msg.user || 'Anon');
-  const textEsc = escapeHtml(msg.text || '');
-  const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : '';
-
-  el.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <b style="color:${getColor(userEsc)};font-weight:800">${userEsc}</b>
-      <span style="font-size:11px;color:rgba(255,255,255,0.5);margin-left:auto">${time}</span>
-    </div>
-    <div style="margin-top:6px;white-space:pre-wrap">${textEsc}</div>
-  `;
-
-  chatMessages.appendChild(el);
-
-  while(chatMessages.children.length > 500){
-    chatMessages.removeChild(chatMessages.firstChild);
-  }
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-function showPlaceholder(){
-  chatMessages.innerHTML = `<div style="opacity:0.7;text-align:center;margin-top:20px">No messages yet — be first!</div>`;
-}
-
-/* ====== Load history ====== */
-async function loadHistory(){
-  try{
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('id, user, text, created_at')
-      .order('id', { ascending: true })
-      .limit(200);
-
-    if(error){
-      console.error('History load error', error);
-      chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Failed to load chat history</div>`;
-      return;
-    }
-
-    renderedIds.clear();
-    chatMessages.innerHTML = '';
-    if(!data || !data.length){
-      showPlaceholder();
-      lastId = 0;
-      return;
-    }
-
-    data.forEach(renderMessage);
-  }catch(err){
-    console.error('loadHistory exception', err);
-    chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Chat unavailable</div>`;
-  }
-}
-
-/* ====== Polling: fetch new messages every 1.5s ====== */
-async function fetchNewMessages() {
-    try {
-        const { data, error } = await supabase
-            .from('chat_messages')
-            .select('id, user, text, created_at')
-            .gt('id', lastId)
-            .order('id', { ascending: true });
-
-        if(error){
-            console.error('Fetch new messages error:', error);
-            return;
-        }
-
-        if(data && data.length){
-            data.forEach(renderMessage);
-        }
-    } catch (e) {
-        console.error('fetchNewMessages exception:', e);
-    }
-}
-setInterval(fetchNewMessages, 1500);
-
-/* ====== Send message ====== */
-let sending = false;
-sendChatBtn.addEventListener('click', async () => {
-  const text = (chatInput.value || '').trim();
-  if(!text) return;
-  if(!chatUser){
-    usernameModal.style.display = 'flex';
-    return;
-  }
-  if(sending) return;
-  sending = true;
-  sendChatBtn.disabled = true;
-
-  try{
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .insert({ user: chatUser, text });
-
-    if(error){
-      console.error('Insert error', error);
-      alert('Send failed. Check console.');
-    } else if(data && data[0]){
-      // local echo
-      renderMessage(data[0]);
-      // clear input and focus for new message
-      chatInput.value = '';
-      chatInput.focus();
-    }
-  }catch(e){
-    console.error('Send exception', e);
-    alert('Send failed');
-  } finally {
-    setTimeout(()=>{ sending=false; sendChatBtn.disabled=false; }, 500);
-  }
-});
-
-/* ====== Send on Enter ====== */
-chatInput.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter' && !e.shiftKey){
-    e.preventDefault();
-    sendChatBtn.click();
-  }
-});
-
-/* ====== Toggle chat sidebar (explicit only via toggle) ====== */
-chatToggle && chatToggle.addEventListener('click', () => {
-  chatSidebar.classList.toggle('open');
-});
-
-/* ====== Clicking outside chat closes chat only (not open) ====== */
-document.addEventListener('click', (ev)=>{
-  const inChat = !!ev.target.closest('#chatSidebar') || !!ev.target.closest('#chatToggle');
-  if(!inChat && chatSidebar.classList.contains('open')){
-    chatSidebar.classList.remove('open');
-  }
-});
-
-/* NOTE: Removed auto-open on page click as requested */
-
-/* ====== Init chat ====== */
-async function initChat(){
-  await loadHistory();
-}
-</script>
-<script>
-  /* ================= PARTICLES */
-(function createParticles(){ for(let i=0;i<60;i++){ const p=document.createElement('div'); p.className='particle'; p.style.top=(Math.random()*100)+'%'; p.style.left=(Math.random()*100)+'%'; p.style.width=(Math.random()*3+1)+'px'; p.style.height=(Math.random()*3+1)+'px'; p.style.animationDuration=(Math.random()*10+5)+'s'; document.body.appendChild(p); }})();
-
-/* =================== CONFIG & STATE =================== */
+/* =================== CONSTANTS & STATE =================== */
 const CHAIN_ID = 137;
 const CHAIN_ID_HEX = '0x89';
 const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
@@ -660,16 +486,16 @@ const ZEROX_BASE = 'https://polygon.api.0x.org';
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPCS = [
   "https://polygon-rpc.com",
-   "https://rpc-mainnet.maticvigil.com",
+  "https://rpc-mainnet.maticvigil.com",
 ];
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
 const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
-const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384'; // keep as-is
+const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384';
 const WALLETCONNECT_PROJECT_ID = '6557a92e3698182727669d41cbeb95a1';
 const FEE_PERCENT = 0.00001;
 const FEE_RECIPIENT = '0xFEE_RECIPIENT_PLACEHOLDER';
-const QUOTE_CACHE_TTL = 10_000; // 10s
+const QUOTE_CACHE_TTL = 10000; // 10s
 
 let tokenList = [];
 let tokenMap = new Map();
@@ -694,8 +520,13 @@ const connectFloating = $('connectFloating'), addrChip = $('addrChip'), connectL
 const slippageWrap = $('slippageWrap'), slippageDisplay = $('slippageDisplay'), slippageList = $('slippageList'), slippageLabel = $('slippageLabel');
 const fromChangeEl = $('fromChange'), toChangeEl = $('toChange');
 const quickSwapBtn = $('quickSwapBtn'), quickSpinner = $('quickSpinner'), quickLabel = $('quickLabel');
+const walletFallbackModal = $('walletFallbackModal'), wcQR = $('wcQR'), walletList = $('walletList'), walletFallbackClose = $('walletFallbackClose');
 
-let provider = null, signer = null, userAddress = null, web3modal = null; // wallet
+/* chat refs */
+const chatSidebar = $('chatSidebar'), chatToggle = $('chatToggle'), chatMessages = $('chatMessages'), chatInput = $('chatInput'), sendChatBtn = $('sendChat');
+const usernameModal = $('usernameModal'), modalUsername = $('modalUsername'), confirmUsername = $('confirmUsername');
+
+let provider = null, signer = null, userAddress = null, wcProviderInstance = null;
 
 /* =================== HELPERS =================== */
 const isAddress = v => /^0x[a-fA-F0-9]{40}$/.test((v||'').trim());
@@ -754,7 +585,6 @@ let _bodyScrollLocked = false;
 function stopBodyScroll(){
   if (_bodyScrollLocked) return;
   _bodyScrollLocked = true;
-  // enforce hidden page scroll
   document.documentElement.style.overflow = 'hidden';
   document.body.style.overflow = 'hidden';
 }
@@ -777,50 +607,46 @@ async function getRpcProvider(){
   return new ethers.providers.JsonRpcProvider(FALLBACK_RPCS[0]);
 }
 
-/* =================== LOAD TOKENS & COINGECKO MARKETS =================== */
-async function loadTokensAndMarkets(){
-  try {
-    const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
-    const j = await r.json();
-    tokenList = (j.tokens||[]).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
-    tokenList.forEach(t => tokenMap.set(t.address, t));
-    if (!tokenMap.has(low(MATIC_ADDR))) tokenMap.set(low(MATIC_ADDR), { address: low(MATIC_ADDR), symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
-
-    try {
-      const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-      const rm = await fetchWithTimeout(marketsUrl, {}, 5000);
-      const jm = await rm.json();
-      jm.forEach(c => {
-        const sym = low(c.symbol||''), name = low(c.name||'');
-        const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
-        if (sym) cgStatsMap.set(sym, stat);
-        if (name) cgStatsMap.set(name, stat);
-      });
-    } catch(e){ console.warn('CoinGecko markets failed', e); }
-
-    try {
-      const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
-      const j1 = await r1.json();
-      if (j1 && j1.tokens) {
-        Object.values(j1.tokens).forEach(t => {
-          const addr = low(t.address||'');
-          if (!addr) return;
-          if (tokenMap.has(addr)) return;
-          const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
-          tokenList.push(obj); tokenMap.set(addr, obj);
-        });
-      }
-    } catch(e){ /* ignore */ }
-
-    const seen = new Set();
-    tokenList = tokenList.filter(t => { if(!t||!t.address) return false; if(seen.has(t.address)) return false; seen.add(t.address); return true; });
-    console.log('Loaded tokens:', tokenList.length);
-  } catch(e){ console.error('loadTokensAndMarkets error', e); }
+/* =================== UTILS & UI HELPERS =================== */
+function shortAddr(addr){
+  if(!addr) return '';
+  return addr.slice(0,6) + '...' + addr.slice(-4);
 }
-let tokensLoadedPromise = loadTokensAndMarkets();
-async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
+function setConnectedUI(address){
+  userAddress = address;
+  addrChip.textContent = shortAddr(address);
+  addrChip.style.display = 'inline-flex';
+  connectLabel.textContent = 'Connected';
+  connectFloating.classList.add('connected');
+  connectIcon.textContent = '🔒';
+}
+function disconnectWallet(showToastMsg = true){
+  provider = null;
+  signer = null;
+  userAddress = null;
+  addrChip.style.display = 'none';
+  connectLabel.textContent = 'Connect Wallet';
+  connectFloating.classList.remove('connected');
+  connectIcon.textContent = '🔌';
+  if (showToastMsg) showToast('Wallet disconnected');
+}
 
-/* =================== PRICING SOURCES & SMART PRICE (unchanged core) =================== */
+/* Utility to detect mobile */
+function isMobile() {
+  if (typeof navigator === 'undefined') return false;
+  return /Mobi|Android|iPhone|iPad|iPod|Opera Mini/i.test(navigator.userAgent);
+}
+
+/* Show fallback modal */
+function showWalletFallbackModal(qrText){
+  wcQR.textContent = qrText ? 'Scan via WalletConnect' : 'No QR available';
+  walletFallbackModal.style.display = 'flex';
+}
+function hideWalletFallbackModal(){
+  walletFallbackModal.style.display = 'none';
+}
+
+/* =================== PRICING SOURCES & SMART PRICE =================== */
 async function fetch0xPrice(addr, decimals=18){
   try {
     const sellToken = addr;
@@ -961,7 +787,52 @@ async function getTokenPriceUSD(address, decimals=18){
   });
 }
 
+/* =================== LOAD TOKENS & COINGECKO MARKETS =================== */
+async function loadTokensAndMarkets(){
+  try {
+    const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
+    const j = await r.json();
+    tokenList = (j.tokens||[]).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
+    tokenList.forEach(t => tokenMap.set(t.address, t));
+    if (!tokenMap.has(low(MATIC_ADDR))) tokenMap.set(low(MATIC_ADDR), { address: low(MATIC_ADDR), symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
+
+    try {
+      const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+      const rm = await fetchWithTimeout(marketsUrl, {}, 5000);
+      const jm = await rm.json();
+      jm.forEach(c => {
+        const sym = low(c.symbol||''), name = low(c.name||'');
+        const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
+        if (sym) cgStatsMap.set(sym, stat);
+        if (name) cgStatsMap.set(name, stat);
+      });
+    } catch(e){ console.warn('CoinGecko markets failed', e); }
+
+    try {
+      const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
+      const j1 = await r1.json();
+      if (j1 && j1.tokens) {
+        Object.values(j1.tokens).forEach(t => {
+          const addr = low(t.address||'');
+          if (!addr) return;
+          if (tokenMap.has(addr)) return;
+          const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
+          tokenList.push(obj); tokenMap.set(addr, obj);
+        });
+      }
+    } catch(e){ /* ignore */ }
+
+    const seen = new Set();
+    tokenList = tokenList.filter(t => { if(!t||!t.address) return false; if(seen.has(t.address)) return false; seen.add(t.address); return true; });
+    console.log('Loaded tokens:', tokenList.length);
+  } catch(e){ console.error('loadTokensAndMarkets error', e); }
+}
+let tokensLoadedPromise = loadTokensAndMarkets();
+async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
+
 /* =================== SUGGESTIONS & AUTOCOMPLETE (with scroll-lock) =================== */
+const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
+
 function makeSuggestionItem(tokenObj, stats, priceUSD){
   const row = document.createElement('div'); row.className='suggestion-item';
   const left = document.createElement('div'); left.className='suggestion-left';
@@ -998,7 +869,6 @@ function showDefaultList(side){
   withStats.sort((a,b)=> (b.stat.volume24h||0) - (a.stat.volume24h||0));
   const top = withStats.slice(0, Math.min(15, withStats.length));
   (async ()=>{
-    // lock page scroll and attach safe handlers
     stopBodyScroll();
     attachSuggestionScrollSafety(box);
     for (const e of top){
@@ -1014,17 +884,12 @@ function showDefaultList(side){
 
 /* stop wheel/touch from scrolling parent when inside suggestions */
 function attachSuggestionScrollSafety(box){
-  // ensure box is scrollable, lock body scroll
-  const wheelHandler = e => {
-    // allow inner scroll but prevent the event from bubbling to page
-    e.stopPropagation();
-  };
+  const wheelHandler = e => { e.stopPropagation(); };
   const touchHandler = e => { e.stopPropagation(); };
   box._wheel = wheelHandler;
   box._touch = touchHandler;
   box.addEventListener('wheel', wheelHandler, { passive: false });
   box.addEventListener('touchmove', touchHandler, { passive: false });
-  // clicking outside hides
   setTimeout(()=> {
     document.addEventListener('click', box._outsideClick = (ev)=> {
       if (!box.contains(ev.target)) {
@@ -1050,22 +915,7 @@ function setupAutocomplete(inputEl, boxEl, side){
   let timer = null;
   inputEl.addEventListener('input', ()=>{ clearTimeout(timer); timer = setTimeout(()=> handle(inputEl.value.trim().toLowerCase()), 140); updateActionButtonsState(); });
   inputEl.addEventListener('focus', ()=> { const q = inputEl.value.trim().toLowerCase(); hideSymbolOnFocus(side); if (!q) showDefaultList(side); else handle(q); placeCaretAtEnd(inputEl); });
-  inputEl.addEventListener('blur', ()=> setTimeout(()=> { // on blur, ensure text resets to selected token's name if we have address
-    if (!document.activeElement || !boxEl.contains(document.activeElement)) { 
-      boxEl.style.display='none'; 
-      restoreSymbolOnBlur(side); 
-      detachSuggestionScrollSafety(boxEl); 
-      restoreBodyScroll(); 
-      const addr = inputEl.dataset.address || '';
-      if(addr){ // ensure the displayed text is the selected token's symbol/name
-        const tk = tokenMap.get(low(addr));
-        if(tk){ inputEl.value = tk.symbol || tk.name || inputEl.value; }
-      } else {
-        // can't be empty — if user removed text and no address selected, revert to previous if exists
-        const prev = inputEl.dataset.prevValue || '';
-        inputEl.value = prev || inputEl.placeholder || '';
-      }
-    } }, 180));
+  inputEl.addEventListener('blur', ()=> setTimeout(()=> { if (!document.activeElement || !boxEl.contains(document.activeElement)) { boxEl.style.display='none'; restoreSymbolOnBlur(side); detachSuggestionScrollSafety(boxEl); restoreBodyScroll(); } }, 180));
 
   async function handle(q){
     boxEl.innerHTML = ''; if (!q){ boxEl.style.display='none'; return; }
@@ -1149,13 +999,95 @@ function renderSuggestionsFromCache(q, side, box){
 setupAutocomplete(fromTokenInput, fromSuggestions, 'from');
 setupAutocomplete(toTokenInput, toSuggestions, 'to');
 
-/* =================== SELECTION, USD DISPLAY, PASTE, RESOLVE =================== */
-const DARK_SVG_PLACEHOLDER = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36"><rect width="100%" height="100%" rx="8" ry="8" fill="#151225"/></svg>`);
+/* =================== ELEMENT CARET / SYMBOL UX =================== */
+function placeCaretAtEnd(inputEl){
+  try{ const len = (inputEl.value || '').length; inputEl.setSelectionRange(len, len); }catch(e){}
+}
+function focusAndPlaceCaretAtEnd(inputEl){
+  try{ inputEl.focus(); placeCaretAtEnd(inputEl); }catch(e){}
+}
+function hideSymbolOnFocus(side){
+  const sym = (side==='from')? $('fromSymbol') : $('toSymbol');
+  const input = (side==='from')? fromTokenInput : toTokenInput;
+  if (sym) sym.style.visibility = 'hidden';
+}
+function restoreSymbolOnBlur(side){
+  const sym = (side==='from')? $('fromSymbol') : $('toSymbol');
+  const input = (side==='from')? fromTokenInput : toTokenInput;
+  if (sym) {
+    if (!input.value || input.value.trim() === '') {
+      const addr = input.dataset.address;
+      if (addr && tokenMap.has(low(addr))) sym.textContent = tokenMap.get(low(addr)).symbol || tokenMap.get(low(addr)).name || 'Select';
+      else sym.textContent = 'Select';
+    }
+    sym.style.visibility = 'visible';
+  }
+}
 
+/* Handle manual clearing / blur restore */
+[fromTokenInput, toTokenInput].forEach(inp => {
+  inp.addEventListener('blur', ()=> {
+    const id = inp.id;
+    const side = (id === 'fromToken') ? 'from' : 'to';
+    const addr = low(inp.dataset.address || '');
+    if (!inp.value || String(inp.value).trim() === '') {
+      const restoreAddr = (side === 'from') ? (fromTokenInput.dataset.address || null) : (toTokenInput.dataset.address || null);
+      if (restoreAddr && tokenMap.has(low(restoreAddr))) {
+        const tk = tokenMap.get(low(restoreAddr));
+        inp.value = tk.symbol || tk.name || restoreAddr.slice(0,8);
+        inp.dataset.address = tk.address;
+        inp.dataset.decimals = tk.decimals || 18;
+        const logo = (side === 'from') ? fromLogo : toLogo;
+        const chip = (side === 'from') ? fromChip : toChip;
+        logo.src = tk.logoURI || DARK_SVG_PLACEHOLDER;
+        logo.style.display = 'block';
+        chip.textContent = tk.symbol || tk.name || '';
+        chip.style.display = 'inline-flex';
+        const box = (side === 'from') ? fromBox : toBox;
+        box.classList.add('has-token');
+      } else {
+        inp.value = '';
+        const symbolEl = (side === 'from') ? $('fromSymbol') : $('toSymbol');
+        if (symbolEl) symbolEl.textContent = 'Select';
+        const box = (side === 'from') ? fromBox : toBox;
+        box.classList.remove('has-token');
+        delete inp.dataset.address;
+        delete inp.dataset.decimals;
+      }
+    } else {
+      const v = String(inp.value).trim();
+      if (isAddress(v)) {
+        (async ()=> {
+          const info = tokenMap.get(low(v)) || await fetchOnchainTokenInfo(v);
+          if (info) {
+            applyTokenSelection(side, info);
+          }
+        })();
+      }
+    }
+  });
+});
+
+/* =================== ONCHAIN TOKEN RESOLVE =================== */
+async function fetchOnchainTokenInfo(address){
+  try {
+    const addrL = low(address);
+    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
+    const rpcProvider = await getRpcProvider();
+    const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
+    const c = new ethers.Contract(address, abi, rpcProvider);
+    const [symbol,name,decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
+    const info = { address: addrL, symbol: symbol||address.slice(0,6), name: name||symbol||address.slice(0,8), decimals: decimals||18, logoURI: '' };
+    tokenMap.set(info.address, info);
+    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
+    return info;
+  } catch(e){ console.warn('fetchOnchainTokenInfo failed', e); return null; }
+}
+
+/* =================== SELECTION, USD DISPLAY, PASTE, RESOLVE =================== */
 function applyTokenSelection(side, tokenObj){
   if (!tokenObj) return;
 
-  // Prevent same token chosen on both sides
   const otherSide = (side === 'from') ? 'to' : 'from';
   const otherInput = (otherSide === 'from') ? fromTokenInput : toTokenInput;
   const otherAddr = low(otherInput.dataset.address || '');
@@ -1171,7 +1103,6 @@ function applyTokenSelection(side, tokenObj){
   const symbolEl = (side === 'from') ? $('fromSymbol') : $('toSymbol');
   const box = (side === 'from') ? fromBox : toBox;
 
-  input.dataset.prevValue = input.value || '';
   input.value = tokenObj.symbol || tokenObj.name || '';
   symbolEl.textContent = tokenObj.symbol || tokenObj.name || '';
   input.dataset.address = low(tokenObj.address || tokenObj.address);
@@ -1192,83 +1123,27 @@ function applyTokenSelection(side, tokenObj){
   focusAndPlaceCaretAtEnd(input);
   fetchPriceForToken(tokenObj.address, tokenObj.decimals || 18, side);
 
-  // show percent change (percent ONLY)
   try {
     const sym = (tokenObj.symbol||'').toLowerCase();
     const nm = (tokenObj.name||'').toLowerCase();
     const stat = cgStatsMap.get(sym) || cgStatsMap.get(nm) || null;
+    const changeEl = (side==='from')? fromChangeEl : toChangeEl;
     if (stat && typeof stat.change === 'number') {
-      const el = (side==='from')? fromChangeEl : toChangeEl;
-      el.style.display = 'block';
-      el.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
-      el.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
-    } else {
-      const el = (side==='from')? fromChangeEl : toChangeEl;
-      if (el) el.style.display = 'none';
+      changeEl.style.display = 'block';
+      changeEl.textContent = (stat.change >= 0 ? '+' : '') + stat.change.toFixed(2) + '%';
+      changeEl.style.color = stat.change >= 0 ? '#9ef39e' : '#ff9e9e';
+    } else if (changeEl) {
+      changeEl.style.display = 'none';
     }
   } catch(e){}
-  updateActionButtonsState();
-}
-function clearTokenSelection(side){
-  const box = (side === 'from') ? fromBox : toBox;
-  box.classList.remove('has-token');
-  const chip = (side === 'from') ? fromChip : toChip;
-  chip.style.display = 'none';
-  const changeEl = (side === 'from') ? fromChangeEl : toChangeEl;
-  if (changeEl) changeEl.style.display = 'none';
 }
 
-/* paste handling — if user pastes a token address detect it */
-document.querySelectorAll('.input-box input[type="text"], .input-box input[type="number"]').forEach(inp=>{
-  inp.addEventListener('paste', (ev)=>{
-    const txt = (ev.clipboardData || window.clipboardData).getData('text').trim();
-    if (isAddress(txt)) {
-      setTimeout(async ()=> {
-        inp.dataset.address = low(txt);
-        let info = tokenMap.get(low(txt)) || await fetchOnchainTokenInfo(txt);
-        if (info) {
-          inp.dataset.decimals = info.decimals || 18;
-          inp.value = info.symbol || info.name || txt.slice(0,8);
-          tokenMap.set(info.address, info);
-          const logo = (inp.id === 'fromToken') ? fromLogo : toLogo;
-          const chip = (inp.id === 'fromToken') ? fromChip : toChip;
-          if (info.logoURI) { logo.src = info.logoURI; logo.style.display = 'block'; } else { logo.src = DARK_SVG_PLACEHOLDER; logo.style.display = 'block'; }
-          const box = (inp.id === 'fromToken') ? fromBox : toBox;
-          box.classList.add('has-token');
-          chip.textContent = info.symbol || info.name || '';
-          chip.style.display = 'inline-flex';
-          updateUsdVisibility();
-          fetchBothPrices(); updateQuoteDebounced(); updateEstimate();
-          updateActionButtonsState();
-        }
-      }, 10);
-    }
-  });
-});
-
-async function fetchOnchainTokenInfo(address){
-  try {
-    const addrL = low(address);
-    if (tokenMap.has(addrL)) return tokenMap.get(addrL);
-    const rpcProvider = await getRpcProvider();
-    const abi = ["function symbol() view returns (string)","function name() view returns (string)","function decimals() view returns (uint8)"];
-    const c = new ethers.Contract(address, abi, rpcProvider);
-    const [symbol,name,decimals] = await Promise.all([ c.symbol().catch(()=>null), c.name().catch(()=>null), c.decimals().catch(()=>18) ]);
-    const info = { address: addrL, symbol: symbol||address.slice(0,6), name: name||symbol||address.slice(0,8), decimals: decimals||18, logoURI: '' };
-    tokenMap.set(info.address, info);
-    if (!tokenList.find(t => t.address === info.address)) tokenList.push(info);
-    return info;
-  } catch(e){ console.warn('fetchOnchainTokenInfo failed', e); return null; }
-}
-
-/* display USD/unit */
-async function fetchPriceForToken(address, decimals, side){
+/* =================== USD PRICE UI =================== */
+async function fetchPriceForToken(address, decimals=18, side){
   try {
     if (!address) return;
     const price = await getTokenPriceUSD(address, decimals);
-    const amtEl = (side === 'from') ? fromAmountEl : toAmountEl;
-    const amt = Number(amtEl.value || 0);
-
+    const amt = Number((side === 'from' ? fromAmountEl.value : toAmountEl.value) || 0);
     const usdEl = (side === 'from') ? fromUsdSmall : toUsdSmall;
     const unitEl = (side === 'from') ? fromUnitSmall : toUnitSmall;
 
@@ -1314,237 +1189,614 @@ async function fetchBothPrices(){
   ]);
 }
 
-/* =================== QUOTE + QUICK SWAP logic (added/modified) =================== */
-function _quoteKey(fromAddr, toAddr, amount){ return `${low(fromAddr)}|${low(toAddr)}|${String(amount||'0')}`; }
-async function fetchQuote(fromAddr, toAddr, amount, slippagePct){
-  try {
-    if(!fromAddr || !toAddr || !amount) return null;
-    const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${String(amount)}`;
-    const res = await fetchWithTimeout(qUrl,{},4000);
-    if(!res.ok) return null;
-    const j = await res.json();
-    // we keep the raw object as the cache value
-    return j;
+/* =================== QUOTE AGGREGATION & ESTIMATE (simplified/robust) =================== */
+async function fetch1InchSwapQuote(fromAddr,toAddr,amountWei,slippagePercent,fromAddress){
+  try{
+    const qUrl = `${ONEINCH_BASE}/quote?fromTokenAddress=${fromAddr}&toTokenAddress=${toAddr}&amount=${amountWei}`;
+    const r = await fetchWithTimeout(qUrl,{},3500);
+    if(!r.ok) throw new Error('1inch quote fail');
+    const j = await r.json();
+    return {source:'1inch', toTokenAmount: j.toTokenAmount, raw: j};
   } catch(e){ return null; }
 }
 
-async function updateQuote(fromAddr, toAddr, amount){
-  const key = _quoteKey(fromAddr,toAddr,amount);
-  const existing = quoteCache.get(key);
-  if (existing && (nowTs()-existing.ts) < QUOTE_CACHE_TTL) return existing.quote;
-  const q = await fetchQuote(fromAddr,toAddr,amount);
-  quoteCache.set(key, {quote:q,ts:nowTs()});
-  return q;
+async function fetch0xQuote(fromAddr,toAddr,amountWei,slippagePercent,fromAddress){
+  try{
+    const qUrl = `${ZEROX_BASE}/swap/v1/quote?sellToken=${fromAddr}&buyToken=${toAddr}&sellAmount=${amountWei}`;
+    const r = await fetchWithTimeout(qUrl, { headers: { '0x-api-key': ZEROX_API_KEY } }, 3500);
+    if(!r.ok) throw new Error('0x quote fail');
+    const j = await r.json();
+    return {source:'0x', toTokenAmount: j.buyAmount, raw: j};
+  } catch(e){ return null; }
 }
 
-async function quickSwapAction(){
-  const fAddr = low(fromTokenInput.dataset.address || '');
-  const tAddr = low(toTokenInput.dataset.address || '');
-  const amtVal = fromAmountEl.value ? String(ethers.utils.parseUnits(String(fromAmountEl.value||'0'), Number(fromTokenInput.dataset.decimals||18))) : null;
-  if(!fAddr || !tAddr || !amtVal) { showToast('Provide valid from/to and amount', {type:'warn'}); return; }
+function makeQuoteKey(fromAddr,toAddr,amountWei,slippage){
+  return `${low(fromAddr)}|${low(toAddr)}|${amountWei}|${slippage}`;
+}
 
-  const key = _quoteKey(fAddr,tAddr,amtVal);
-  const cached = quoteCache.get(key);
-  if(cached && cached.quote){
-    // proceed to execute with cached quote (omitted execution flow for safety)
-    showToast('Using cached quote — ready to execute (execution not implemented in this demo)');
+function getCachedQuote(key){
+  const entry = quoteCache.get(key);
+  if (!entry) return null;
+  if (nowTs() - entry.ts > QUOTE_CACHE_TTL) { quoteCache.delete(key); return null; }
+  return entry.quote;
+}
+
+/* getBestQuote: ask both 1inch and 0x concurrently and pick best by toTokenAmount */
+async function getBestQuote(fromAddr,toAddr,amountWei,slippagePercent,fromAddress){
+  try {
+    const key = makeQuoteKey(fromAddr,toAddr,amountWei,slippagePercent);
+    const cached = getCachedQuote(key);
+    if (cached) return cached;
+
+    const [q1,q0] = await Promise.allSettled([
+      fetch1InchSwapQuote(fromAddr,toAddr,amountWei,slippagePercent,fromAddress),
+      fetch0xQuote(fromAddr,toAddr,amountWei,slippagePercent,fromAddress)
+    ]);
+
+    const candidates = [];
+    if (q1.status === 'fulfilled' && q1.value) candidates.push(q1.value);
+    if (q0.status === 'fulfilled' && q0.value) candidates.push(q0.value);
+
+    if (candidates.length === 0) return null;
+    candidates.sort((a,b)=> {
+      const av = BigInt(a.toTokenAmount || 0);
+      const bv = BigInt(b.toTokenAmount || 0);
+      return av > bv ? -1 : (av < bv ? 1 : 0);
+    });
+    const best = candidates[0];
+    quoteCache.set(key, { quote: best, ts: nowTs() });
+    return best;
+  } catch(e){ return null; }
+}
+
+async function updateEstimate(){
+  try {
+    const fromAddr = low(fromTokenInput.dataset.address || '');
+    const toAddr = low(toTokenInput.dataset.address || '');
+    const amount = Number(fromAmountEl.value || 0);
+    if (!fromAddr || !toAddr || !(amount > 0)) {
+      toAmountEl.value = '';
+      updateActionButtonsState();
+      return;
+    }
+    const fromDecimals = Number(fromTokenInput.dataset.decimals || 18);
+    const amtWei = ethers.utils.parseUnits(String(amount), fromDecimals).toString();
+    const sl = Number(getSelectedSlippage() || 1);
+
+    const best = await getBestQuote(fromAddr, toAddr, amtWei, sl, userAddress || null);
+    if (!best || !best.toTokenAmount) {
+      toAmountEl.value = '';
+      updateActionButtonsState();
+      return;
+    }
+    const toDecimals = (best.raw && best.raw.toToken && best.raw.toToken.decimals) ? Number(best.raw.toToken.decimals) : Number(toTokenInput.dataset.decimals || 18);
+    const toAmount = Number(ethers.utils.formatUnits(best.toTokenAmount, toDecimals || 18));
+    toAmountEl.value = toAmount;
+    updateActionButtonsState();
+  } catch(e){ console.warn('updateEstimate error', e); toAmountEl.value = ''; updateActionButtonsState(); }
+}
+
+/* =================== ENABLE / DISABLE ACTION BUTTONS =================== */
+function updateActionButtonsState(){
+  const fromAddr = low(fromTokenInput.dataset.address || '');
+  const toAddr = low(toTokenInput.dataset.address || '');
+  const amount = Number(fromAmountEl.value || 0);
+  const estimate = Number(toAmountEl.value || 0);
+  const canSwap = fromAddr && toAddr && (amount > 0) && (!Number.isNaN(estimate) && estimate > 0);
+  swapBtn.disabled = !canSwap;
+  quickSwapBtn.disabled = !canSwap;
+}
+
+/* event wiring: amount changes trigger estimate */
+fromAmountEl.addEventListener('input', ()=> {
+  updateEstimate();
+});
+
+/* caret click to show suggestions */
+fromBox.querySelector('.left').addEventListener('click', (e)=>{
+  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
+  focusAndPlaceCaretAtEnd(fromTokenInput);
+  showDefaultList('from');
+});
+toBox.querySelector('.left').addEventListener('click', (e)=>{
+  if (e.target.closest('.suggestions') || e.target.closest('input[type="number"]')) return;
+  focusAndPlaceCaretAtEnd(toTokenInput);
+  showDefaultList('to');
+});
+
+/* swap outside (swap tokens) */
+swapOutside.addEventListener('click', ()=>{
+  // swap UI values and data attrs
+  const fAddr = fromTokenInput.dataset.address || '';
+  const fDec = fromTokenInput.dataset.decimals || 18;
+  const fVal = fromTokenInput.value || '';
+  const fLogoSrc = fromLogo.src || '';
+  const fChipText = fromChip.textContent || '';
+
+  // swap with to
+  const tAddr = toTokenInput.dataset.address || '';
+  const tDec = toTokenInput.dataset.decimals || 18;
+  const tVal = toTokenInput.value || '';
+  const tLogoSrc = toLogo.src || '';
+  const tChipText = toChip.textContent || '';
+
+  // swap
+  fromTokenInput.dataset.address = tAddr || '';
+  fromTokenInput.dataset.decimals = tDec || 18;
+  fromTokenInput.value = tVal || '';
+  fromLogo.src = tLogoSrc || DARK_SVG_PLACEHOLDER;
+  fromLogo.style.display = tLogoSrc ? 'block' : 'block';
+  fromChip.textContent = tChipText || '';
+  if (tAddr) fromBox.classList.add('has-token'); else fromBox.classList.remove('has-token');
+
+  toTokenInput.dataset.address = fAddr || '';
+  toTokenInput.dataset.decimals = fDec || 18;
+  toTokenInput.value = fVal || '';
+  toLogo.src = fLogoSrc || DARK_SVG_PLACEHOLDER;
+  toLogo.style.display = fLogoSrc ? 'block' : 'block';
+  toChip.textContent = fChipText || '';
+  if (fAddr) toBox.classList.add('has-token'); else toBox.classList.remove('has-token');
+
+  // swap amounts (approx)
+  const fa = fromAmountEl.value || '';
+  const ta = toAmountEl.value || '';
+  fromAmountEl.value = ta;
+  toAmountEl.value = fa;
+
+  scheduleActivePriceRefresh();
+  updateEstimate();
+});
+
+/* small helper: update USD visible fields */
+function updateUsdVisibility(){
+  fromUsdSmall.style.display = 'block';
+  toUsdSmall.style.display = 'block';
+  fromUnitSmall.style.display = 'block';
+  toUnitSmall.style.display = 'block';
+}
+
+/* =================== DEFAULTS & INIT =================== */
+async function initDefaults(){
+  try{
+    await ensureTokensLoaded();
+    const usdc = tokenList.find(t=> low(t.address) === low(USDC_ADDR)) || tokenList.find(t => (t.symbol && low(t.symbol) === 'usdc'));
+    let maxVol = 0; let top = null;
+    for (const [k,stat] of cgStatsMap.entries()){
+      if (stat) {
+        const v12 = stat.volume12h || 0;
+        const v24 = stat.volume24h || 0;
+        const vol = v12 > 0 ? v12 : v24;
+        if (vol > maxVol) { maxVol = vol; top = k; }
+      }
+    }
+    let topToken = null;
+    if (top) topToken = tokenList.find(t => (t.symbol && t.symbol.toLowerCase() === top) || (t.name && t.name.toLowerCase() === top));
+    if (!topToken) topToken = tokenList.find(t => cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name)));
+
+    if (usdc) {
+      applyTokenSelection('from', usdc);
+      $('fromSymbol').textContent = usdc.symbol || 'USDC';
+      fromTokenInput.value = usdc.symbol || usdc.name;
+      fromTokenInput.dataset.address = low(usdc.address);
+      fromTokenInput.dataset.decimals = usdc.decimals || 6;
+    }
+    if (topToken) {
+      if (!usdc || low(topToken.address) !== low(usdc.address)) {
+        applyTokenSelection('to', topToken);
+        $('toSymbol').textContent = topToken.symbol || topToken.name || 'TO';
+        toTokenInput.value = topToken.symbol || topToken.name;
+        toTokenInput.dataset.address = low(topToken.address);
+        toTokenInput.dataset.decimals = topToken.decimals || 18;
+      } else if (usdc) {
+        const fallback = tokenList.find(t => low(t.address) !== low(usdc.address) && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
+        if (fallback) applyTokenSelection('to', fallback);
+      }
+    } else if (usdc) {
+      applyTokenSelection('to', usdc);
+      $('toSymbol').textContent = usdc.symbol || 'USDC';
+      toTokenInput.value = usdc.symbol || usdc.name;
+      toTokenInput.dataset.address = low(usdc.address);
+      toTokenInput.dataset.decimals = usdc.decimals || 6;
+    }
+    await fetchBothPrices();
+    updateEstimate();
+    updateActionButtonsState();
+  } catch(e){ console.warn('initDefaults fail', e); }
+}
+
+/* run init */
+(async function init(){
+  await ensureTokensLoaded();
+  await initDefaults();
+  startBackgroundRefresh();
+})();
+
+/* =================== BACKGROUND REFRESH =================== */
+function startBackgroundRefresh(){
+  setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 7000);
+}
+function scheduleActivePriceRefresh(){
+  setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 900);
+}
+
+/* =================== SLIPPAGE UI (custom dropdown) =================== */
+function toggleSlippageList(open){
+  if (open === undefined) open = slippageList.style.display !== 'block';
+  if (open) {
+    slippageList.style.display = 'block';
+    slippageDisplay.setAttribute('aria-expanded', 'true');
+    stopBodyScroll();
+  } else {
+    slippageList.style.display = 'none';
+    slippageDisplay.setAttribute('aria-expanded', 'false');
+    restoreBodyScroll();
+  }
+}
+slippageDisplay.addEventListener('click', ()=> toggleSlippageList());
+slippageList.querySelectorAll('.slippage-item').forEach(it=>{
+  it.addEventListener('click', ()=>{
+    slippageLabel.textContent = it.dataset.value + '%';
+    toggleSlippageList(false);
+  });
+});
+function getSelectedSlippage(){ return (slippageLabel.textContent||'1%').replace('%','').trim(); }
+
+/* =================== ERROR PARSING =================== */
+function parseSwapError(e){
+  const s = (e && e.message) ? e.message.toLowerCase() : '';
+  if (s.includes('user-rejected') || s.includes('user rejected') || s.includes('request rejected') || s.includes('user denied')) return 'You rejected the wallet request. Please confirm the transaction in your wallet.';
+  if (s.includes('insufficient funds') || s.includes('insufficient balance')) return 'Insufficient funds for this transaction (including gas). Check wallet balance.';
+  if (s.includes('allowance') || s.includes('approve') || s.includes('insufficient allowance')) return 'Token allowance is missing. Please approve the token in your wallet (we attempt this automatically).';
+  if (s.includes('network') || s.includes('wrong-chain') || s.includes('chain')) return 'Wrong network — switch your wallet to Polygon (chain 137).';
+  return (e && e.message) ? `Transaction error: ${e.message}` : 'An unknown error occurred.';
+}
+
+/* =================== WALLET CONNECT (INJECTED FIRST, UNIVERSAL FALLBACK) =================== */
+async function connectWallet(){
+  try {
+    // 1) Prefer injected provider when present (fast path)
+    if (window.ethereum) {
+      try {
+        const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
+        await ethProvider.send("eth_requestAccounts", []);
+        provider = ethProvider;
+        signer = provider.getSigner();
+        userAddress = await signer.getAddress();
+        setConnectedUI(userAddress);
+
+        if (window.ethereum.on) {
+          window.ethereum.on('accountsChanged', (accounts)=> {
+            if (!accounts || accounts.length === 0) {
+              disconnectWallet(true);
+            } else {
+              userAddress = accounts[0];
+              setConnectedUI(userAddress);
+            }
+          });
+          window.ethereum.on('chainChanged', (chainId)=> {
+            try { console.log('chainChanged to', chainId); } catch(e){}
+            setTimeout(()=> window.location.reload(), 250);
+          });
+        }
+        showToast('Connected via injected wallet');
+        return;
+      } catch(injectedErr){
+        console.warn('Injected provider failed', injectedErr);
+      }
+    }
+
+    // 2) dynamic import of WalletConnect Universal Provider
+    try {
+      const mod = await import('https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.23.0/dist/umd/index.min.js');
+      const UniversalProvider = mod?.default || mod?.UniversalProvider || window?.UniversalProvider || null;
+      if (!UniversalProvider) throw new Error('UniversalProvider not found');
+
+      const wc = await UniversalProvider.init({
+        projectId: WALLETCONNECT_PROJECT_ID,
+        metadata: {
+          name: 'NOLA Exchange',
+          description: 'NOLA Exchange — browser dapp',
+          url: location.origin,
+          icons: [location.origin + '/logo.png']
+        }
+      });
+
+      // if already connected
+      if (wc.active) {
+        // attempt to use its provider
+        try {
+          // The universal provider can be wrapped as an ethers provider via Web3Provider
+          const ethProv = new ethers.providers.Web3Provider(wc, "any");
+          provider = ethProv;
+          signer = provider.getSigner();
+          userAddress = await signer.getAddress();
+          wcProviderInstance = wc;
+          setConnectedUI(userAddress);
+          showToast('Connected via WalletConnect (universal)');
+          return;
+        } catch(e){}
+      }
+
+      // create a pairing connection (this will open deep link in mobile clients; also provides URI for QR)
+      const pairing = await wc.connect({
+        requiredNamespaces: {
+          eip155: {
+            methods: ["eth_sendTransaction","personal_sign","eth_signTypedData"],
+            chains: ["eip155:137"],
+            events: ["chainChanged","accountsChanged"],
+            rpcMap: { "eip155:137": FALLBACK_RPCS[0] }
+          }
+        }
+      });
+
+      const uri = pairing?.uri || pairing?.topic || null;
+      // show fallback modal and display URI for QR scanning
+      showWalletFallbackModal(uri ? 'Scan QR with WalletConnect' : null);
+      if (uri && wcQR) {
+        // show the short URI text (could be used by wallet apps)
+        wcQR.textContent = uri;
+      }
+
+      // Register event listener for when connection becomes active
+      wc.on?.('connect', async (details) => {
+        try {
+          // create ethers provider wrapper
+          const ethProv = new ethers.providers.Web3Provider(wc, "any");
+          provider = ethProv;
+          signer = provider.getSigner();
+          userAddress = await signer.getAddress();
+          wcProviderInstance = wc;
+          setConnectedUI(userAddress);
+          hideWalletFallbackModal();
+          showToast('Connected via WalletConnect');
+        } catch(e){ console.warn('wc connect handler failed', e); }
+      });
+
+      wc.on?.('disconnect', () => {
+        disconnectWallet(true);
+      });
+
+      // If not connected immediately, the modal remains for the user to scan/link
+      return;
+    } catch(wcErr){
+      console.warn('WalletConnect import/flow failed', wcErr);
+      // show fallback modal instructing user to install or deep-link
+      showWalletFallbackModal(null);
+      return;
+    }
+  } catch(e){
+    console.error('connectWallet error', e);
+    showToast('Connection failed: ' + (e && e.message ? e.message : 'unknown'));
+  }
+}
+
+/* connect button wiring */
+connectFloating.addEventListener('click', async (ev) => {
+  ev.preventDefault();
+  if (userAddress) {
+    disconnectWallet();
     return;
   }
-  // no cached quote — fetch and retry
-  setBusy(quickSwapBtn,true);
-  const q = await updateQuote(fAddr,tAddr,amtVal);
-  setBusy(quickSwapBtn,false);
-  if(q){
-    showToast('Quote fetched — quick swap ready (no execution in demo)');
-    updateActionButtonsState();
-  } else {
-    showToast('Unable to fetch quote', {type:'error'});
-  }
-}
-
-quickSwapBtn.addEventListener('click', async ()=>{ await quickSwapAction(); });
-
-/* updateActionButtonsState: stays disabled if amounts are 0, enables only when fetched valid quote exists */
-function updateActionButtonsState(){
-  const fAddr = low(fromTokenInput.dataset.address || '');
-  const tAddr = low(toTokenInput.dataset.address || '');
-  const amtRaw = Number(fromAmountEl.value || 0);
-  const amtNonZero = amtRaw > 0;
-  const hasQuote = (()=>{
-    if(!fAddr||!tAddr||!amtNonZero) return false;
-    const amtVal = String(ethers.utils.parseUnits(String(fromAmountEl.value||'0'), Number(fromTokenInput.dataset.decimals||18)));
-    const key = _quoteKey(fAddr,tAddr,amtVal);
-    const c = quoteCache.get(key);
-    return !!(c && c.quote);
-  })();
-
-  if(amtNonZero && hasQuote){
-    quickSwapBtn.removeAttribute('disabled');
-    swapBtn.removeAttribute('disabled');
-  } else {
-    quickSwapBtn.setAttribute('disabled','true');
-    swapBtn.setAttribute('disabled','true');
-  }
-}
-
-fromAmountEl.addEventListener('input', ()=>{ updateActionButtonsState(); updateUsdVisibility(); updateQuoteDebounced(); });
-
-let _quoteDebounceTimer = null;
-function updateQuoteDebounced(){ clearTimeout(_quoteDebounceTimer); _quoteDebounceTimer = setTimeout(async ()=>{
-  const fAddr = low(fromTokenInput.dataset.address || '');
-  const tAddr = low(toTokenInput.dataset.address || '');
-  if(!fAddr || !tAddr) return;
-  const decimals = Number(fromTokenInput.dataset.decimals||18);
-  const amt = fromAmountEl.value ? ethers.utils.parseUnits(String(fromAmountEl.value), decimals).toString() : null;
-  if(!amt) return;
-  await updateQuote(fAddr,tAddr,amt);
-  updateActionButtonsState();
-}, 450); }
-
-/* =================== SCHEDULED PRICE REFRESH (keeps active prices refreshed) =================== */
-function scheduleActivePriceRefresh(){
-  // simple: refresh prices for active addresses
-  for(const a of ACTIVE_PRICE_ADDRS){ const tk = tokenMap.get(low(a)); if(tk) fetchPriceForToken(tk.address, tk.decimals || 18, (fromTokenInput.dataset.address===low(a))?'from':(toTokenInput.dataset.address===low(a))?'to':'from'); }
-}
-
-/* =================== SUGGESTION / INPUT HELPERS (caret + symbols) =================== */
-function focusAndPlaceCaretAtEnd(el){ try{ el.focus(); placeCaretAtEnd(el); }catch(e){} }
-function placeCaretAtEnd(el){ if(!el) return; try{ const val = el.value || ''; el.value=''; el.value = val; }catch(e){} }
-function hideSymbolOnFocus(side){ const sym = (side==='from')?$('fromSymbol'):$('toSymbol'); if(sym) sym.style.display='none'; }
-function restoreSymbolOnBlur(side){ const sym = (side==='from')?$('fromSymbol'):$('toSymbol'); if(sym) sym.style.display='block'; }
-
-function updateUsdVisibility(){ fetchBothPrices(); }
-
-/* =================== TOKEN DEFAULTS (FROM = USDC, TO = top mover last ~6h) =================== */
-async function determineTopMover6h(){
-  // Best-effort: fetch top 30 market coins and compute 6h change via market_chart (hourly).
-  try{
-    const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=50&page=1&sparkline=false`;
-    const res = await fetchWithTimeout(marketsUrl,{},5000);
-    if(!res.ok) return null;
-    const data = await res.json();
-    const limited = data.slice(0,20);
-    let best = null;
-    for(const c of limited){
-      try{
-        const chartRes = await fetchWithTimeout(`https://api.coingecko.com/api/v3/coins/${c.id}/market_chart?vs_currency=usd&days=1&interval=hourly`,{},3500);
-        if(!chartRes.ok) continue;
-        const chart = await chartRes.json();
-        const prices = chart.prices || [];
-        if(prices.length < 7) continue; // not enough points
-        const now = prices[prices.length-1][1];
-        // find price ~6 hours ago (approx by points)
-        const sixHoursAgoIndex = Math.max(0, prices.length-7); // ~6 hours back when hourly
-        const past = prices[sixHoursAgoIndex][1];
-        const pct = ((now - past)/past)*100;
-        if(!best || pct > best.pct) best = { id:c.id, symbol:c.symbol, name:c.name, pct };
-      }catch(e){ continue; }
-    }
-    return best;
-  }catch(e){ console.warn('determineTopMover6h failed',e); return null; }
-}
-
-async function applyDefaultTokens(){
-  await ensureTokensLoaded();
-  // default FROM -> USDC if available else MATIC
-  const usdc = tokenMap.get(low(USDC_ADDR)) || tokenMap.get(low(MATIC_ADDR));
-  if(usdc) applyTokenSelection('from', usdc);
-  // default TO -> top mover
-  const mover = await determineTopMover6h();
-  if(mover){
-    // try to find in tokenMap by symbol or name
-    let tk = tokenList.find(t => low(t.symbol)===low(mover.symbol)) || tokenList.find(t=>low(t.name)===low(mover.name));
-    if(!tk){
-      // try coingecko to find contract on polygon via coin info (best effort) - skipped for speed
-    }
-    if(tk) applyTokenSelection('to', tk);
-  }
-  updateActionButtonsState();
-}
-
-/* =================== ONBLUR BEHAVIOR: ensure field shows selected token name */
-fromTokenInput.addEventListener('blur', ()=>{
-  const addr = fromTokenInput.dataset.address || '';
-  if(addr){ const tk = tokenMap.get(low(addr)); if(tk) fromTokenInput.value = tk.symbol || tk.name; }
-});
-toTokenInput.addEventListener('blur', ()=>{
-  const addr = toTokenInput.dataset.address || '';
-  if(addr){ const tk = tokenMap.get(low(addr)); if(tk) toTokenInput.value = tk.symbol || tk.name; }
+  await connectWallet();
 });
 
-/* =================== WALLETCONNECT / WEB3MODAL v3 (best effort integration) =================== */
-async function initWalletModal(){
+/* attempt graceful disconnect */
+async function tryDisconnect(){
+  try {
+    if (provider && provider.provider && provider.provider.disconnect) {
+      await provider.provider.disconnect();
+    }
+  } catch(e){}
+  disconnectWallet();
+}
+
+/* deep link handler for wallet buttons in fallback modal */
+walletList.addEventListener('click', (ev)=>{
+  const btn = ev.target.closest('.wallet-btn');
+  if (!btn) return;
+  const key = btn.dataset.deep;
+  if (key === 'metamask') {
+    const deep = isMobile() ? 'metamask://dapp/' + encodeURIComponent(location.href) : 'https://metamask.io/';
+    window.open(deep, '_blank');
+  } else if (key === 'trust') {
+    window.open(isMobile() ? 'trust://browser_url?url=' + encodeURIComponent(location.href) : 'https://trustwallet.com/', '_blank');
+  } else if (key === 'rainbow') {
+    window.open(isMobile() ? 'rainbow://open_url?url=' + encodeURIComponent(location.href) : 'https://rainbow.me/', '_blank');
+  } else if (key === 'coinbase') {
+    window.open(isMobile() ? 'coinbase://wallet.coinbase.com/connect?uri=' + encodeURIComponent(location.href) : 'https://wallet.coinbase.com/', '_blank');
+  }
+});
+walletFallbackClose && walletFallbackClose.addEventListener('click', hideWalletFallbackModal);
+
+/* =================== CHAT (supabase) =================== */
+let chatUser = localStorage.getItem("chatUser") || null;
+let renderedIds = new Set(); 
+let lastId = 0; // track highest id rendered
+
+if(!chatUser){
+  usernameModal.style.display = "flex";
+} else if(modalUsername) {
+  modalUsername.value = chatUser;
+}
+
+confirmUsername && (confirmUsername.onclick = async () => {
+  const v = (modalUsername.value || '').trim();
+  chatUser = v || ('User' + Math.floor(Math.random()*9999));
+  localStorage.setItem('chatUser', chatUser);
+  usernameModal.style.display = 'none';
+  await initChat();
+});
+
+if(chatUser){
+  initChat();
+}
+
+const userColors = {};
+function getColor(name){
+  if(userColors[name]) return userColors[name];
+  const r = Math.floor(100 + Math.random()*120);
+  const g = Math.floor(50 + Math.random()*140);
+  const b = Math.floor(100 + Math.random()*120);
+  const col = `rgb(${r},${g},${b})`;
+  userColors[name] = col;
+  return col;
+}
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+function renderMessage(msg){
+  if(!msg || !msg.id) return;
+  if(renderedIds.has(String(msg.id))) return; 
+  renderedIds.add(String(msg.id));
+
+  const numericId = Number(msg.id);
+  if(!Number.isNaN(numericId) && numericId > lastId) lastId = numericId;
+
+  const el = document.createElement('div');
+  el.className = 'chat-msg';
+
+  const userEsc = escapeHtml(msg.user || 'Anon');
+  const textEsc = escapeHtml(msg.text || '');
+  const time = msg.created_at ? new Date(msg.created_at).toLocaleTimeString() : '';
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="color:${getColor(userEsc)};font-weight:800">${userEsc}</b>
+      <span style="font-size:11px;color:rgba(255,255,255,0.5);margin-left:auto">${time}</span>
+    </div>
+    <div style="margin-top:6px;white-space:pre-wrap">${textEsc}</div>
+  `;
+
+  chatMessages.appendChild(el);
+
+  while(chatMessages.children.length > 500){
+    chatMessages.removeChild(chatMessages.firstChild);
+  }
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showPlaceholder(){
+  chatMessages.innerHTML = `<div style="opacity:0.7;text-align:center;margin-top:20px">No messages yet — be first!</div>`;
+}
+
+async function loadHistory(){
   try{
-    // Attempt a generic initialization using the provided scripts. API shape may vary by library version.
-    if(window.Web3Modal && window.Web3Modal.default){
-      web3modal = new window.Web3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, theme: 'dark' });
-    } else if(window.Web3Modal){
-      web3modal = window.Web3Modal;
-    } else if(window.WalletConnectModal && window.WalletConnectModal.default){
-      web3modal = new window.WalletConnectModal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' });
-    } else if(window.WalletConnectWeb3Modal && window.WalletConnectWeb3Modal.default){
-      web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' });
-    } else {
-      console.warn('Web3Modal library not found; wallet modal will be degraded.');
-      web3modal = null;
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('id, user, text, created_at')
+      .order('id', { ascending: true })
+      .limit(200);
+
+    if(error){
+      console.error('History load error', error);
+      chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Failed to load chat history</div>`;
       return;
     }
 
-    // auto-reconnect if prior
-    const last = localStorage.getItem('nola_wallet_connected');
-    if(last && web3modal && web3modal.connect){
-      try{
-        const mp = await web3modal.connect();
-        await handleProviderConnect(mp);
-      }catch(e){ console.warn('auto-reconnect failed', e); }
+    renderedIds.clear();
+    chatMessages.innerHTML = '';
+    if(!data || !data.length){
+      showPlaceholder();
+      lastId = 0;
+      return;
     }
-  }catch(e){ console.error('initWalletModal failed', e); }
+
+    data.forEach(renderMessage);
+  }catch(err){
+    console.error('loadHistory exception', err);
+    chatMessages.innerHTML = `<div style="color:#f88;text-align:center">Chat unavailable</div>`;
+  }
 }
 
-async function handleProviderConnect(rawProvider){
-  try{
-    // wrap with ethers
-    provider = new ethers.providers.Web3Provider(rawProvider);
-    signer = provider.getSigner();
-    userAddress = await signer.getAddress();
-    // attempt chain switch
-    try{ await provider.send('wallet_switchEthereumChain', [{ chainId: CHAIN_ID_HEX }]); }catch(e){ /* ignore if fails */ }
-    addrChip.textContent = userAddress.slice(0,6)+'...'+userAddress.slice(-4);
-    addrChip.style.display = 'inline-flex';
-    connectLabel.textContent = 'Connected';
-    localStorage.setItem('nola_wallet_connected','1');
-  }catch(e){ console.error('handleProviderConnect',e); }
-}
+async function fetchNewMessages() {
+    try {
+        const { data, error } = await supabase
+            .from('chat_messages')
+            .select('id, user, text, created_at')
+            .gt('id', lastId)
+            .order('id', { ascending: true });
 
-connectFloating.addEventListener('click', async ()=>{
-  try{
-    if(!web3modal){ await initWalletModal(); }
-    if(!web3modal){ showToast('Wallet modal not available in this environment.'); return; }
-    // connect flow: depending on API
-    if(web3modal.connect) {
-      const p = await web3modal.connect();
-      await handleProviderConnect(p);
-    } else if(web3modal.open) {
-      // some UIs offer open() which then exposes provider
-      web3modal.open();
-    } else {
-      showToast('Cannot open wallet modal with current library build.');
+        if(error){
+            console.error('Fetch new messages error:', error);
+            return;
+        }
+
+        if(data && data.length){
+            data.forEach(renderMessage);
+        }
+    } catch (e) {
+        console.error('fetchNewMessages exception:', e);
     }
-  }catch(e){ console.error('connectFloating error', e); showToast('Wallet connect failed'); }
+}
+setInterval(fetchNewMessages, 1500);
+
+let sending = false;
+sendChatBtn.addEventListener('click', async () => {
+  const text = (chatInput.value || '').trim();
+  if(!text) return;
+  if(!chatUser){
+    usernameModal.style.display = 'flex';
+    return;
+  }
+  if(sending) return;
+  sending = true;
+  sendChatBtn.disabled = true;
+
+  try{
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .insert({ user: chatUser, text });
+
+    if(error){
+      console.error('Insert error', error);
+      alert('Send failed. Check console.');
+    } else if(data && data[0]){
+      renderMessage(data[0]);
+      chatInput.value = '';
+      chatInput.focus();
+    }
+  }catch(e){
+    console.error('Send exception', e);
+    alert('Send failed');
+  } finally {
+    setTimeout(()=>{ sending=false; sendChatBtn.disabled=false; }, 500);
+  }
 });
 
-/* =================== MISC: Swap button click (placeholder) =================== */
-swapBtn.addEventListener('click', ()=>{ showToast('Swap execution is not implemented in this preview/demo.'); });
+chatInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    sendChatBtn.click();
+  }
+});
 
-/* =================== MOUNT & INIT =================== */
-(async function mount(){
-  await ensureTokensLoaded();
-  await initWalletModal();
-  await applyDefaultTokens();
-})();
+chatToggle && chatToggle.addEventListener('click', () => {
+  chatSidebar.classList.toggle('open');
+});
 
-/* =================== SMALL HELPERS (trim) =================== */
-function scheduleActivePriceRefreshDebounced(){ setTimeout(scheduleActivePriceRefresh, 1200); }
+/* Page click behavior: close chat when clicking the main page */
+document.querySelectorAll('.section-wrapper, .container').forEach(el=>{
+  el.addEventListener('click', (e) => {
+    const insideSuggestion = !!e.target.closest('.suggestions');
+    const insideInput = !!e.target.closest('input, button, .glassy-btn, .quick-cta');
+    if (insideSuggestion || insideInput) return;
+    chatSidebar.classList.remove('open');
+  });
+});
+
+/* =================== INIT CHAT =================== */
+async function initChat(){
+  await loadHistory();
+}
+
+/* =================== UTIL: parse swap errors (already above) =================== */
 
 </script>
 </body>
