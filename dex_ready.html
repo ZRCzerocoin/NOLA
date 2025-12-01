@@ -1923,6 +1923,22 @@ function restoreSymbolOnBlur(side){
     sym.style.visibility = 'visible';
   }
 }
+  /* Ensure blur normalization (defensive) */
+function normalizeSelectedTokenText(inputEl, chipEl) {
+  try {
+    const addr = low(inputEl.dataset.address || '');
+    if (addr && tokenMap.has(addr)) {
+      const tok = tokenMap.get(addr);
+      inputEl.value = tok.symbol || tok.name || inputEl.value || addr.slice(0,8);
+      return;
+    }
+    if (chipEl && chipEl.textContent) {
+      inputEl.value = chipEl.textContent;
+    }
+  } catch(e){}
+}
+fromToken.addEventListener('blur', ()=> { setTimeout(()=> normalizeSelectedTokenText(fromToken, fromChip), 120); });
+toToken.addEventListener('blur', ()=> { setTimeout(()=> normalizeSelectedTokenText(toToken, toChip), 120); });
 
 /* =================== SLIPPAGE UI (custom dropdown) =================== */
 function toggleSlippageList(open){
@@ -1969,13 +1985,12 @@ function getSelectedSlippage(){ return (typeof slippageLabel !== 'undefined' && 
 
 (function(){
   const $ = id => document.getElementById(id);
-  const swapBtn = $('swapOutside'); // uses your existing element
+  const swapBtn = $('swapOutside');
   if (!swapBtn) {
-    console.warn('swapOutside button not found.');
+    console.warn('swapOutside not found');
     return;
   }
 
-  // Elements (match your page IDs)
   const fromToken = $('fromToken'), toToken = $('toToken');
   const fromAmount = $('fromAmount'), toAmount = $('toAmount');
   const fromLogo = $('fromLogo'), toLogo = $('toLogo');
@@ -1985,17 +2000,91 @@ function getSelectedSlippage(){ return (typeof slippageLabel !== 'undefined' && 
   const fromUsdSmall = $('fromUsdSmall'), toUsdSmall = $('toUsdSmall');
   const fromUnitSmall = $('fromUnitSmall'), toUnitSmall = $('toUnitSmall');
 
-  function moveDataset(src, dst, key='address'){
-    if (!src || !dst) return;
-    const val = (src.dataset && src.dataset[key]) ? src.dataset[key] : '';
-    if (val) dst.dataset[key] = val;
-    else if (dst.dataset) delete dst.dataset[key];
+  function hasSelected(el){ return !!(el && el.dataset && (el.dataset.address||'').trim()); }
+
+  function swapDataset(a, b, key='address'){
+    if (!a || !b) return;
+    const ta = (a.dataset && a.dataset[key]) ? a.dataset[key] : '';
+    const tb = (b.dataset && b.dataset[key]) ? b.dataset[key] : '';
+    if (a.dataset) a.dataset[key] = tb || '';
+    if (b.dataset) b.dataset[key] = ta || '';
   }
 
-  function moveValue(src, dst){
-    if (!src || !dst) return;
-    dst.value = src.value || '';
-    src.value = '';
+  function swapValues(a, b){
+    if (!a || !b) return;
+    const va = a.value || '';
+    const vb = b.value || '';
+    a.value = vb;
+    b.value = va;
+  }
+
+  function swapSrc(a, b){
+    if (!a || !b) return;
+    const sa = a.src || '';
+    const sb = b.src || '';
+    a.src = sb || '';
+    b.src = sa || '';
+    a.style.display = a.src ? 'block' : 'none';
+    b.style.display = b.src ? 'block' : 'none';
+  }
+
+  function swapTextDisplay(a, b){
+    if (!a || !b) return;
+    const ta = a.textContent || '';
+    const tb = b.textContent || '';
+    a.textContent = tb || '';
+    b.textContent = ta || '';
+    a.style.display = a.textContent ? 'inline-block' : 'none';
+    b.style.display = b.textContent ? 'inline-block' : 'none';
+  }
+
+  function swapPriceDisplays(aUsd, bUsd, aUnit, bUnit){
+    if (aUsd && bUsd) {
+      const au = aUsd.textContent||'';
+      const bu = bUsd.textContent||'';
+      aUsd.textContent = bu; bUsd.textContent = au;
+      aUsd.style.display = aUsd.textContent ? 'block' : 'none';
+      bUsd.style.display = bUsd.textContent ? 'block' : 'none';
+    }
+    if (aUnit && bUnit) {
+      const au = aUnit.textContent||'';
+      const bu = bUnit.textContent||'';
+      aUnit.textContent = bu; bUnit.textContent = au;
+      aUnit.style.display = aUnit.textContent ? 'block' : 'none';
+      bUnit.style.display = bUnit.textContent ? 'block' : 'none';
+    }
+  }
+
+  function swapHasTokenClass(){
+    if (!fromBox || !toBox) return;
+    const f = fromBox.classList.contains('has-token');
+    const t = toBox.classList.contains('has-token');
+    if (f && !t) { fromBox.classList.remove('has-token'); toBox.classList.add('has-token'); }
+    else if (!f && t) { toBox.classList.remove('has-token'); fromBox.classList.add('has-token'); }
+    // if both or none: toggle both
+    else if (f && t) { /* keep */ }
+  }
+
+  function moveFromTo(srcEl, dstEl, options={moveAmount:true}){
+    // dataset
+    if (srcEl && dstEl) {
+      const val = (srcEl.dataset && srcEl.dataset.address) ? srcEl.dataset.address : '';
+      if (val) dstEl.dataset.address = val;
+      else if (dstEl.dataset) delete dstEl.dataset.address;
+    }
+    // visible value
+    if (srcEl && dstEl) {
+      dstEl.value = srcEl.value || '';
+      srcEl.value = '';
+    }
+    // amount
+    if (options.moveAmount && fromAmount && toAmount && srcEl===fromToken && dstEl===toToken) {
+      toAmount.value = fromAmount.value || '';
+      fromAmount.value = '';
+    } else if (options.moveAmount && fromAmount && toAmount && srcEl===toToken && dstEl===fromToken) {
+      fromAmount.value = toAmount.value || '';
+      toAmount.value = '';
+    }
   }
 
   function moveImg(src, dst){
@@ -2014,80 +2103,59 @@ function getSelectedSlippage(){ return (typeof slippageLabel !== 'undefined' && 
     src.style.display = 'none';
   }
 
-  function movePriceDisplays(srcUsd, dstUsd, srcUnit, dstUnit){
-    if (srcUsd && dstUsd) {
-      dstUsd.textContent = srcUsd.textContent || '';
-      dstUsd.style.display = dstUsd.textContent ? 'block' : 'none';
-      srcUsd.textContent = '';
-      srcUsd.style.display = 'none';
-    }
-    if (srcUnit && dstUnit) {
-      dstUnit.textContent = srcUnit.textContent || '';
-      dstUnit.style.display = dstUnit.textContent ? 'block' : 'none';
-      srcUnit.textContent = '';
-      srcUnit.style.display = 'none';
-    }
-  }
+  function clearSuggestions(){ if (fromSuggestions) fromSuggestions.style.display='none'; if (toSuggestions) toSuggestions.style.display='none'; }
 
-  function moveHasTokenClass(){
-    if (!fromBox || !toBox) return;
-    if (fromBox.classList.contains('has-token')) {
-      fromBox.classList.remove('has-token');
-      toBox.classList.add('has-token');
-    }
-  }
-
-  function hideSuggestions(){
-    try { if (fromSuggestions) fromSuggestions.style.display = 'none'; } catch(e){}
-    try { if (toSuggestions) toSuggestions.style.display = 'none'; } catch(e){}
-  }
-
-  function dispatchUpdates(){
+  function dispatchEvents(){
     try {
-      if (toToken) {
-        toToken.dispatchEvent(new Event('input', { bubbles: true }));
-        toToken.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      if (fromToken) {
-        fromToken.dispatchEvent(new Event('input', { bubbles: true }));
-        fromToken.dispatchEvent(new Event('change', { bubbles: true }));
-      }
-      if (toAmount) toAmount.dispatchEvent(new Event('input', { bubbles: true }));
-      if (fromAmount) fromAmount.dispatchEvent(new Event('input', { bubbles: true }));
-    } catch(e){ /* ignore */ }
+      if (fromToken) { fromToken.dispatchEvent(new Event('input',{bubbles:true})); fromToken.dispatchEvent(new Event('change',{bubbles:true})); }
+      if (toToken) { toToken.dispatchEvent(new Event('input',{bubbles:true})); toToken.dispatchEvent(new Event('change',{bubbles:true})); }
+      if (fromAmount) fromAmount.dispatchEvent(new Event('input',{bubbles:true}));
+      if (toAmount) toAmount.dispatchEvent(new Event('input',{bubbles:true}));
+    } catch(e){}
   }
 
-  swapBtn.addEventListener('click', function(evt){
-    evt.preventDefault();
+  swapBtn.addEventListener('click', function(e){
+    e.preventDefault();
 
-    // only move if FROM has a selected token address
-    const fromAddr = fromToken && fromToken.dataset ? (fromToken.dataset.address || '') : '';
-    if (!fromAddr) {
-      // nothing to move
+    const fSel = hasSelected(fromToken);
+    const tSel = hasSelected(toToken);
+
+    if (fSel && tSel) {
+      // both present -> swap everything (addresses, visible text, logos, chips, amounts, small-price)
+      swapDataset(fromToken, toToken, 'address');
+      swapValues(fromToken, toToken);
+      swapSrc(fromLogo, toLogo);
+      swapTextDisplay(fromChip, toChip);
+      swapValues(fromAmount, toAmount); // swap amounts
+      swapPriceDisplays(fromUsdSmall, toUsdSmall, fromUnitSmall, toUnitSmall);
+      swapHasTokenClass();
+    } else if (fSel && !tSel) {
+      // only from -> move to to, clear from
+      moveFromTo(fromToken, toToken, {moveAmount:true});
+      moveImg(fromLogo, toLogo);
+      moveChip(fromChip, toChip);
+      if (fromBox && toBox) { fromBox.classList.remove('has-token'); toBox.classList.add('has-token'); }
+      // move price displays
+      if (fromUsdSmall && toUsdSmall) { toUsdSmall.textContent = fromUsdSmall.textContent || ''; toUsdSmall.style.display = toUsdSmall.textContent?'block':'none'; fromUsdSmall.textContent = ''; fromUsdSmall.style.display='none'; }
+      if (fromUnitSmall && toUnitSmall) { toUnitSmall.textContent = fromUnitSmall.textContent || ''; toUnitSmall.style.display = toUnitSmall.textContent?'block':'none'; fromUnitSmall.textContent=''; fromUnitSmall.style.display='none'; }
+    } else if (!fSel && tSel) {
+      // only to -> move to from, clear to
+      moveFromTo(toToken, fromToken, {moveAmount:true});
+      moveImg(toLogo, fromLogo);
+      moveChip(toChip, fromChip);
+      if (toBox && fromBox) { toBox.classList.remove('has-token'); fromBox.classList.add('has-token'); }
+      if (toUsdSmall && fromUsdSmall) { fromUsdSmall.textContent = toUsdSmall.textContent || ''; fromUsdSmall.style.display = fromUsdSmall.textContent?'block':'none'; toUsdSmall.textContent=''; toUsdSmall.style.display='none'; }
+      if (toUnitSmall && fromUnitSmall) { fromUnitSmall.textContent = toUnitSmall.textContent || ''; fromUnitSmall.style.display = fromUnitSmall.textContent?'block':'none'; toUnitSmall.textContent=''; toUnitSmall.style.display='none'; }
+    } else {
+      // nothing selected in either -> no-op
       return;
     }
 
-    // move address & visible label
-    moveDataset(fromToken, toToken, 'address');
-    moveValue(fromToken, toToken);
-
-    // move logos, chips, amount, price displays
-    moveImg(fromLogo, toLogo);
-    moveChip(fromChip, toChip);
-
-    // move numeric amount from FROM -> TO (and clear FROM)
-    moveValue(fromAmount, toAmount);
-
-    movePriceDisplays(fromUsdSmall, toUsdSmall, fromUnitSmall, toUnitSmall);
-
-    // move UI class
-    moveHasTokenClass();
-
-    // hide suggestions and trigger updates
-    hideSuggestions();
-    dispatchUpdates();
+    clearSuggestions();
+    dispatchEvents();
   });
-})();
+
+})(); 
 </script>
 </body>  
 </html>
