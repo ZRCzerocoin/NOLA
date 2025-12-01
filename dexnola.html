@@ -237,31 +237,17 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 
 #usernameModal .modal-content {
   background: rgba(255,255,255,0.07);
-  padding: 25px;
-  border-radius: 20px;
-  text-align: center;
-  width: 300px;
+/* small modal for WalletConnect pairing (QR + deep links) */
+#walletPairModal {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%);
+  background: rgba(10,6,14,0.92); padding: 18px; border-radius: 14px; z-index: 5000;
+  display: none; max-width: 420px; width: 92%; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
 }
-
-#usernameModal input {
-  width: 85%;
-  padding: 10px;
-  border-radius: 12px;
-  border: none;
-  margin-top: 12px;
-  background: rgba(255,255,255,0.06);
-  color: white;
-}
-
-#usernameModal button {
-  margin-top: 15px;
-  padding: 10px 20px;
-  border-radius: 12px;
-  border: none;
-  background: linear-gradient(135deg,#b445ff,#7013ff);
-  cursor: pointer;
-  color: white;
-}
+#walletPairModal .row { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+#walletPairModal img.qr { width: 220px; height: 220px; border-radius: 10px; background: #fff; display:block; margin: 0 auto; }
+#walletPairModal .uri { word-break: break-all; background: rgba(255,255,255,0.04); padding:10px;border-radius:8px; margin:8px 0; font-size:12px; max-height:88px; overflow:auto; }
+#walletPairModal .dlBtns { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:6px; }
+#walletPairModal button { padding:8px 10px; border-radius:10px; border:none; cursor:pointer; background:linear-gradient(90deg,var(--accent-1),var(--accent-2)); color:#fff; font-weight:800; }
 
 /* spinner */
 .btn-spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top-color:rgba(255,255,255,1);animation:spin 700ms linear infinite;display:inline-block}
@@ -642,7 +628,7 @@ document.querySelectorAll('.section-wrapper, .container').forEach(el=>{
     const insideSuggestion = !!e.target.closest('.suggestions');
     const insideInput = !!e.target.closest('input, button, .glassy-btn, .quick-cta');
     if (insideSuggestion || insideInput) return;
-    chatSidebar.classList.add('open');
+    chatSidebar.classList.remove'open');
   });
 });
 
@@ -918,14 +904,14 @@ async function getTokenPriceUSD(address, decimals=18){
   }
 
   const sources = [
-    { name:'0x', fn: async ()=> await fetch0xPrice(addr), priority:1 },
-    { name:'1inch', fn: async ()=> await fetch1InchQuotePrice(addr, decimals), priority:2 },
-    { name:'coingecko_simple', fn: async ()=> await fetchCoingeckoSimple(addr), priority:3 },
+    { name:'coingecko_simple', fn: async ()=> await fetchCoingeckoSimple(addr), priority:1 },
+    { name:'0x', fn: async ()=> await fetch0xPrice(addr), priority:2 },
+    { name:'1inch', fn: async ()=> await fetch1InchQuotePrice(addr, decimals), priority:3 },
     { name:'dexscreener', fn: async ()=> await fetchDexscreenerPrice(addr), priority:4 },
     { name:'derive_weth', fn: async ()=> await derivePriceViaWeth(addr, decimals), priority:5 }
   ];
 
-  const TIME_WINDOW = 700;
+  const TIME_WINDOW = 7000;
   let best = null;
   const start = Date.now();
   let completed = 0;
@@ -1737,42 +1723,40 @@ function parseSwapError(e){
   if (s.includes('network') || s.includes('wrong-chain') || s.includes('chain')) return 'Wrong network — switch your wallet to Polygon (chain 137).';
   return (e && e.message) ? `Transaction error: ${e.message}` : 'An unknown error occurred.';
 }
+  
 
-/* =================== CONNECT WALLET & CHAIN SWITCH & WEB3MODAL (modern-friendly) =================== */
-async function initWeb3Modal(){
-  try{
-    // Prefer the modern Web3Modal HTML instance when available (your page includes @web3modal/html).
-    // Keep the project id only; we intentionally avoid legacy providers and deprecated transports.
-    if (window.WalletConnectWeb3Modal && window.WalletConnectWeb3Modal.default) {
-      // @walletconnect/web3modal integration (if loaded)
-      web3modal = new window.WalletConnectWeb3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID, themeMode: 'dark' });
-    } else if (window.Web3Modal && window.Web3Modal.default) {
-      // other builds
-      try {
-        web3modal = new window.Web3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID });
-      } catch(e){
-        web3modal = window.Web3Modal;
+/* ----------------- Restore symbol & ensure input values reflect chosen token on blur ----------------- */
+function restoreSymbolOnBlur(side){
+  const sym = (side==='from')? $('fromSymbol') : $('toSymbol');
+  const input = (side==='from')? fromTokenInput : toTokenInput;
+  if (sym) {
+    if (!input.value || input.value.trim() === '') {
+      const addr = input.dataset.address;
+      if (addr && tokenMap.has(low(addr))) {
+        const t = tokenMap.get(low(addr));
+        sym.textContent = t.symbol || t.name || 'Select';
+        // ensure input also reflects the selected token symbol (so it is never "empty or nonsense")
+        input.value = t.symbol || t.name || '';
+      } else {
+        sym.textContent = 'Select';
+        input.value = '';
       }
-    } else if (window.Web3Modal) {
-      // fallback older global
-      web3modal = window.Web3Modal;
-    } else if (window.WalletConnect) {
-      // some environments
-      web3modal = window.WalletConnect;
     } else {
-      web3modal = null;
+      // try to keep field consistent with dataset.address symbol if present
+      const addr = input.dataset.address;
+      if (addr && tokenMap.has(low(addr))) {
+        const t = tokenMap.get(low(addr));
+        // keep the visual input equal to the token symbol (prevent mismatch)
+        input.value = t.symbol || t.name || input.value;
+        sym.textContent = t.symbol || t.name || 'Select';
+      }
     }
-  }catch(e){ console.warn('web3modal init failed', e); web3modal = null; }
+    sym.style.visibility = 'visible';
+  }
 }
-initWeb3Modal();
+/* =================== CONNECT WALLET & CHAIN SWITCH & WEB3MODAL (modern-friendly) =================== */
 
-function shortAddr(addr){ return addr ? `${addr.slice(0,6)}…${addr.slice(-4)}` : ''; }
-function setConnectedUI(address){
-  if(address){ addrChip.style.display = 'inline-block'; addrChip.textContent = shortAddr(address); connectLabel.textContent = 'Connected'; connectIcon.textContent = '🔗'; connectFloating.classList.add('connected'); }
-  else { addrChip.style.display = 'none'; connectLabel.textContent = 'Connect Wallet'; connectIcon.textContent = '🔌'; connectFloating.classList.remove('connected'); }
-}
 
-/* Ensure connected: prompt user to connect if not */
 async function ensureWalletConnectedOrPrompt(){
   if (userAddress && signer) return true;
   const ok = await connectWallet();
@@ -1786,9 +1770,11 @@ async function ensureCorrectChainOrPrompt(){
     try { net = await provider.getNetwork(); } catch(e){ net = null; }
     if (!net || net.chainId !== CHAIN_ID) {
       // try to request wallet to switch
-      if (provider.provider && provider.provider.request) {
+      // In case of wrapped universal provider the underlying provider may be available as provider.provider
+      const rawProvider = provider.provider || provider; 
+      if (rawProvider && rawProvider.request) {
         try {
-          await provider.provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
+          await rawProvider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
           showToast('Switched network to Polygon', { type: 'success' });
           return true;
         } catch(switchErr){
@@ -1804,33 +1790,76 @@ async function ensureCorrectChainOrPrompt(){
   } catch(e){ throw e; }
 }
 
-/* Improved connectWallet: prefer modern modal deep-links when available, fallback to injected provider */
+/* utility: create EIP-1193 wrapper around a UniversalProvider instance */
+function makeEip1193WrapperFromUniversal(universalProvider){
+  // minimal wrapper ethers accepts: .request({ method, params })
+  const wrapper = {
+    isWalletConnect: true,
+    walletConnect: true,
+    providerType: 'universal',
+    // ethers expects request({ method, params })
+    request: async (args) => {
+      if (!universalProvider || !universalProvider.request) throw new Error('Underlying provider does not support request()');
+      // pass through
+      return await universalProvider.request(args);
+    },
+    // event helpers forwarded
+    on: (ev, cb) => { try { universalProvider.on(ev, cb); } catch(e){} },
+    removeListener: (ev, cb) => { try { universalProvider.removeListener(ev, cb); } catch(e){} },
+    // expose original
+    _universal: universalProvider
+  };
+  return wrapper;
+}
+
+/* Display pairing modal with QR and deep links */
+function showPairingModal(uri){
+  const modal = $('walletPairModal');
+  const qr = $('pairQr');
+  const uriEl = $('pairUri');
+  const deepDiv = $('deepLinkButtons');
+  // Use an external QR generator (reliable, lightweight) for quick QR rendering:
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(uri)}`;
+  qr.src = qrSrc;
+  uriEl.textContent = uri;
+  // build a reasonable set of deep link buttons (wallets often accept wc: URIs via their universal-deeplink endpoints)
+  deepDiv.innerHTML = '';
+  const links = [
+    {label:'MetaMask', url:`https://metamask.app.link/wc?uri=${encodeURIComponent(uri)}`},
+    {label:'Coinbase', url:`https://go.cb-w.com/wc?uri=${encodeURIComponent(uri)}`},
+    {label:'Trust', url:`trust://wc?uri=${encodeURIComponent(uri)}`},
+    {label:'Rainbow', url:`https://rnbwapp.com/wc?uri=${encodeURIComponent(uri)}`},
+    {label:'Universal', url:`https://walletconnect.com/wc?uri=${encodeURIComponent(uri)}`}
+  ];
+  links.forEach(l=>{
+    const b = document.createElement('button');
+    b.textContent = l.label;
+    b.addEventListener('click', (e)=>{
+      window.open(l.url, '_blank');
+    });
+    deepDiv.appendChild(b);
+  });
+
+  modal.style.display = 'block';
+}
+function hidePairingModal(){ const modal = $('walletPairModal'); modal.style.display = 'none'; }
+
+/* copy pairing URI */
+$('copyPairUri').addEventListener('click', async ()=>{
+  try {
+    const uri = $('pairUri').textContent || '';
+    await navigator.clipboard.writeText(uri);
+    showToast('Pairing URI copied to clipboard', { type: 'success' });
+  } catch(e){ showToast('Copy failed', { type: 'error' }); }
+});
+$('closePairModal').addEventListener('click', ()=> { hidePairingModal(); });
+
+/* Core connect logic */
 async function connectWallet(){
   try{
-    // Prefer Web3Modal (modern) if available
-    if (web3modal && typeof web3modal.openModal === 'function') {
-      try {
-        // If the library supports openModal, call it to show deep-linked wallets / QR
-        const modalProvider = await web3modal.openModal ? await web3modal.openModal({}) : await web3modal.requestConnection?.();
-        if (modalProvider) {
-          provider = new ethers.providers.Web3Provider(modalProvider, "any");
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress();
-          setConnectedUI(userAddress);
-          modalProvider.on && modalProvider.on('accountsChanged', (accounts)=>{ if (!accounts || accounts.length === 0) { disconnectWallet(false); } else { userAddress = accounts[0]; setConnectedUI(userAddress); }});
-          modalProvider.on && modalProvider.on('chainChanged', ()=>{ window.location.reload(); });
-          await ensureCorrectChainOrPrompt();
-          showToast('Wallet connected (via modal)', { type: 'success' });
-          return true;
-        }
-      } catch(e){
-        console.warn('web3modal connection failed', e);
-      }
-    }
-
-    // fallback to injected provider (MetaMask)
+    // FAST PATH: prefer injected provider
     if (window.ethereum) {
-      try{
+      try {
         const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
         await ethProvider.send("eth_requestAccounts", []);
         provider = ethProvider;
@@ -1842,22 +1871,178 @@ async function connectWallet(){
           window.ethereum.on('chainChanged', ()=>{ window.location.reload(); });
         }
         await ensureCorrectChainOrPrompt();
-        showToast('Wallet connected', { type: 'success' });
+        showToast('Wallet connected (injected)', { type: 'success' });
         return true;
       } catch(e){
-        console.warn('injected connect failed', e);
+        console.warn('Injected connect failed', e);
       }
     }
 
-    showToast('No wallet available — install MetaMask or use the wallet modal', { type: 'warn' });
+    // FALLBACK: attempt dynamic import of UniversalProvider (WalletConnect v3)
+    let UniversalProvider = null;
+    const tryPaths = [
+      // ESM builds on CDN (try jsdelivr / unpkg ESM entrypoints)
+      'https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.6.6/dist/esm/index.min.js',
+      'https://unpkg.com/@walletconnect/universal-provider@2.6.6/dist/esm/index.min.js',
+      // some packages expose module entry - try package path
+      'https://cdn.jsdelivr.net/npm/@walletconnect/universal-provider@2.6.6/dist/esm/provider.min.js'
+    ];
+
+    for (const p of tryPaths){
+      try {
+        const mod = await import(/* @vite-ignore */ p);
+        UniversalProvider = mod?.UniversalProvider || mod?.default || mod;
+        if (UniversalProvider) break;
+      } catch(e){
+        // silent fail — try next
+      }
+    }
+
+    // If dynamic import didn't yield an ESM module, check global (UMD loaded externally)
+    if (!UniversalProvider && window.UniversalProvider) {
+      UniversalProvider = window.UniversalProvider;
+    }
+
+    if (!UniversalProvider) {
+      // show friendly fallback: ask user to install a wallet or open deep-link modal
+      showToast('No injected wallet found and WalletConnect library not available. Please install a wallet or try again.', { type: 'warn' });
+      // Show a simple deep-link modal instructing the user
+      const modalUri = `wc:`;
+      showPairingModal('No pairing URI available — install a wallet or open your mobile wallet and use WalletConnect');
+      return false;
+    }
+
+    // Initialize UniversalProvider and attempt pairing.
+    // Keep a reference for cleanup
+    try {
+      const up = await UniversalProvider.init({
+        projectId: WALLETCONNECT_PROJECT_ID,
+        metadata: {
+          name: 'NOLA Exchange',
+          description: 'NOLA swap interface',
+          url: window.location.origin,
+          icons: [ (window.location.origin + '/logo.png') ]
+        }
+      });
+      _universalProviderInstance = up;
+
+      // show QR when provider emits display_uri (this is the robust event for many UniversalProvider builds)
+      const onDisplayUri = (uri) => {
+        // some implementations emit { uri } or string
+        const finalUri = (typeof uri === 'string') ? uri : (uri && (uri.uri || uri.uris || uri[0])) || '';
+        if (finalUri) showPairingModal(finalUri);
+      };
+      try { up.on && up.on('display_uri', onDisplayUri); } catch(e){}
+
+      // Attempt connect — provide requiredNamespaces for EIP-155 (Polygon)
+      try {
+        // This will trigger display_uri event for QR if pairing needed
+        await up.connect({
+          // require eip155:137
+          requiredNamespaces: {
+            eip155: {
+              methods: ['eth_sendTransaction','eth_signTransaction','personal_sign','eth_signTypedData'],
+              chains: [`eip155:${CHAIN_ID}`],
+              events: ['accountsChanged','chainChanged'],
+              // optional: you can provide rpcMap for chain -> rpc
+              rpcMap: { [`eip155:${CHAIN_ID}`]: FALLBACK_RPCS[0] }
+            }
+          }
+        });
+      } catch(connectErr){
+        // user might cancel or pairing may be aborted
+        console.warn('UniversalProvider connect failed or cancelled', connectErr);
+        // hide modal if still shown
+        hidePairingModal();
+        // fall back to showing user instructions
+        showToast('WalletConnect pairing cancelled or failed. Try again.', { type: 'warn' });
+        return false;
+      }
+
+      // If connected, hide modal
+      hidePairingModal();
+
+      // Wrap into an EIP-1193 provider that ethers understands
+      const eip1193 = makeEip1193WrapperFromUniversal(up);
+      // create ethers provider
+      const ethProvider = new ethers.providers.Web3Provider(eip1193, "any");
+      provider = ethProvider;
+      signer = provider.getSigner();
+
+      // attempt to get address via eth_accounts then signer
+      try {
+        const accounts = await eip1193.request({ method: 'eth_accounts' });
+        if (accounts && accounts.length) {
+          userAddress = accounts[0];
+        } else {
+          // fallback to signer.getAddress (some providers provide signer)
+          try { userAddress = await signer.getAddress(); } catch(_) {}
+        }
+      } catch(_) {
+        try { userAddress = await signer.getAddress(); } catch(_) {}
+      }
+
+      // wire events emitted by UniversalProvider to update UI
+      try {
+        up.on && up.on('session_update', (update)=> {
+          // when accounts change, update UI
+          // Some implementations emit { topic, namespaces } - try to extract accounts
+          try {
+            const ns = update?.namespaces || update;
+            if (ns && typeof ns === 'object') {
+              // search for eip155 accounts
+              for (const k of Object.keys(ns)) {
+                if (k.startsWith('eip155')) {
+                  const a = ns[k]?.accounts?.[0];
+                  if (a) { userAddress = a.split(':').pop(); setConnectedUI(userAddress); }
+                }
+              }
+            }
+          } catch(e) { console.warn('session_update handler error', e); }
+        });
+        up.on && up.on('accountsChanged', (accounts) => {
+          if (!accounts || accounts.length === 0) { disconnectWallet(false); }
+          else { userAddress = accounts[0]; setConnectedUI(userAddress); }
+        });
+        up.on && up.on('chainChanged', (chainId) => {
+          // force reload to reinitialize environment on chain change
+          window.location.reload();
+        });
+      } catch(e){}
+
+      // finalize UI
+      try {
+        if (!userAddress) {
+          userAddress = await signer.getAddress();
+        }
+      } catch(e){/* ignore */ }
+      setConnectedUI(userAddress);
+      showToast('Wallet connected (WalletConnect)', { type: 'success' });
+      return true;
+    } catch(e){
+      console.error('UniversalProvider pairing error', e);
+      hidePairingModal();
+      showToast('Wallet connection failed: '+(e.message||e), { type: 'error' });
+      return false;
+    }
+
+  } catch(e){
+    console.error('connectWallet error', e);
+    showToast('Connection failed: '+(e.message||e), { type: 'error' });
     return false;
-  } catch(e){ console.error('connectWallet error', e); showToast('Connection failed: '+(e.message||e), { type: 'error' }); return false; }
+  }
 }
 
+/* Disconnect logic */
 async function disconnectWallet(confirmAsk = true){
   try {
     if (confirmAsk && !confirm('Disconnect wallet?')) return;
-    try { if (web3modal && web3modal.closeModal) web3modal.closeModal(); } catch(_){}
+    try { 
+      // if we have a universal provider instance attempt to disconnect pairings / session
+      if (_universalProviderInstance && _universalProviderInstance.disconnect) {
+        try { await _universalProviderInstance.disconnect(); } catch(_){}
+      }
+    } catch(_) {}
     provider = null; signer = null; userAddress = null;
     setConnectedUI(null);
     showToast('Wallet disconnected', { type: 'info' });
@@ -1865,7 +2050,8 @@ async function disconnectWallet(confirmAsk = true){
 }
 
 /* connectFloating UI click: toggle connect / disconnect */
-connectFloating.addEventListener('click', async ()=>{
+connectFloating.addEventListener('click', async (ev)=>{
+  ev.stopPropagation();
   if (userAddress) {
     if (!confirm('Disconnect wallet?')) return;
     await disconnectWallet(false);
@@ -1874,31 +2060,6 @@ connectFloating.addEventListener('click', async ()=>{
     try { await connectWallet(); } finally { setBusy(connectFloating, false); }
   }
 });
-
-/* =================== CARET, SYMBOL UX =================== */
-function placeCaretAtEnd(inputEl){
-  try{ const len = (inputEl.value || '').length; inputEl.setSelectionRange(len, len); }catch(e){}
-}
-function focusAndPlaceCaretAtEnd(inputEl){
-  try{ inputEl.focus(); placeCaretAtEnd(inputEl); }catch(e){}
-}
-function hideSymbolOnFocus(side){
-  const sym = (side==='from')? $('fromSymbol') : $('toSymbol');
-  const input = (side==='from')? fromTokenInput : toTokenInput;
-  if (sym) sym.style.visibility = 'hidden';
-}
-function restoreSymbolOnBlur(side){
-  const sym = (side==='from')? $('fromSymbol') : $('toSymbol');
-  const input = (side==='from')? fromTokenInput : toTokenInput;
-  if (sym) {
-    if (!input.value || input.value.trim() === '') {
-      const addr = input.dataset.address;
-      if (addr && tokenMap.has(low(addr))) sym.textContent = tokenMap.get(low(addr)).symbol || tokenMap.get(low(addr)).name || 'Select';
-      else sym.textContent = 'Select';
-    }
-    sym.style.visibility = 'visible';
-  }
-}
 
 /* =================== SLIPPAGE UI (custom dropdown) =================== */
 function toggleSlippageList(open){
