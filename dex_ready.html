@@ -850,47 +850,159 @@ async function getRpcProvider(){
 }
 
 /* =================== LOAD TOKENS & COINGECKO MARKETS =================== */
-async function loadTokensAndMarkets(){
+async function loadTokensAndMarkets() {
   try {
-    const r = await fetch('https://tokens.coingecko.com/polygon-pos/all.json');
-    const j = await r.json();
-    tokenList = (j.tokens||[]).map(t => ({ address: low(t.address), symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||t.logo||'' }));
-    tokenList.forEach(t => tokenMap.set(t.address, t));
-    if (!tokenMap.has(low(MATIC_ADDR))) tokenMap.set(low(MATIC_ADDR), { address: low(MATIC_ADDR), symbol:'MATIC', name:'Polygon', decimals:18, logoURI: '' });
 
+    /* -------------------- FETCH POLYGON TOKENLISTS (FREE) -------------------- */
+    const polygonSources = [
+      "https://raw.githubusercontent.com/sameepsi/quickswap-default-token-list/master/src/tokens.json",
+      "https://raw.githubusercontent.com/sushiswap/list/master/lists/token-lists/default-token-list.json",
+      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/tokens.json"
+    ];
+
+    async function fetchJsonSafe(url, timeout = 4000) {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), timeout);
+
+      try {
+        const r = await fetch(url, { signal: controller.signal });
+        clearTimeout(id);
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return await r.json();
+      } catch (e) {
+        clearTimeout(id);
+        console.warn("Token source failed:", url, e);
+        return null;
+      }
+    }
+
+    const rawLists = await Promise.all(
+      polygonSources.map(src => fetchJsonSafe(src))
+    );
+
+    let merged = [];
+
+    for (const raw of rawLists) {
+      if (!raw) continue;
+
+      // Quickswap + Sushi style: { tokens: [ ... ] }
+      if (Array.isArray(raw.tokens)) {
+        merged.push(...raw.tokens);
+        continue;
+      }
+
+      // TrustWallet style: object of tokens
+      if (raw.tokens && typeof raw.tokens === "object" && !Array.isArray(raw.tokens)) {
+        merged.push(
+          ...Object.entries(raw.tokens).map(([addr, t]) => ({
+            address: addr,
+            symbol: t.symbol,
+            name: t.name,
+            decimals: t.decimals || 18,
+            logoURI: t.logoURI || t.logo
+          }))
+        );
+        continue;
+      }
+    }
+
+    /* Convert to your standard token object */
+    tokenList = merged.map(t => ({
+      address: low(t.address || ""),
+      symbol: t.symbol || "",
+      name: t.name || "",
+      decimals: t.decimals || 18,
+      logoURI: t.logoURI || t.logo || ""
+    }));
+
+    /* Insert into tokenMap */
+    tokenList.forEach(t => tokenMap.set(t.address, t));
+
+    /* Add MATIC manually if missing */
+    if (!tokenMap.has(low(MATIC_ADDR))) {
+      tokenMap.set(low(MATIC_ADDR), {
+        address: low(MATIC_ADDR),
+        symbol: "MATIC",
+        name: "Polygon",
+        decimals: 18,
+        logoURI: ""
+      });
+    }
+
+    /* -------------------- COINGECKO MARKETS (UNCHANGED) -------------------- */
     try {
-      const marketsUrl = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+      const marketsUrl =
+        `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=volume_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+
       const rm = await fetchWithTimeout(marketsUrl, {}, 5000);
       const jm = await rm.json();
+
       jm.forEach(c => {
-        const sym = low(c.symbol||''), name = low(c.name||'');
-        const stat = { price: (typeof c.current_price === 'number' ? c.current_price : null), change: (typeof c.price_change_percentage_24h === 'number' ? c.price_change_percentage_24h : null), changePeriod:'24h', volume24h: (typeof c.total_volume === 'number' ? c.total_volume : 0), image: c.image||'', volume12h: null };
+        const sym = low(c.symbol || "");
+        const name = low(c.name || "");
+        const stat = {
+          price: typeof c.current_price === "number" ? c.current_price : null,
+          change: typeof c.price_change_percentage_24h === "number" ? c.price_change_percentage_24h : null,
+          changePeriod: "24h",
+          volume24h: typeof c.total_volume === "number" ? c.total_volume : 0,
+          image: c.image || "",
+          volume12h: null
+        };
         if (sym) cgStatsMap.set(sym, stat);
         if (name) cgStatsMap.set(name, stat);
       });
-    } catch(e){ console.warn('CoinGecko markets failed', e); }
+    } catch (e) {
+      console.warn("CoinGecko markets failed", e);
+    }
 
+    /* -------------------- 1INCH TOKENS (UNCHANGED) -------------------- */
     try {
       const r1 = await fetch(`${ONEINCH_BASE}/tokens`);
       const j1 = await r1.json();
       if (j1 && j1.tokens) {
         Object.values(j1.tokens).forEach(t => {
-          const addr = low(t.address||'');
+          const addr = low(t.address || "");
           if (!addr) return;
           if (tokenMap.has(addr)) return;
-          const obj = { address: addr, symbol: t.symbol||'', name: t.name||'', decimals: t.decimals||18, logoURI: t.logoURI||'' };
-          tokenList.push(obj); tokenMap.set(addr, obj);
+
+          const obj = {
+            address: addr,
+            symbol: t.symbol || "",
+            name: t.name || "",
+            decimals: t.decimals || 18,
+            logoURI: t.logoURI || ""
+          };
+
+          tokenList.push(obj);
+          tokenMap.set(addr, obj);
         });
       }
-    } catch(e){ /* ignore */ }
+    } catch (e) {
+      /* ignore */
+    }
 
+    /* -------------------- REMOVE DUPLICATES -------------------- */
     const seen = new Set();
-    tokenList = tokenList.filter(t => { if(!t||!t.address) return false; if(seen.has(t.address)) return false; seen.add(t.address); return true; });
-    console.log('Loaded tokens:', tokenList.length);
-  } catch(e){ console.error('loadTokensAndMarkets error', e); }
+    tokenList = tokenList.filter(t => {
+      if (!t || !t.address) return false;
+      if (seen.has(t.address)) return false;
+      seen.add(t.address);
+      return true;
+    });
+
+    console.log("Loaded tokens:", tokenList.length);
+
+  } catch (e) {
+    console.error("loadTokensAndMarkets error", e);
+  }
 }
+
 let tokensLoadedPromise = loadTokensAndMarkets();
-async function ensureTokensLoaded(){ if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets(); await tokensLoadedPromise; }
+async function ensureTokensLoaded() {
+  if (!tokensLoadedPromise) tokensLoadedPromise = loadTokensAndMarkets();
+  await tokensLoadedPromise;
+}
+
 
 /* =================== PRICING SOURCES & SMART PRICE (unchanged core) =================== */
 /* ... (kept original price/quote functions) ... */
