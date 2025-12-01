@@ -736,7 +736,7 @@ const FALLBACK_RPCS = [
 ];
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 const WETH_ADDR = '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619';
-const MATIC_ADDR = '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee';
+const MATIC_ADDR = '0x0000000000000000000000000000000000001010';
 const ZEROX_API_KEY = '099490ac-79a1-4416-a088-df38b6e0c384'; // keep as-is
 const WALLETCONNECT_PROJECT_ID = '6557a92e3698182727669d41cbeb95a1';
 const FEE_PERCENT = 0.00001;
@@ -850,84 +850,6 @@ async function getRpcProvider(){
 }
 
 /* =================== LOAD TOKENS & COINGECKO MARKETS =================== */
-async function loadTokensAndMarkets() {
-  try {
-
-    /* -------------------- FETCH POLYGON TOKENLISTS (FREE) -------------------- */
-    const polygonSources = [
-      "https://raw.githubusercontent.com/sameepsi/quickswap-default-token-list/master/src/tokens.json",
-      "https://raw.githubusercontent.com/sushiswap/list/master/lists/token-lists/default-token-list.json",
-      "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/polygon/tokens.json"
-    ];
-
-    async function fetchJsonSafe(url, timeout = 4000) {
-      const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
-
-      try {
-        const r = await fetch(url, { signal: controller.signal });
-        clearTimeout(id);
-        if (!r.ok) throw new Error("HTTP " + r.status);
-        return await r.json();
-      } catch (e) {
-        clearTimeout(id);
-        console.warn("Token source failed:", url, e);
-        return null;
-      }
-    }
-
-    const rawLists = await Promise.all(
-      polygonSources.map(src => fetchJsonSafe(src))
-    );
-
-    let merged = [];
-
-    for (const raw of rawLists) {
-      if (!raw) continue;
-
-      // Quickswap + Sushi style: { tokens: [ ... ] }
-      if (Array.isArray(raw.tokens)) {
-        merged.push(...raw.tokens);
-        continue;
-      }
-
-      // TrustWallet style: object of tokens
-      if (raw.tokens && typeof raw.tokens === "object" && !Array.isArray(raw.tokens)) {
-        merged.push(
-          ...Object.entries(raw.tokens).map(([addr, t]) => ({
-            address: addr,
-            symbol: t.symbol,
-            name: t.name,
-            decimals: t.decimals || 18,
-            logoURI: t.logoURI || t.logo
-          }))
-        );
-        continue;
-      }
-    }
-
-    /* Convert to your standard token object */
-    tokenList = merged.map(t => ({
-      address: low(t.address || ""),
-      symbol: t.symbol || "",
-      name: t.name || "",
-      decimals: t.decimals || 18,
-      logoURI: t.logoURI || t.logo || ""
-    }));
-
-    /* Insert into tokenMap */
-    tokenList.forEach(t => tokenMap.set(t.address, t));
-
-    /* Add MATIC manually if missing */
-    if (!tokenMap.has(low(MATIC_ADDR))) {
-      tokenMap.set(low(MATIC_ADDR), {
-        address: low(MATIC_ADDR),
-        symbol: "MATIC",
-        name: "Polygon",
-        decimals: 18,
-        logoURI: ""
-      });
-    }
 
     /* -------------------- COINGECKO MARKETS (UNCHANGED) -------------------- */
     try {
