@@ -1527,10 +1527,10 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
 
 /* =================== BACKGROUND REFRESH =================== */
 function startBackgroundRefresh(){
-  setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 7000);
+  setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 3000);
 }
 function scheduleActivePriceRefresh(){
-  setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 900);
+  setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 1500);
 }
 
 /* =================== ENABLE / DISABLE ACTION BUTTONS (professional look) =================== */
