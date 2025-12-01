@@ -1451,46 +1451,25 @@ async function initDefaults(){
       fromTokenInput.dataset.address = low(usdc.address);
       fromTokenInput.dataset.decimals = usdc.decimals || 6;
     }
-    // --- NEW TO-TOKEN DEFAULT LOGIC --- //
-const NOLA_ADDR = "0x1515546B052151D5eb8CCB1bcf2857E0C6f51451";
-const WBTC_ADDR = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"; // mainnet WBTC
-
-// find tokens
-const nolaToken = tokenList.find(t => low(t.address) === low(NOLA_ADDR));
-const wbtcToken = tokenList.find(t => low(t.address) === low(WBTC_ADDR));
-
-let toDefault = null;
-
-// priority 1 — NOLA
-if (nolaToken) {
-  toDefault = nolaToken;
-}
-// priority 2 — WBTC
-else if (wbtcToken) {
-  toDefault = wbtcToken;
-}
-// priority 3 — the previously calculated top-volume token
-else if (topToken) {
-  toDefault = topToken;
-}
-
-// if TO defaults to same token as FROM, pick next best by volume
-if (toDefault && usdc && low(toDefault.address) === low(usdc.address)) {
-  const fallback = tokenList.find(t =>
-    low(t.address) !== low(usdc.address) &&
-    (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name)))
-  );
-  if (fallback) toDefault = fallback;
-}
-
-// apply TO-token if found
-if (toDefault) {
-  applyTokenSelection('to', toDefault);
-  $('toSymbol').textContent = toDefault.symbol || toDefault.name;
-  toTokenInput.value = toDefault.symbol || toDefault.name;
-  toTokenInput.dataset.address = low(toDefault.address);
-  toTokenInput.dataset.decimals = toDefault.decimals || 18;
-}
+    if (topToken) {
+      // prevent picking same as from
+      if (!usdc || low(topToken.address) !== low(usdc.address)) {
+        applyTokenSelection('to', topToken);
+        $('toSymbol').textContent = topToken.symbol || topToken.name || 'TO';
+        toTokenInput.value = topToken.symbol || topToken.name;
+        toTokenInput.dataset.address = low(topToken.address);
+        toTokenInput.dataset.decimals = topToken.decimals || 18;
+      } else if (usdc) {
+        // fallback: choose another high-volume token
+        const fallback = tokenList.find(t => low(t.address) !== low(usdc.address) && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
+        if (fallback) applyTokenSelection('to', fallback);
+      }
+    } else if (usdc) {
+      applyTokenSelection('to', usdc);
+      $('toSymbol').textContent = usdc.symbol || 'USDC';
+      toTokenInput.value = usdc.symbol || usdc.name;
+      toTokenInput.dataset.address = low(usdc.address);
+      toTokenInput.dataset.decimals = usdc.decimals || 6;
     }
     await fetchBothPrices();
     updateEstimate();
@@ -1527,10 +1506,10 @@ toBox.querySelector('.left').addEventListener('click', (e)=>{
 
 /* =================== BACKGROUND REFRESH =================== */
 function startBackgroundRefresh(){
-  setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 3000);
+  setInterval(()=>{ try{ fetchBothPrices(); }catch(e){} }, 7000);
 }
 function scheduleActivePriceRefresh(){
-  setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 1500);
+  setTimeout(()=>{ try{ fetchBothPrices(); }catch(e){} }, 900);
 }
 
 /* =================== ENABLE / DISABLE ACTION BUTTONS (professional look) =================== */
