@@ -266,6 +266,75 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 /* spinner */
 .btn-spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,0.2);border-top-color:rgba(255,255,255,1);animation:spin 700ms linear infinite;display:inline-block}
 @keyframes spin{to{transform:rotate(360deg)}}
+  /* ====== Button press & tap fixes (drop-in — paste AFTER your existing button CSS) ====== */
+
+/* Target your main interactive elements explicitly so nothing else changes */
+button,
+button[class],
+.glassy-btn,
+.quick-cta,
+.connect-floating,
+.swap-outside,
+.chat-toggle,
+.slippage-display,
+.slippage-item,
+input[type="button"],
+input[type="submit"],
+a.button,
+a.btn {
+  -webkit-tap-highlight-color: transparent; /* remove blue flash on Android */
+  outline: none !important;                 /* no default outline */
+  -webkit-focus-ring-color: transparent;    /* suppress iOS/old Chrome focus ring */
+  -webkit-appearance: none;                 /* normalize across browsers */
+  touch-action: manipulation;               /* avoid delay/gesture interference */
+  user-select: none;                        /* avoid accidental text selection while pressing */
+  transition: transform 120ms cubic-bezier(.2,.9,.2,1), box-shadow 120ms ease, opacity 120ms ease;
+  will-change: transform, box-shadow;
+}
+
+/* Remove inner highlight on iOS Safari for links acting like buttons */
+a.button, a.btn { -webkit-tap-highlight-color: transparent; }
+
+/* Pressed state: subtle downward motion + tiny scale, with shadow reduction — "pure press" feel */
+button:active,
+.glassy-btn:active,
+.quick-cta:active,
+.connect-floating:active,
+.swap-outside:active,
+.chat-toggle:active,
+.slippage-display:active,
+.slippage-item:active {
+  transform: translateY(1px) scale(0.996);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35) !important; /* slightly reduced shadow */
+  opacity: 0.995;
+  transition: transform 80ms cubic-bezier(.05,.6,.2,1), box-shadow 80ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Keep keyboard focus visible and accessible, but subtle & theme-matching */
+button:focus-visible,
+.glassy-btn:focus-visible,
+.quick-cta:focus-visible,
+.connect-floating:focus-visible,
+.swap-outside:focus-visible,
+.chat-toggle:focus-visible,
+.slippage-display:focus-visible,
+.slippage-item:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(180,68,255,0.08), 0 10px 30px rgba(106,0,255,0.06);
+  border-radius: 12px; /* ensure the ring matches button shape */
+}
+
+/* Prevent the huge default dotted outline on some browsers when clicked with mouse */
+button::-moz-focus-inner { border: 0; }
+
+/* Optional: for elements that use -webkit-user-select or other vendor props, ensure no text selection while pressing */
+button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none; -ms-user-select: none; user-select: none; }
+
+/* If you have any elements that still flash a background on tap (some Android skins),
+   add this as last-resort guard:
+*/
+* { -webkit-tap-highlight-color: transparent !important; }
 </style>
 </head>
 <body>
@@ -1973,7 +2042,21 @@ if (typeof slippageList !== 'undefined' && slippageList) {
 }
 function getSelectedSlippage(){ return (typeof slippageLabel !== 'undefined' && slippageLabel ? (slippageLabel.textContent||'1%') : '1%').replace('%','').trim(); }
 
-/* accessory helpers are already present above */
+// Close slippage list when clicking outside
+document.addEventListener('click', function (e) {
+  if (!slippageList || !slippageDisplay) return;
+
+  // if slippage list is open
+  const isOpen = slippageList.style.display === 'block';
+
+  if (!isOpen) return;
+
+  // If click is outside both the list and the button → close it
+  if (!slippageList.contains(e.target) && !slippageDisplay.contains(e.target)) {
+    toggleSlippageList(false);
+  }
+});
+  /* accessory helpers are already present above */
 
 /*
   swapOutside MOVE behavior (not swap):
