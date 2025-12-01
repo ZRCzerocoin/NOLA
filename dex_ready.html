@@ -1451,25 +1451,72 @@ async function initDefaults(){
       fromTokenInput.dataset.address = low(usdc.address);
       fromTokenInput.dataset.decimals = usdc.decimals || 6;
     }
-    if (topToken) {
-      // prevent picking same as from
-      if (!usdc || low(topToken.address) !== low(usdc.address)) {
-        applyTokenSelection('to', topToken);
-        $('toSymbol').textContent = topToken.symbol || topToken.name || 'TO';
-        toTokenInput.value = topToken.symbol || topToken.name;
-        toTokenInput.dataset.address = low(topToken.address);
-        toTokenInput.dataset.decimals = topToken.decimals || 18;
-      } else if (usdc) {
-        // fallback: choose another high-volume token
-        const fallback = tokenList.find(t => low(t.address) !== low(usdc.address) && (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name))));
-        if (fallback) applyTokenSelection('to', fallback);
-      }
-    } else if (usdc) {
-      applyTokenSelection('to', usdc);
-      $('toSymbol').textContent = usdc.symbol || 'USDC';
-      toTokenInput.value = usdc.symbol || usdc.name;
-      toTokenInput.dataset.address = low(usdc.address);
-      toTokenInput.dataset.decimals = usdc.decimals || 6;
+    // --- NEW SAFE TO-TOKEN DEFAULT LOGIC --- //
+const NOLA_ADDR = "0x1515546B052151D5eb8CCB1bcf2857E0C6f51451";
+const WBTC_ADDR = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
+
+// Safely search tokens
+let nolaToken = null;
+let wbtcToken = null;
+
+try {
+  nolaToken = tokenList.find(t => t?.address && low(t.address) === low(NOLA_ADDR));
+  wbtcToken = tokenList.find(t => t?.address && low(t.address) === low(WBTC_ADDR));
+} catch (err) {
+  console.warn("Token search error:", err);
+}
+
+// Determine fallback “top volume token”
+let topTokenSafe = null;
+try {
+  let maxVol = 0;
+  for (const [k, stat] of cgStatsMap.entries()) {
+    if (!stat) continue;
+    const vol = stat.volume12h || stat.volume24h || 0;
+    if (vol > maxVol) { maxVol = vol; topTokenSafe = k; }
+  }
+  if (topTokenSafe) {
+    topTokenSafe = tokenList.find(
+      t => (t.symbol && low(t.symbol) === topTokenSafe) || 
+           (t.name && low(t.name) === topTokenSafe)
+    );
+  }
+} catch (err) {
+  console.warn("Top token logic error:", err);
+}
+
+// choose default TO in order: NOLA → WBTC → top-volume token
+let toDefault = nolaToken || wbtcToken || topTokenSafe;
+
+// ensure TO is not same as FROM
+try {
+  if (toDefault && usdc && low(toDefault.address) === low(usdc.address)) {
+    const fallback = tokenList.find(
+      t => t?.address &&
+      low(t.address) !== low(usdc.address) &&
+      (cgStatsMap.has(low(t.symbol)) || cgStatsMap.has(low(t.name)))
+    );
+    if (fallback) toDefault = fallback;
+  }
+} catch (err) {
+  console.warn("TO-from conflict resolver error:", err);
+}
+
+// FINAL APPLY
+if (toDefault) {
+  try {
+    applyTokenSelection("to", toDefault);
+
+    if ($("toSymbol")) $("toSymbol").textContent = toDefault.symbol || toDefault.name;
+    if (toTokenInput) {
+      toTokenInput.value = toDefault.symbol || toDefault.name;
+      toTokenInput.dataset.address = low(toDefault.address);
+      toTokenInput.dataset.decimals = toDefault.decimals || 18;
+    }
+  } catch (err) {
+    console.warn("Applying TO token failed:", err);
+  }
+}
     }
     await fetchBothPrices();
     updateEstimate();
