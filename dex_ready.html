@@ -679,7 +679,7 @@ async function fetchNewMessages() {
         console.error('fetchNewMessages exception:', e);
     }
 }
-setInterval(fetchNewMessages, 1500);
+setInterval(fetchNewMessages, 900);
 
 /* ====== Send message ====== */
 /* ====== Send message (robust: always clears and focuses) ====== */
