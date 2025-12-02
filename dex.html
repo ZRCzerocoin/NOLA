@@ -47,13 +47,12 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 .section-wrapper {
   min-height: 100vh;
   display: flex;
+  align-items: flex-start;   /* content stays at the top */
   justify-content: center;
   gap: 18px;
   padding: 28px;
 
-  padding-top: 20vh; /* Move the section down */
-  padding-bottom: 0;
-
+  margin-top: 20vh;          /* move the whole section UP the page */
   position: relative;
   z-index: 1;
 }
@@ -160,7 +159,7 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 }
   
 /* Keep main container centered with its own scroll area if needed */
-.section-wrapper { height: 100%; display:flex; align-items:center; justify-content:center; }
+
 
 /* Allow suggestions and chat messages areas to scroll independently */
 .suggestions { max-height: 360px; overflow-y: auto; -webkit-overflow-scrolling:touch; }
