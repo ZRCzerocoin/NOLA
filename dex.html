@@ -47,7 +47,7 @@ body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%
 .section-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;gap:18px;padding:28px;position:relative;z-index:1}
 
 /* CARD */
-.container{width:90%;max-width:var(--container-max);margin:0;background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:25px;padding:22px;backdrop-filter:blur(18px);box-shadow:var(--shadow);animation:cardIn 800ms ease;position:relative}
+.container{width:90%;max-width:var(--container-max);margin:9px;background:var(--glass);border:1px solid rgba(255,255,255,0.08);border-radius:25px;padding:22px;backdrop-filter:blur(18px);box-shadow:var(--shadow);animation:cardIn 800ms ease;position:relative}
 @keyframes cardIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0b3ff;text-shadow:0 0 8px #b445ff}
 
@@ -391,11 +391,11 @@ button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none
         <div class="token-info">
           <div class="token-symbol" id="fromSymbol">Select</div>
           <div class="token-change" id="fromChange" style="display:none">+0.00%</div>
-          <div id="fromUnitSmall" class="price-unit" style=padding:2px 2px;display:none">—</div>
+            <div id="toUnitSmall" class="price-unit" style="display:none">—</div>
         </div>
 
         <div class="input-field">
-          <input id="fromToken" placeholder="Token" style="padding:12px 14px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="fromToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
         <div class="input-amount" style="min-width:120px;">
@@ -404,7 +404,7 @@ button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none
 
         <div class="price-small">
           <div id="fromUsdSmall" class="price-usd" style="display:none">≈ $—</div>
-          <div id="fromUnitSmall" class="price-unit" style="display:none">—</div>
+          <div id="fromUnitSmall" class="price-unit" style="display:none">— / unit</div>
         </div>
 
       </div>
@@ -422,11 +422,11 @@ button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none
         <div class="token-info">
           <div class="token-symbol" id="toSymbol">Select</div>
           <div class="token-change" id="toChange" style="display:none">+0.00%</div>
-          <div id="toUnitSmall" class="price-unit" style="display:none">— / unit</div>
+          <div id="toUnitSmall" class="price-unit" style="display:none">—</div>
         </div>
 
         <div class="input-field">
-          <input id="toToken" placeholder="Token" style="padding:12px 14px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
+          <input id="toToken" placeholder="Token symbol or contract (paste address too)" style="padding:8px 10px;border-radius:8px;border:none;background:transparent;color:#fff;width:100%">
         </div>
 
         <div class="input-amount" style="min-width:120px;">
@@ -2052,26 +2052,13 @@ async function connectWallet(){
     if (web3modal && typeof web3modal.openModal === 'function' && typeof web3modal.connect === 'function') {
       try {
         // Open modal UI (non-blocking)
-        // Open modal UI (non-blocking if available)
-    if (typeof web3modal?.openModal === 'function') {
-      try { await web3modal.openModal(); } catch(e){ /* ignore openModal errors */ }
-    }
-
-    // Connect (try the most appropriate method)
-    let modalProvider = null;
-    if (typeof web3modal?.connect === 'function') {
-      modalProvider = await web3modal.connect();
-    } else if (typeof web3modal?.requestConnection === 'function') {
-      modalProvider = await web3modal.requestConnection();
-    } else if (typeof web3modal?.openModal === 'function') {
-      // some builds expose openModal then connect via other API
-      try { modalProvider = await web3modal.connect?.() || await web3modal.requestConnection?.(); } catch(e){ modalProvider = null; }
-    }
-
-    if (modalProvider) {
-      provider = new ethers.providers.Web3Provider(modalProvider, "any");
-      signer = provider.getSigner();
-      userAddress = await signer.getAddress().catch(()=>null);
+        await web3modal.openModal();
+        // Wait for user to choose and connect (connect() typically resolves to a provider)
+        const modalProvider = (typeof web3modal?.connect === 'function') ? await web3modal.connect() : (typeof web3modal?.openModal === 'function' ? await web3modal.openModal({}) : await web3modal.requestConnection?.());
+        if (modalProvider) {
+          provider = new ethers.providers.Web3Provider(modalProvider, "any");
+          signer = provider.getSigner();
+          userAddress = await signer.getAddress().catch(()=>null);
           setConnectedUI(userAddress);
           await ensureCorrectChainOrPrompt();
           showToast('Wallet connected', { type: 'success' });
