@@ -29,15 +29,15 @@ body{
 }
 
 /* NEBULA + PARTICLES */
-body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(150,0,255,0.12),transparent 60%);animation:nebulaMove 20s infinite alternate ease-in-out;z-index:-2}
+body::before{content:'';position:fixed;left:-50%;top:-50%;width:200%;height:200%;background:radial-gradient(circle,rgba(150,0,255,0.12),transparent 60%);animation:nebulaMove 35s infinite alternate ease-in-out;z-index:-2}
 @keyframes nebulaMove{0%{transform:translate(-10%,-10%)}100%{transform:translate(5%,5%)}}
-.particle{position:absolute;width:2px;height:2px;background:#b445ff;border-radius:50%;opacity:0.8;animation:floatParticle linear infinite;z-index:-1}
+.particle{position:absolute;width:4px;height:3px;background:#b445ff;border-radius:50%;opacity:0.8;animation:floatParticle linear infinite;z-index:-1}
 @keyframes floatParticle{0%{transform:translateY(0) translateX(0);opacity:0.8}50%{transform:translateY(-50px) translateX(20px);opacity:0.4}100%{transform:translateY(0) translateX(0);opacity:0.8}}
 
 /* TOP LOGO moved down to sit above section */
 .logo{
   width:84px;height:auto;display:block;margin:0 auto;pointer-events:none;
-  animation:logoGlow 15s ease-in-out infinite alternate,logoRotate 45s linear infinite;
+  animation:logoGlow 25s ease-in-out infinite alternate,logoRotate 45s linear infinite;
   z-index:998;position:fixed;left:50%;top:8vh;transform:translateX(-50%);
 }
 @keyframes logoGlow{0%{filter:drop-shadow(0 0 12px #9c00ff)}50%{filter:drop-shadow(0 0 30px #d15fff)}100%{filter:drop-shadow(0 0 12px #9c00ff)}}
@@ -147,8 +147,6 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
   .logo{top:6vh;width:72px}
 }
   
-
-
 /* Keep main container centered with its own scroll area if needed */
 .section-wrapper { height: 100%; display:flex; align-items:center; justify-content:center; }
 
