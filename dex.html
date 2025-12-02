@@ -1509,23 +1509,19 @@ async function initDefaults(){
     // --- NEW SAFE TO-TOKEN DEFAULT LOGIC --- //
 
 // --- NEW TO-TOKEN DEFAULT LOGIC --- //
-const NOLA_ADDR = "0x1515546B052151D5eb8CCB1bcf2857E0C6f51451";
+
 const WBTC_ADDR = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599"; // mainnet WBTC
 
 // find tokens
-const nolaToken = tokenList.find(t => low(t.address) === low(NOLA_ADDR));
 const wbtcToken = tokenList.find(t => low(t.address) === low(WBTC_ADDR));
 
 let toDefault = null;
 
-// priority 1 — NOLA
-if (nolaToken) {
-  toDefault = nolaToken;
-}
-// priority 2 — WBTC
-else if (wbtcToken) {
+// priority 1 — 
+if (wbtcToken) {
   toDefault = wbtcToken;
 }
+// priority 2 — 
 // priority 3 — the previously calculated top-volume token
 else if (topToken) {
   toDefault = topToken;
