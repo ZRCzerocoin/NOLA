@@ -1,85 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>3D Wallet Connect</title>
-<style>
-  body, html {
-    height: 100%;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #0d1117;
-    font-family: Arial, sans-serif;
-  }
-  .wallet-button {
-    padding: 20px 40px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #fff;
-    background: linear-gradient(145deg, #ff416c, #ff4b2b);
-    border: none;
-    border-radius: 15px;
-    cursor: pointer;
-    box-shadow: 0 6px #b93a2f, 0 6px 15px rgba(0,0,0,0.5);
-    transition: all 0.2s ease;
-    perspective: 1000px;
-  }
-  .wallet-button:hover {
-    transform: rotateX(10deg) rotateY(10deg) scale(1.05);
-    box-shadow: 0 12px #b93a2f, 0 12px 20px rgba(0,0,0,0.6);
-  }
-  .wallet-button:active {
-    transform: scale(0.95);
-    box-shadow: 0 4px #b93a2f, 0 4px 10px rgba(0,0,0,0.4);
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polygon Connect Wallet</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0d1117;
+      font-family: Arial, sans-serif;
+    }
+
+    #connectBtn {
+      padding: 20px 40px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(145deg, #8247e5, #5e20a4);
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      box-shadow: 0 6px #5e20a4, 0 6px 15px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+      perspective: 1000px;
+    }
+
+    #connectBtn:hover {
+      transform: rotateX(10deg) rotateY(10deg) scale(1.05);
+      box-shadow: 0 12px #5e20a4, 0 12px 20px rgba(0,0,0,0.6);
+    }
+
+    #connectBtn:active {
+      transform: scale(0.95);
+      box-shadow: 0 4px #5e20a4, 0 4px 10px rgba(0,0,0,0.4);
+    }
+  </style>
 </head>
 <body>
+  <button id="connectBtn">Connect Wallet</button>
 
-<button id="connectWallet" class="wallet-button">Connect Wallet</button>
-
-<script type="module">
-import { EthereumProvider } from "https://unpkg.com/@walletconnect/ethereum-provider@2.8.2/dist/esm/index.js";
-import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.9.0/dist/ethers.min.js";
-
-let provider, signer;
-
-async function connectWallet() {
-  try {
-    // Initialize WalletConnect provider
-    provider = await EthereumProvider.init({
-      projectId: "6557a92e3698182727669d41cbeb95a1", // Your Project ID
-      chains: [1], // Ethereum mainnet, you can add others
-      showQrModal: true
-    });
-
-    // Connect to wallet
-    await provider.connect();
-
-    // Wrap with ethers.js
-    const ethersProvider = new ethers.BrowserProvider(provider);
-    signer = await ethersProvider.getSigner();
-    const address = await signer.getAddress();
-
-    alert("Connected: " + address);
-    console.log("Connected wallet:", address);
-
-    // Change button text
-    const btn = document.getElementById("connectWallet");
-    btn.innerText = "Connected ✅";
-    btn.disabled = true;
-
-  } catch (err) {
-    console.error("Wallet connection failed:", err);
-    alert("Connection failed: " + err.message);
-  }
-}
-
-document.getElementById("connectWallet").addEventListener("click", connectWallet);
-</script>
-
+  <script type="module" src="./app.js"></script>
 </body>
 </html>
