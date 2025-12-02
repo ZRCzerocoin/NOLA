@@ -514,14 +514,13 @@ button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none
 <!-- footer -->
 <div class="footer">
   <div>© 2025 NOLA — All rights reserved</div>
-  <div><a href="PrivacyTerms.html" id="privacyTerms">Privacy & Terms</a> • <a href="#" id="xLink">X</a> <a href="#" id="tgLink">Telegram</a> <a href="#" id="siteLink">Website</a></div>
+  <div><a href="terms&privacy.html" id="privacyTerms">Terms&Privacy</a> • <a href="https://x.com/NOLA_CHAIN" id="xLink">X</a> <a href="https:https://t.me/NOLA_community" id="tgLink">Telegram</a> <a href="index.html" id="siteLink">Website</a></div>
 </div>
 
 <!-- LIBS -->
 <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <!-- try to include the latest Web3Modal v3 and WalletConnect v2 script if present (developer will swap versions if different) -->
 <script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
-<script src="https://unpkg.com/@walletconnect/web3modal@2.6.4/dist/w3m.min.js"></script>
   <!-- chat -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
@@ -677,7 +676,7 @@ async function fetchNewMessages() {
         console.error('fetchNewMessages exception:', e);
     }
 }
-setInterval(fetchNewMessages, 900);
+setInterval(fetchNewMessages, 600);
 
 /* ====== Send message ====== */
 /* ====== Send message (robust: always clears and focuses) ====== */
