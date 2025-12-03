@@ -1,82 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Universal Wallet Connect</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polygon Wallet Connect</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #0d1117;
+      font-family: Arial, sans-serif;
+    }
 
-<style>
-  body, html {
-    height: 100%;
-    margin: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #0d1117;
-    font-family: Arial, sans-serif;
-  }
+    #connectBtn {
+      padding: 20px 50px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      background: linear-gradient(145deg, #8247e5, #5e20a4);
+      box-shadow: 0 8px #5e20a4, 0 6px 15px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+    }
 
-  #connectWallet {
-    padding: 22px 50px;
-    font-size: 1.7rem;
-    font-weight: bold;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    background: linear-gradient(145deg, #7a41ff, #4b1bb1);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-    transition: 0.3s;
-  }
+    #connectBtn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 12px #5e20a4, 0 12px 20px rgba(0,0,0,0.6);
+    }
 
-  #connectWallet:hover {
-    transform: scale(1.1) rotateX(12deg) rotateY(12deg);
-  }
-</style>
+    #connectBtn:active {
+      transform: scale(0.95);
+      box-shadow: 0 4px #5e20a4, 0 4px 10px rgba(0,0,0,0.4);
+    }
+  </style>
 </head>
-
 <body>
 
-<button id="connectWallet">Connect Wallet</button>
+  <button id="connectBtn">Connect Wallet</button>
 
-<script type="module">
-import { WalletConnectModal } from "https://esm.sh/@walletconnect/modal@3";
-import { EthereumProvider } from "https://esm.sh/@walletconnect/ethereum-provider@3";
-
-// YOUR PROJECT ID ✔
-const projectId = "6557a92e3698182727669d41cbeb95a1";
-
-// WalletConnect universal modal
-const wcModal = new WalletConnectModal({
-  projectId: projectId,
-  themeMode: "dark",
-});
-
-// Create Ethereum universal provider
-let provider = await EthereumProvider.init({
-  projectId: projectId,
-  showQrModal: true,
-  optionalChains: [137],    // Polygon
-});
-
-// Connect function — works on ALL wallets
-async function connect() {
-  try {
-    await provider.connect();  // <-- THIS triggers apps on mobile automatically!
-
-    const accounts = provider.accounts;
-    const address = accounts[0];
-
-    alert("Connected: " + address);
-    document.getElementById("connectWallet").innerText = "Connected ✔";
-  } catch (err) {
-    console.error(err);
-    alert("Connection failed: " + err.message);
-  }
-}
-
-document.getElementById("connectWallet").addEventListener("click", connect);
-</script>
+  <script type="module" src="./app.js"></script>
 
 </body>
 </html>
