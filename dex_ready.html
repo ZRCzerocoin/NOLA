@@ -180,23 +180,6 @@ h2{text-align:center;font-size:26px;font-weight:600;margin-bottom:14px;color:#e0
 .suggestions { max-height: 360px; overflow-y: auto; -webkit-overflow-scrolling:touch; }
 .chat-sidebar #chatMessages { overflow-y: auto; max-height: calc(100vh - 220px); -webkit-overflow-scrolling:touch; }
 
-/* Wallet pairing modal / app tiles (visual polish) */
-#walletPairModal .pair-app {
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border-radius:10px;
-  padding:8px;
-  text-decoration:none;
-  color:#fff;
-  border:1px solid rgba(255,255,255,0.03);
-}
-#walletPairModal .pair-app-inner { display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px; }
-#walletPairModal .app-icon {
-  width:36px;height:36px;border-radius:8px;background:linear-gradient(180deg,#222,#111);display:flex;align-items:center;justify-content:center;font-weight:800;
-}
-#walletPairModal .app-label { font-size:12px; opacity:0.9; }
 /* CHAT TOGGLE BUTTON */
 .chat-toggle {
   position: fixed;
@@ -386,6 +369,7 @@ button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none
 */
 * { -webkit-tap-highlight-color: transparent !important; }
 </style>
+    <link rel="stylesheet" href="/assets/nola-wallet/styles.nola.css">
 </head>
 <body>
 
@@ -537,11 +521,8 @@ button:active, .glassy-btn:active, .quick-cta:active { -webkit-user-select: none
   <div>© 2025 NOLA — All rights reserved</div>
   <div><a href="terms&privacy.html" id="privacyTerms">Terms&Privacy</a> • <a href="https://x.com/NOLA_CHAIN" id="xLink">X</a> <a href="https:https://t.me/NOLA_community" id="tgLink">Telegram</a> <a href="index.html" id="siteLink">Website</a></div>
 </div>
-
-<!-- LIBS -->
-<script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
 <!-- try to include the latest Web3Modal v3 and WalletConnect v2 script if present (developer will swap versions if different) -->
-<script src="https://unpkg.com/@web3modal/html@2.1.1/dist/index.js"></script>
+
   <!-- chat -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
@@ -780,7 +761,7 @@ const ONEINCH_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
 const ZEROX_BASE = 'https://polygon.api.0x.org';
 const COINGECKO_CHAIN = 'polygon-pos';
 const FALLBACK_RPCS = [
-  "https://polygon-rpc.com",
+  "https://polygon-mainnet.g.alchemy.com/v2/8ikEzpLeLerL-8xNW23fV",
    "https://rpc-mainnet.maticvigil.com",
 ];
 const USDC_ADDR = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
@@ -1881,305 +1862,10 @@ function parseSwapError(e){
   return (e && e.message) ? `Transaction error: ${e.message}` : 'An unknown error occurred.';
 }
 
-/* =================== CONNECT WALLET & CHAIN SWITCH & WEB3MODAL (modern-friendly) =================== */
-/* =================== CONNECT WALLET & CHAIN SWITCH & WEB3MODAL (modern-friendly) =================== */
 
-async function initWeb3Modal(){
-  try{
-    // Prefer the modern Web3Modal HTML build when available (you already include @web3modal/html and @walletconnect/web3modal)
-    if (window.WalletConnectWeb3Modal && window.WalletConnectWeb3Modal.default) {
-      web3modal = new window.WalletConnectWeb3Modal.default({
-        projectId: WALLETCONNECT_PROJECT_ID,
-        themeMode: 'dark',
-        // allow the bundled modal to handle deep-linking and QR for mobile/desktop
-        modalOptions: { }
-      });
-      console.info('Web3Modal (WalletConnect) initialized');
-    } else if (window.Web3Modal && window.Web3Modal.default) {
-      // fallback older global
-      web3modal = new window.Web3Modal.default({ projectId: WALLETCONNECT_PROJECT_ID });
-      console.info('Fallback Web3Modal initialized');
-    } else {
-      web3modal = null;
-      console.warn('Web3Modal not available - wallet modal will be limited');
-    }
-  }catch(e){
-    console.warn('web3modal init failed', e);
-    web3modal = null;
-  }
-}
-initWeb3Modal();
 
-function shortAddr(addr){ return addr ? `${addr.slice(0,6)}…${addr.slice(-4)}` : ''; }
-function setConnectedUI(address){
-  if(address){
-    addrChip.style.display = 'inline-block';
-    addrChip.textContent = shortAddr(address);
-    connectLabel.textContent = 'Connected';
-    connectIcon.textContent = '🔗';
-    connectFloating.classList.add('connected');
-  } else {
-    addrChip.style.display = 'none';
-    connectLabel.textContent = 'Connect Wallet';
-    connectIcon.textContent = '🔌';
-    connectFloating.classList.remove('connected');
-  }
-}
 
-/* Ensure connected: prompt user to connect if not */
-async function ensureWalletConnectedOrPrompt(){
-  if (userAddress && signer) return true;
-  const ok = await connectWallet();
-  return ok;
-}
-
-/* Ensure chain is Polygon (137) and request switch if possible */
-async function ensureCorrectChainOrPrompt(){
-  try {
-    if (!provider) return false;
-    let net = null;
-    try { net = await provider.getNetwork(); } catch(e){ net = null; }
-    if (!net || net.chainId !== CHAIN_ID) {
-      // If the provider has 'request', try switching
-      if (provider.provider && provider.provider.request) {
-        try {
-          await provider.provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
-          showToast('Switched network to Polygon', { type: 'success' });
-          return true;
-        } catch(switchErr){
-          showToast('Please switch wallet network to Polygon (Chain 137) and retry.', { type: 'warn' });
-          throw new Error('wrong-chain');
-        }
-      } else {
-        showToast('Connected provider is not on Polygon. Switch network to proceed.', { type: 'warn' });
-        throw new Error('wrong-chain');
-      }
-    }
-    return true;
-  } catch(e){ throw e; }
-}
-
-/* Try pairing via UniversalProvider if available (best-effort) */
-async function tryUniversalProviderPairing(){
-  try {
-    // if UniversalProvider is available on window (UMD build included), use it
-    const UP = window.UniversalProvider || (window.WalletConnect && window.WalletConnect.UniversalProvider);
-    if (!UP) return null;
-
-    // init
-    const providerInstance = await UP.init({
-      projectId: WALLETCONNECT_PROJECT_ID,
-      metadata: {
-        name: 'NOLA Exchange',
-        description: 'Connect your wallet to NOLA Exchange',
-        url: window.location.origin,
-        icons: [ window.location.origin + '/logo.png' ]
-      }
-    });
-
-    // request a pairing — init returns an object which exposes connect()
-    const pairingResult = await providerInstance.connect({ pairingTopic: undefined, timeout: 120000 });
-    // pairingResult may contain a uri for QR/pairing
-    if (pairingResult && pairingResult.uri) {
-      return { pairingURI: pairingResult.uri, providerInstance };
-    }
-    // Some builds expose .session or result that contains uri
-    if (providerInstance && providerInstance.session && providerInstance.session.uri) {
-      return { pairingURI: providerInstance.session.uri, providerInstance };
-    }
-    return { providerInstance }; // no pairingURI but we have instance
-  } catch(e){
-    console.warn('tryUniversalProviderPairing failed:', e);
-    return null;
-  }
-}
-
-/* Show pairing modal (QR + deep links) — this populates and opens #walletPairModal in DOM */
-function showPairingModal(pairingURI){
-  try {
-    const m = document.getElementById('walletPairModal');
-    if(!m) return;
-    const qrImg = m.querySelector('.pair-qr img');
-    const linkEl = m.querySelector('.pair-link');
-    const copyBtn = m.querySelector('.pair-copy');
-    const deepGrid = m.querySelector('.pair-grid');
-
-    const encoded = encodeURIComponent(pairingURI);
-    // Use public QR API for image (fast and reliable) — data sent is pairingURI
-    const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=420x420&data=' + encodeURIComponent(pairingURI);
-
-    if(qrImg) qrImg.src = qrUrl;
-    if(linkEl) { linkEl.textContent = pairingURI; linkEl.href = pairingURI; }
-
-    // populate common deep-links for mobile wallets (these schemes are widely used)
-    const wallets = [
-      { id:'metamask', label:'MetaMask', href:`metamask://wc?uri=${encoded}` },
-      { id:'trust', label:'Trust Wallet', href:`trust://wc?uri=${encoded}` },
-      { id:'rainbow', label:'Rainbow', href:`rainbow://wc?uri=${encoded}` },
-      { id:'argent', label:'Argent', href:`argent://wc?uri=${encoded}` },
-      { id:'imtoken', label:'imToken', href:`imtokenv2://wallet/wc?uri=${encoded}` },
-      { id:'ledger', label:'Ledger Live', href:`ledgerlive://wc?uri=${encoded}` },
-      { id:'bitpay', label:'BitPay', href:`bitpay://wc?uri=${encoded}` },
-      { id:'other', label:'Open in Wallet', href: pairingURI }
-    ];
-
-    deepGrid.innerHTML = '';
-    wallets.forEach(w => {
-      const a = document.createElement('a');
-      a.className = 'pair-app';
-      a.setAttribute('target','_blank');
-      a.setAttribute('rel','noopener noreferrer');
-      a.href = w.href;
-      a.innerHTML = `<div class="pair-app-inner"><div class="app-icon">${w.label[0]}</div><div class="app-label">${w.label}</div></div>`;
-      deepGrid.appendChild(a);
-    });
-
-    copyBtn.onclick = async ()=>{
-      try {
-        await navigator.clipboard.writeText(pairingURI);
-        showToast('Copy successful', { type: 'success' });
-      } catch(e){ showToast('Copy failed', { type:'error' }); }
-    };
-
-    m.style.display = 'flex';
-    stopBodyScroll();
-  } catch(e){ console.warn('showPairingModal err', e); }
-}
-
-/* hide pairing modal */
-function hidePairingModal(){
-  const m = document.getElementById('walletPairModal');
-  if(!m) return;
-  m.style.display = 'none';
-  restoreBodyScroll();
-}
-
-/* The main connect wallet function (modern, mobile-friendly)
-   Strategy:
-   1) If web3modal exists -> open modal and await connect() (handles installed wallets & deep-links)
-   2) Fallback to injected (window.ethereum) if available
-   3) Try UniversalProvider pairing (WalletConnect) and show pairing modal if a pairingURI is returned
-   4) If none succeeded -> warn user
-*/
-async function connectWallet(){
-  try {
-    // If already connected, return true
-    if (userAddress && signer) return true;
-
-    // 1) If web3modal present, ask the bundled modal to connect (this handles mobile deep-links and installed wallets)
-    if (web3modal && typeof web3modal.openModal === 'function' && typeof web3modal.connect === 'function') {
-      try {
-        // Open modal UI (non-blocking)
-        await web3modal.openModal();
-        // Wait for user to choose and connect (connect() typically resolves to a provider)
-        const modalProvider = await web3modal.connect();
-        if (modalProvider) {
-          provider = new ethers.providers.Web3Provider(modalProvider, "any");
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress().catch(()=>null);
-          setConnectedUI(userAddress);
-          await ensureCorrectChainOrPrompt();
-          showToast('Wallet connected', { type: 'success' });
-          return true;
-        }
-      } catch(e){
-        console.warn('web3modal connect failed', e);
-        // Continue to other methods
-      } finally {
-        // close the modal UI if provided
-        try { if (web3modal.closeModal) web3modal.closeModal(); }catch(_){}
-      }
-    }
-
-    // 2) Try injected provider (fast path for desktop/exposed extension)
-    if (window.ethereum) {
-      try {
-        const ethProvider = new ethers.providers.Web3Provider(window.ethereum, "any");
-        await ethProvider.send("eth_requestAccounts", []);
-        provider = ethProvider;
-        signer = provider.getSigner();
-        userAddress = await signer.getAddress().catch(()=>null);
-        setConnectedUI(userAddress);
-        await ensureCorrectChainOrPrompt();
-        showToast('Wallet connected (injected)', { type: 'success' });
-        return true;
-      } catch(e){
-        console.warn('Injected provider connect failed', e);
-      }
-    }
-
-    // 3) Best-effort: WalletConnect Universal Provider pairing (generate a pairing URI then show pairing modal)
-    try {
-      const res = await tryUniversalProviderPairing();
-      if (res && res.pairingURI) {
-        // show pairing QR + copyable URI to user
-        showPairingModal(res.pairingURI);
-        showToast('Scan the QR with your wallet app, or open using a wallet button below.', { type: 'info', ttl: 6000 });
-        return true;
-      } else if (res && res.providerInstance) {
-        // If a provider instance came back already connected
-        try {
-          provider = new ethers.providers.Web3Provider(res.providerInstance, "any");
-          signer = provider.getSigner();
-          userAddress = await signer.getAddress().catch(()=>null);
-          setConnectedUI(userAddress);
-          await ensureCorrectChainOrPrompt();
-          showToast('Wallet connected (universal)', { type: 'success' });
-          return true;
-        } catch(e){}
-      }
-    } catch(e){
-      console.warn('UniversalProvider pairing failed', e);
-    }
-
-    // nothing worked
-    showToast('No wallet available — install a mobile wallet or use the wallet modal', { type: 'warn' });
-    return false;
-  } catch(e){
-    console.error('connectWallet error', e);
-    showToast('Connection failed: '+(e.message||e), { type: 'error' });
-    return false;
-  }
-}
-
-/* disconnect wallet safely */
-async function disconnectWallet(confirmAsk = true){
-  try {
-    if (confirmAsk && !confirm('Disconnect wallet?')) return;
-    try {
-      // If web3modal exposes close / clear handlers
-      if (web3modal && web3modal.closeModal) web3modal.closeModal();
-      // If provider has a disconnect method (walletconnect providers do)
-      if (provider && typeof provider.disconnect === 'function') {
-        try { await provider.disconnect(); } catch(e){ /* swallow */ }
-      }
-    } catch(_) {}
-    provider = null; signer = null; userAddress = null;
-    setConnectedUI(null);
-    showToast('Wallet disconnected', { type: 'info' });
-  } catch(e){ console.warn('disconnect fail', e); }
-}
-
-/* connectFloating click: connect or disconnect */
-connectFloating.addEventListener('click', async ()=>{
-  if (userAddress) {
-    if (!confirm('Disconnect wallet?')) return;
-    await disconnectWallet(false);
-  } else {
-    setBusy(connectFloating, true);
-    try { await connectWallet(); } finally { setBusy(connectFloating, false); }
-  }
-});
-
-/* Hide pairing modal when user clicks outside or presses ESC */
-document.addEventListener('click', (e)=>{
-  const modal = document.getElementById('walletPairModal');
-  if (!modal) return;
-  if (modal.style.display === 'flex' && e.target === modal) hidePairingModal();
-});
-document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') hidePairingModal(); });
-
-/* =================== End connect wallet block =================== */
+    
   
 /* =================== CARET, SYMBOL UX =================== */
 function placeCaretAtEnd(inputEl){
@@ -2453,36 +2139,6 @@ document.addEventListener('click', function (e) {
 
 })(); 
 </script>
-  <!-- WALLET PAIRING MODAL (QR + deep-links) -->
-<div id="walletPairModal" style="display:none;position:fixed;inset:0;z-index:99999;align-items:center;justify-content:center;background:linear-gradient(180deg, rgba(0,0,0,0.65), rgba(0,0,0,0.8));">
-  <div style="width:94%;max-width:520px;background:#0f0d14;border-radius:18px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,0.6);color:#fff;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <div style="font-weight:800;font-size:18px">WalletConnect</div>
-      <button onclick="hidePairingModal()" aria-label="Close" style="background:transparent;border:0;color:rgba(255,255,255,0.7);font-size:18px;padding:6px;border-radius:8px">✕</button>
-    </div>
-
-    <div style="display:flex;gap:14px;align-items:flex-start;">
-      <div class="pair-qr" style="flex:0 0 52%;background:#050308;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;">
-        <img src="" alt="QR" style="width:100%;height:auto;border-radius:8px;max-width:100%;">
-      </div>
-
-      <div style="flex:1;display:flex;flex-direction:column;gap:8px;">
-        <div style="font-size:13px;color:rgba(255,255,255,0.7)">Scan this QR code with your phone or open one of the wallet apps below</div>
-        <a class="pair-link" href="#" style="display:block;word-break:break-all;background:#07060a;padding:8px;border-radius:8px;border:1px dashed rgba(255,255,255,0.03);font-size:12px;color:#ddd;text-decoration:none;max-height:84px;overflow:auto;"></a>
-        <div style="display:flex;gap:8px;">
-          <button class="pair-copy" style="flex:0 0 auto;background:#1e1730;border:0;padding:8px 10px;border-radius:10px;color:#fff">Copy link</button>
-          <button onclick="hidePairingModal()" style="flex:1;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:10px;color:rgba(255,255,255,0.8)">Close</button>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-top:12px;font-weight:700">Open in wallet</div>
-    <div class="pair-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px;"></div>
-
-    <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.5)">If your wallet does not open automatically, copy the link above and paste it into your wallet's "Connect" or "WalletConnect" field.</div>
-  </div>
-</div>
-  <link rel="stylesheet" href="/assets/nola-wallet/styles.nola.css">
   <script src="/assets/nola-wallet/nola-full-bundle-loader.js"> </script>
 </body>  
 </html>
