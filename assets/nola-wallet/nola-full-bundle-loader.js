@@ -1,40 +1,8 @@
-/*!
- * NOLA Full Bundle Loader (local-first)
- *
- * Purpose:
- * - Single, copy/paste-ready loader that makes the Connect Wallet buttons work 100%.
- * - Prefers local UMD builds (no network); if not found, falls back to CDN.
- * - Initializes injected wallet support (MetaMask / Binance) and WalletConnect v2 (if provider UMD available).
- * - Keeps purple theme, modal, connected chip (address + MATIC balance), disconnect behavior.
- *
- * How it works:
- * - Place this file into your repo (assets/nola-wallet/) and add styles.nola.css (also provided).
- * - Also place the UMD files locally in the same folder:
- *     - ethers.umd.min.js  (downloaded from the ethers v5 UMD)
- *     - index.min.js       (WalletConnect v2 UMD)
- *   The loader will attempt to load these local files first (no CDN), ensuring the page works offline.
- * - If local UMD files are absent, the loader will try CDN versions as a fallback.
- *
- * Notes:
- * - I cannot legally or practically inline the entire UMD library code here due to size and license/maintenance reasons.
- *   This loader gives you a true "no-node" drop-in experience: copy three files into a folder and update your HTML.
- *
- * Security:
- * - Keeps runtime minimal. Do not commit private RPC keys. Use meta tags (see README below) to set RPC & WC project id.
- *
- * Usage (short):
- * 1) Create assets/nola-wallet/
- * 2) Put this file and styles.nola.css into that folder.
- * 3) Download and put ethers.umd.min.js and walletconnect UMD index.min.js into same folder (exact URLs provided below).
- * 4) Add meta tags to each HTML page and link CSS + this script. Add class "connect-wallet" to buttons.
- *
- * Built to work with ethers v5 (5.7.2 recommended) and @walletconnect/ethereum-provider v2.x UMD.
- */
-
+/* NOLA Full Bundle Loader — updated to ensure ethers is loaded before usage */
 (function (window, document) {
   'use strict';
 
-  // --- CONFIG (meta-based; prefer meta tags on each page so JS file doesn't contain secrets) ---
+  // --- CONFIG (meta-based) ---
   const META_WC_PROJECT = document.querySelector('meta[name="nola-walletconnect-project-id"]');
   const META_POLYGON_RPC = document.querySelector('meta[name="nola-polygon-rpc"]');
 
@@ -48,15 +16,14 @@
   const LOCAL_ETHERS = './ethers.umd.min.js';
   const LOCAL_WC = './index.min.js'; // walletconnect ethereum-provider UMD
 
-  // CDN fallbacks (only used if local files absent)
+  // CDN fallbacks
   const CDN_ETHERS = 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js';
   const CDN_WC = 'https://cdn.jsdelivr.net/npm/@walletconnect/ethereum-provider@2.6.0/dist/umd/index.min.js';
 
-  // Utility: determine base path of this script so local references work relative to script location
+  // Determine base path of this script for local references
   function getThisScriptBasePath() {
     try {
       const scripts = document.getElementsByTagName('script');
-      // last script is usually current one if included directly
       const current = scripts[scripts.length - 1];
       const src = current && current.src ? current.src : '';
       if (!src) return '.';
@@ -67,51 +34,56 @@
     }
   }
   const BASE_PATH = getThisScriptBasePath();
-
-  // Resolve local path relative to loader file
   const LOCAL_ETHERS_PATH = BASE_PATH + LOCAL_ETHERS.replace(/^\.\/+/, '');
   const LOCAL_WC_PATH = BASE_PATH + LOCAL_WC.replace(/^\.\/+/, '');
 
-  // Script loader that tries local then CDN. Accepts a check function that returns true when desired global is present.
+  // Script loader that tries local then CDN. Accepts a globalCheckFn.
   function loadScriptPreferLocal(localUrl, cdnUrl, globalCheckFn, timeout = 12000) {
     return new Promise((resolve, reject) => {
-      // Helper to insert a script
       function insertScript(url) {
         const s = document.createElement('script');
         s.src = url;
         s.async = true;
         s.onload = () => {
           setTimeout(() => {
-            if (globalCheckFn && globalCheckFn()) {
-              resolve({ url, loaded: true });
-            } else if (!globalCheckFn) {
-              resolve({ url, loaded: true });
-            } else {
-              // we loaded script but global didn't appear -> treat as failure for this URL
-              reject(new Error('Loaded script but expected global not found: ' + url));
-            }
-          }, 30);
+            if (globalCheckFn && globalCheckFn()) resolve({ url, loaded: true });
+            else if (!globalCheckFn) resolve({ url, loaded: true });
+            else reject(new Error('Loaded script but expected global not found: ' + url));
+          }, 40);
         };
         s.onerror = () => reject(new Error('Failed to load script: ' + url));
         document.head.appendChild(s);
       }
 
-      // Try local first (but check for accessibility quickly via fetch HEAD)
+      // Try HEAD on local first then fallback
       fetch(localUrl, { method: 'HEAD' }).then(headRes => {
-        if (headRes.ok) {
-          insertScript(localUrl);
-        } else {
-          // try CDN
-          insertScript(cdnUrl);
-        }
-      }).catch(() => {
-        // fetch failed (likely file not present) -> fallback to CDN
-        insertScript(cdnUrl);
-      });
+        if (headRes.ok) insertScript(localUrl);
+        else insertScript(cdnUrl);
+      }).catch(() => insertScript(cdnUrl));
 
       // safety timeout
       setTimeout(() => reject(new Error('Timeout loading ' + (localUrl || cdnUrl))), timeout);
     });
+  }
+
+  // --- ensure ethers is available helper ---
+  let _ethersLoadPromise = null;
+  async function ensureEthersLoaded() {
+    if (window.ethers) return true;
+    if (_ethersLoadPromise) return _ethersLoadPromise;
+    _ethersLoadPromise = (async () => {
+      try {
+        await loadScriptPreferLocal(LOCAL_ETHERS_PATH, CDN_ETHERS, () => !!window.ethers, 15000);
+        if (!window.ethers) throw new Error('Global `ethers` not present after load');
+        console.log('[NolaWallet] ethers ready');
+        return true;
+      } catch (err) {
+        console.error('[NolaWallet] ensureEthersLoaded failed', err);
+        _ethersLoadPromise = null;
+        return false;
+      }
+    })();
+    return _ethersLoadPromise;
   }
 
   // --- UI helpers (inject styles + modal) ---
@@ -122,9 +94,9 @@
     if (document.getElementById(STYLE_ID)) return;
     const css = `
 :root{ --purple-700:#5a0fa8; --purple-500:#7b2bff; --purple-300:#b595ff; }
-.nola-connect-btn{ background:linear-gradient(90deg,var(--purple-700),var(--purple-500)); color:#fff; padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:600; display:inline-flex; gap:8px; align-items:center; }
-.nola-connected-chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background: linear-gradient(90deg, rgba(123,43,255,0.12), rgba(90,15,168,0.04)); color:#fff; font-weight:700; cursor:pointer; }
-.nola-chip-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(6,3,10,0.6), rgba(6,3,10,0.8)); z-index:100000; font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial; }
+.nola-connect-btn{ background:linear-gradient(90deg,var(--purple-700),var(--purple-500)); color:#fff; padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:8px; }
+.nola-connected-chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background: linear-gradient(90deg, rgba(123,43,255,0.12), rgba(90,15,168,0.04)); color:#fff; font-weight:700; }
+.nola-chip-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(6,3,10,0.6), rgba(6,3,10,0.8)); z-index:100000; font-family:Arial,Helvetica,sans-serif; }
 .nola-chip-sheet{ width:100%; max-width:560px; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:14px; padding:18px; box-sizing:border-box; color:#fff; }
 .nola-wallet-item{ display:flex; justify-content:space-between; padding:12px; border-radius:10px; margin-bottom:10px; background: rgba(123,43,255,0.04); cursor:pointer; transition: transform .12s ease; }
 .nola-wallet-item:hover{ transform:translateY(-3px); }
@@ -220,7 +192,7 @@
   let connectedAddress = null;
   let connectedBalance = null;
 
-  function short(addr) { return addr ? addr.slice(0,6) + '…' + addr.slice(-4) : ''; }
+  function shortAddr(addr) { return addr ? addr.slice(0,6) + '…' + addr.slice(-4) : ''; }
   function updateButtons() {
     document.querySelectorAll('.connect-wallet').forEach(btn => {
       if (connectedAddress) {
@@ -228,7 +200,7 @@
         const chip = document.createElement('div');
         chip.className = 'nola-connected-chip';
         chip.title = connectedAddress;
-        chip.innerHTML = `<span style="font-family:monospace">${short(connectedAddress)}</span><span style="background:rgba(255,255,255,0.02);padding:4px 8px;border-radius:6px;color:#ffd6ff;margin-left:8px;font-weight:700">${connectedBalance} MATIC</span>`;
+        chip.innerHTML = `<span style="font-family:monospace">${shortAddr(connectedAddress)}</span><span style="background:rgba(255,255,255,0.02);padding:4px 8px;border-radius:6px;color:#ffd6ff;margin-left:8px">${connectedBalance ?? ''}</span>`;
         chip.addEventListener('click', disconnect);
         btn.appendChild(chip);
       } else {
@@ -267,13 +239,24 @@
   function setupInjectedListeners(raw) {
     if (!raw || !raw.on) return;
     try {
-      raw.on('accountsChanged', (accounts) => {
+      // make callbacks async to allow ensureEthersLoaded inside them
+      raw.on('accountsChanged', async (accounts) => {
         if (!accounts || accounts.length === 0) { disconnect(); return; }
-        connectedAddress = window.ethers.utils.getAddress(accounts[0]);
-        ethersProvider.getBalance(connectedAddress).then(b => {
-          connectedBalance = Number(window.ethers.utils.formatEther(b)).toFixed(4);
+        try {
+          if (!window.ethers) {
+            const ok = await ensureEthersLoaded();
+            if (!ok) { connectedAddress = accounts[0]; updateButtons(); return; }
+          }
+          connectedAddress = window.ethers.utils.getAddress(accounts[0]);
+          ethersProvider.getBalance(connectedAddress).then(b => {
+            connectedBalance = Number(window.ethers.utils.formatEther(b)).toFixed(4);
+            updateButtons();
+          }).catch(()=> updateButtons());
+        } catch (e) {
+          console.warn('accountsChanged handler error', e);
+          connectedAddress = accounts[0];
           updateButtons();
-        }).catch(()=> updateButtons());
+        }
       });
       raw.on('chainChanged', (chainId) => {
         if (chainId !== POLYGON_CHAIN_ID_HEX) showStatus('Please switch to Polygon network in your wallet.');
@@ -292,6 +275,17 @@
         showStatus('No injected wallet detected. Use MetaMask or Binance extension/mobile.');
         return;
       }
+
+      // Ensure ethers is available before touching ethers.* APIs
+      if (!window.ethers) {
+        showStatus('Ethers library not loaded yet. Attempting to load...');
+        const ok = await ensureEthersLoaded();
+        if (!ok) {
+          showStatus('Ethers load failed. Please ensure ethers UMD is reachable or add it to assets/nola-wallet.');
+          return;
+        }
+      }
+
       showStatus('Requesting account access...');
       rawProvider = window.ethereum;
       await ensurePolygonChain(rawProvider);
@@ -313,13 +307,10 @@
 
   async function connectWalletConnectV2() {
     try {
-      // Ensure ethers present
       if (!window.ethers) {
         showStatus('Ethers library not loaded yet. Attempting to load...');
-        await loadScriptPreferLocal(LOCAL_ETHERS_PATH, CDN_ETHERS, () => !!window.ethers).catch(e => {
-          console.error('Failed to load ethers:', e);
-          throw new Error('Ethers load failed');
-        });
+        const ok = await ensureEthersLoaded();
+        if (!ok) throw new Error('Ethers load failed');
       }
 
       // Ensure WC provider present
@@ -328,7 +319,6 @@
                           !!window.WalletConnectProvider ||
                           !!window.EthereumProvider;
       if (!wcAvailable) {
-        // try load local or CDN
         await loadScriptPreferLocal(LOCAL_WC_PATH, CDN_WC, () => {
           return !!(window.WalletConnect && (window.WalletConnect.EthereumProvider || window.WalletConnect.default)) ||
                  !!window.WalletConnectEthereumProvider ||
@@ -339,7 +329,7 @@
         });
       }
 
-      // Evaluate available global
+      // evaluate WC global...
       let WC = null;
       if (window.WalletConnect && (window.WalletConnect.EthereumProvider || window.WalletConnect.default)) {
         WC = window.WalletConnect.EthereumProvider || window.WalletConnect.default;
@@ -363,7 +353,6 @@
         return;
       }
 
-      // init provider (factory or constructor)
       let instance = null;
       if (typeof WC.init === 'function') {
         instance = await WC.init({
@@ -379,7 +368,6 @@
           }
         });
       } else {
-        // try construct
         instance = new WC({
           projectId: WALLETCONNECT_PROJECT_ID,
           chains: [POLYGON_CHAIN_ID_DEC],
@@ -397,11 +385,6 @@
 
       rawProvider = instance;
       await rawProvider.request({ method: 'eth_requestAccounts' });
-
-      if (!window.ethers) {
-        showStatus('Ethers still not available after attempt to load. Aborting.');
-        return;
-      }
 
       ethersProvider = new window.ethers.providers.Web3Provider(rawProvider);
       signer = ethersProvider.getSigner();
@@ -470,8 +453,10 @@
     updateButtons();
   }
 
-  // Auto-init on DOMContentLoaded
+  // Preload ethers in background and attach buttons immediately
   document.addEventListener('DOMContentLoaded', () => {
+    // start background load of ethers — does not block attaching the UI
+    ensureEthersLoaded().catch(()=>{ /* background load failed — handled on connect */ });
     if (document.querySelectorAll('.connect-wallet').length > 0) {
       attachButtons('.connect-wallet');
     }
@@ -485,8 +470,26 @@
     disconnect,
     getAddress: () => connectedAddress,
     getBalance: () => connectedBalance,
-    _internals: { BASE_PATH, LOCAL_ETHERS_PATH, LOCAL_WC_PATH }
+    _internals: { BASE_PATH, LOCAL_ETHERS_PATH, LOCAL_WC_PATH, ensureEthersLoaded }
   };
 
   console.log('Nola full bundle loader ready. Use NolaWallet.init() to configure programmatically.');
+})(window, document);
+
+// Local small loader: prefer a committed full UMD if present. If not, load CDN.
+(function(window, document){
+  try {
+    if (window.ethers) { console.log('ethers already present'); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js';
+    s.async = true;
+    s.onload = function(){ 
+      if (window.ethers) console.log('loaded ethers UMD from CDN'); 
+      else console.error('ethers UMD loaded but global not present');
+    };
+    s.onerror = function(){ console.error('failed to load ethers UMD'); };
+    document.head.appendChild(s);
+  } catch (e) {
+    console.error('ethers local loader error', e);
+  }
 })(window, document);
