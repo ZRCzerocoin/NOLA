@@ -1,49 +1,16 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Polygon Wallet Connect</title>
-  <style>
-    body, html {
-      height: 100%;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #0d1117;
-      font-family: Arial, sans-serif;
-    }
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="nola-walletconnect-project-id" content="6557a92e3698182727669d41cbeb95a1" />
+    <meta name="nola-polygon-rpc" content="https://polygon-mainnet.g.alchemy.com/v2/8ikEzpLeLerL-8xNW23fV" />
+    <link rel="stylesheet" href="/assets/nola-wallet/styles.nola.css" />
+    <title>NOLA Connect</title>
+  </head>
+  <body>
+    <button class="connect-wallet nola-connect-btn">Connect Wallet</button>
 
-    #connectBtn {
-      padding: 20px 50px;
-      font-size: 1.5rem;
-      font-weight: bold;
-      color: #fff;
-      border: none;
-      border-radius: 18px;
-      cursor: pointer;
-      background: linear-gradient(145deg, #8247e5, #5e20a4);
-      box-shadow: 0 8px #5e20a4, 0 6px 15px rgba(0,0,0,0.5);
-      transition: all 0.2s ease;
-    }
-
-    #connectBtn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 12px #5e20a4, 0 12px 20px rgba(0,0,0,0.6);
-    }
-
-    #connectBtn:active {
-      transform: scale(0.95);
-      box-shadow: 0 4px #5e20a4, 0 4px 10px rgba(0,0,0,0.4);
-    }
-  </style>
-</head>
-<body>
-
-  <button id="connectBtn">Connect Wallet</button>
-
-  <script type="module" src="./app.js"></script>
-
-</body>
+    <script src="/assets/nola-wallet/nola-full-bundle-loader.js"></script>
+  </body>
 </html>
