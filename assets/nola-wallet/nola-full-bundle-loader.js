@@ -1,4 +1,4 @@
-/* NOLA Full Bundle Loader — improved WalletConnect UMD handling (waits for wrapper -> vendor) */
+/* NOLA Full Bundle Loader — improved Ethers + WalletConnect loading (waits for wrapper -> vendor) */
 (function (window, document) {
   'use strict';
 
@@ -32,6 +32,7 @@
   const LOCAL_ETHERS_PATH = BASE_PATH + LOCAL_ETHERS.replace(/^\.\/+/, '');
   const LOCAL_WC_PATH = BASE_PATH + LOCAL_WC.replace(/^\.\/+/, '');
 
+  // Basic script loader: insert script (local first if available), with a flexible global check
   function loadScriptPreferLocal(localUrl, cdnUrl, globalCheckFn, timeout = 12000) {
     return new Promise((resolve, reject) => {
       function insertScript(url) {
@@ -49,6 +50,7 @@
         document.head.appendChild(s);
       }
 
+      // Try HEAD on the local file first; fallback to CDN
       fetch(localUrl, { method: 'HEAD' }).then(headRes => {
         if (headRes.ok) insertScript(localUrl);
         else insertScript(cdnUrl);
@@ -67,13 +69,12 @@
           try {
             const parts = n.split('.');
             let cur = window;
+            let ok = true;
             for (const p of parts) {
-              if (cur[p] === undefined) { cur = undefined; break; }
+              if (cur[p] === undefined) { ok = false; break; }
               cur = cur[p];
             }
-            if (cur !== undefined) {
-              return resolve(n);
-            }
+            if (ok) return resolve(n);
           } catch (e) { /* swallow */ }
         }
         if (Date.now() - start >= timeout) return resolve(null);
@@ -82,31 +83,77 @@
     });
   }
 
-  // Ensure ethers loaded helper
+  // --- ENSURE ETHERS LOADED (robust for wrapper -> vendor patterns) ---
   let _ethersLoadPromise = null;
   async function ensureEthersLoaded() {
     if (window.ethers) return true;
     if (_ethersLoadPromise) return _ethersLoadPromise;
+
     _ethersLoadPromise = (async () => {
       try {
-        await loadScriptPreferLocal(LOCAL_ETHERS_PATH, CDN_ETHERS, () => !!window.ethers, 15000);
-        if (!window.ethers) throw new Error('Global `ethers` not present after load');
-        return true;
+        // Attempt to insert a local wrapper or local UMD first; do NOT require the global immediately
+        // (the local file may itself inject the vendor script asynchronously)
+        try {
+          await loadScriptPreferLocal(LOCAL_ETHERS_PATH, CDN_ETHERS, () => true, 8000);
+        } catch (err) {
+          // local HEAD failed or local wrapper failed quickly; try CDN directly
+          console.warn('[NolaWallet] local ethers insertion failed or wrapper not found; attempting CDN', err);
+          try {
+            await loadScriptPreferLocal(CDN_ETHERS, CDN_ETHERS, () => !!window.ethers, 12000);
+          } catch (err2) {
+            console.error('[NolaWallet] CDN ethers insertion failed', err2);
+            return false;
+          }
+        }
+
+        // Wait up to a short period for window.ethers to appear (covers wrapper that loads vendor)
+        const found = await waitForAnyGlobal(['ethers'], 6000, 200);
+        if (found) {
+          console.log('[NolaWallet] ethers available via', found);
+          return true;
+        }
+
+        // If not found after waiting, try CDN directly (second chance)
+        try {
+          await loadScriptPreferLocal(CDN_ETHERS, CDN_ETHERS, () => !!window.ethers, 12000);
+        } catch (e) {
+          console.warn('[NolaWallet] second attempt to load CDN ethers failed', e);
+        }
+        const found2 = await waitForAnyGlobal(['ethers'], 6000, 200);
+        if (found2) {
+          console.log('[NolaWallet] ethers available after CDN load via', found2);
+          return true;
+        }
+
+        console.error('[NolaWallet] ethers not available after attempts');
+        return false;
       } catch (err) {
-        console.error('[NolaWallet] ensureEthersLoaded failed', err);
+        console.error('[NolaWallet] ensureEthersLoaded unexpected error', err);
         _ethersLoadPromise = null;
         return false;
       }
     })();
+
     return _ethersLoadPromise;
   }
 
-  // UI injection...
+  // UI helpers (inject styles + modal)
   const STYLE_ID = 'nola-wallet-style';
   const MODAL_ID = 'nola-chip-modal';
+
   function injectStyles() {
     if (document.getElementById(STYLE_ID)) return;
-    const css = `:root{ --purple-700:#5a0fa8; --purple-500:#7b2bff; } .nola-connect-btn{ background:linear-gradient(90deg,var(--purple-700),var(--purple-500)); color:#fff; padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:8px; } .nola-connected-chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background: linear-gradient(90deg, rgba(123,43,255,0.12), rgba(90,15,168,0.04)); color:#fff; font-weight:700; } .nola-chip-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(6,3,10,0.6), rgba(6,3,10,0.8)); z-index:100000; font-family:Arial,Helvetica,sans-serif; } .nola-chip-sheet{ width:100%; max-width:560px; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:14px; padding:18px; box-sizing:border-box; color:#fff; } .nola-wallet-item{ display:flex; justify-content:space-between; padding:12px; border-radius:10px; margin-bottom:10px; background: rgba(123,43,255,0.04); cursor:pointer; transition: transform .12s ease; } .nola-wallet-item:hover{ transform:translateY(-3px); } .nola-status{ margin-top:8px; color:#d9c9ff; font-size:13px; } @media (max-width:520px){ .nola-chip-sheet{ margin:16px; } }`;
+    const css = `
+:root{ --purple-700:#5a0fa8; --purple-500:#7b2bff; --purple-300:#b595ff; }
+.nola-connect-btn{ background:linear-gradient(90deg,var(--purple-700),var(--purple-500)); color:#fff; padding:10px 14px; border-radius:10px; border:0; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap:8px; }
+.nola-connected-chip{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; background: linear-gradient(90deg, rgba(123,43,255,0.12), rgba(90,15,168,0.04)); color:#fff; font-weight:700; }
+.nola-chip-modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(6,3,10,0.6), rgba(6,3,10,0.8)); z-index:100000; font-family:Arial,Helvetica,sans-serif; }
+.nola-chip-sheet{ width:100%; max-width:560px; background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02)); border-radius:14px; padding:18px; box-sizing:border-box; color:#fff; }
+.nola-wallet-item{ display:flex; justify-content:space-between; padding:12px; border-radius:10px; margin-bottom:10px; background: rgba(123,43,255,0.04); cursor:pointer; transition: transform .12s ease; }
+.nola-wallet-item:hover{ transform:translateY(-3px); }
+.nola-status{ margin-top:8px; color:#d9c9ff; font-size:13px; }
+@media (max-width:520px){ .nola-chip-sheet{ margin:16px; } }
+`;
     const s = document.createElement('style');
     s.id = STYLE_ID;
     s.appendChild(document.createTextNode(css));
@@ -280,7 +327,6 @@
 
   async function connectWalletConnectV2() {
     try {
-      // Ensure ethers is present (we use it to wrap the provider later)
       if (!window.ethers) {
         showStatus('Ethers library not loaded yet. Attempting to load...');
         const ok = await ensureEthersLoaded();
@@ -288,7 +334,6 @@
       }
 
       // Try to ensure WalletConnect UMD is available.
-      // The local index.min.js may itself insert the vendor script asynchronously; handle that case by waiting.
       const expectedGlobals = [
         'WalletConnect',
         'WalletConnect.EthereumProvider',
@@ -298,14 +343,9 @@
         'EthereumProvider'
       ];
 
-      // Try to load local wrapper or CDN (loadScriptPreferLocal resolves when script loads, but wrapper might not expose global immediately)
       try {
-        await loadScriptPreferLocal(LOCAL_WC_PATH, CDN_WC, () => {
-          // We don't require the global to exist immediately here; let waitForAnyGlobal handle async arrival.
-          return true;
-        }, 8000);
+        await loadScriptPreferLocal(LOCAL_WC_PATH, CDN_WC, () => true, 8000);
       } catch (err) {
-        // local load failed quickly — try the CDN vendor directly
         console.warn('Local index.min.js fetch failed or wrapper reported problem, trying CDN directly', err);
         try {
           await loadScriptPreferLocal(CDN_WC, CDN_WC, () => !!window.WalletConnect || !!window.WalletConnectEthereumProvider || !!window.EthereumProvider, 12000);
@@ -314,10 +354,8 @@
         }
       }
 
-      // Wait up to 6s for any known provider global to appear (covers wrapper+vendor async case)
       const found = await waitForAnyGlobal(['WalletConnect', 'WalletConnectEthereumProvider', 'WalletConnectProvider', 'EthereumProvider', 'WalletConnect.default', 'WalletConnect.EthereumProvider'], 6000, 250);
       if (!found) {
-        // As last attempt, try to load CDN directly and wait again
         try {
           await loadScriptPreferLocal(CDN_WC, CDN_WC, () => !!window.WalletConnect || !!window.WalletConnectEthereumProvider || !!window.EthereumProvider, 12000);
         } catch (err) {
@@ -330,7 +368,6 @@
         }
       }
 
-      // Evaluate available global
       let WC = null;
       if (window.WalletConnect && (window.WalletConnect.EthereumProvider || window.WalletConnect.default)) {
         WC = window.WalletConnect.EthereumProvider || window.WalletConnect.default;
@@ -354,7 +391,6 @@
         return;
       }
 
-      // Init provider (factory or constructor)
       let instance = null;
       if (typeof WC.init === 'function') {
         instance = await WC.init({
