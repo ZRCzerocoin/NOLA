@@ -1,0 +1,9 @@
+node_modules
+.env.local
+.env.*.local
+node_modules/
+dist/
+npm-depug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
