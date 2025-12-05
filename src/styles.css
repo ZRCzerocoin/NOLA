@@ -1,0 +1,75 @@
+/* Purple theme + chip styles used by the wallet module */
+/* Paste existing CSS from your project if you want; this is standalone */
+:root{
+  --purple-700: #5a0fa8;
+  --purple-500: #7b2bff;
+  --purple-300: #b595ff;
+  --bg: #0f0813;
+}
+
+html,body{
+  height:100%;
+  margin:0;
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  background: linear-gradient(180deg,#0b0710 0%, #12061a 60%);
+  color:#fff;
+}
+
+/* Button */
+.connect-btn{
+  background: linear-gradient(90deg,var(--purple-700),var(--purple-500));
+  border: none;
+  color: white;
+  padding:12px 18px;
+  border-radius:10px;
+  font-weight:600;
+  display:inline-flex;
+  gap:10px;
+  align-items:center;
+  cursor:pointer;
+}
+
+/* Connected chip (small) */
+.nola-connected-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(123,43,255,0.14), rgba(90,15,168,0.06));
+  color:#fff;
+  font-weight:600;
+}
+
+/* Modal sheet */
+.nola-chip-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6,3,10,0.65);
+  z-index: 10000;
+}
+.nola-chip-sheet {
+  width: 100%;
+  max-width: 560px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+  border-radius: 14px;
+  padding: 18px;
+  box-sizing: border-box;
+}
+.wallet-chip {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
+  cursor:pointer;
+  background: rgba(123,43,255,0.06);
+}
+.wallet-chip:hover{ transform: translateY(-3px); }
+
+/* status */
+.nola-status{ margin-top:8px; color:#d9c9ff; font-size:13px; }
