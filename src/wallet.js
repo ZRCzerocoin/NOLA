@@ -184,7 +184,7 @@ async function connectInjected(){
     hideModal();
     setupInjectedListeners(rawProvider);
     updateAllButtonsUI();
-    showStatus(''); hideStatusModal();
+    hideStatusModal();
   }catch(err){
     console.error('Injected connect error', err);
     showStatus('Injected connection failed: ' + (err.message || err));
@@ -198,7 +198,8 @@ async function connectWalletConnectV2(){
       return;
     }
     showStatus('Opening WalletConnect modal...');
-    // initialize
+    
+    // Initialize WalletConnect provider
     rawProvider = await EthereumProvider.init({
       projectId: WALLETCONNECT_PROJECT_ID,
       chains: [POLYGON_CHAIN_ID_DEC],
@@ -212,16 +213,20 @@ async function connectWalletConnectV2(){
       }
     });
 
-    // request accounts
-    await rawProvider.request({ method: 'eth_requestAccounts' });
+    // CONNECT STEP MUST BE AWAITED
+    await rawProvider.connect(); // ensures connect() before request()
+
+    // Request accounts safely
+    const accounts = await rawProvider.request({ method: 'eth_requestAccounts' });
+    if (!accounts || accounts.length === 0) throw new Error('No accounts returned from WalletConnect');
 
     provider = new ethers.providers.Web3Provider(rawProvider);
     signer = provider.getSigner();
-    connectedAddress = await signer.getAddress();
+    connectedAddress = ethers.utils.getAddress(accounts[0]);
     const bal = await provider.getBalance(connectedAddress);
     connectedBalance = Number(ethers.utils.formatEther(bal)).toFixed(4);
 
-    // wire events
+    // Wire events
     if(rawProvider.on){
       rawProvider.on('disconnect', () => disconnect());
       rawProvider.on('accountsChanged', async (accounts) => {
@@ -239,6 +244,7 @@ async function connectWalletConnectV2(){
 
     hideModal();
     updateAllButtonsUI();
+    hideStatusModal();
   }catch(err){
     console.error('WalletConnect v2 error', err);
     showStatus('WalletConnect failed: ' + (err.message || err));
@@ -287,10 +293,8 @@ export function initNolaWallet(options = {}) {
   createModalIfMissing();
   // Attach handlers for each button
   document.querySelectorAll(selector).forEach(btn => {
-    // preserve existing text if connected state is not present
     btn.addEventListener('click', async (e) => {
       if (connectedAddress) {
-        // clicking when connected acts as disconnect (or you can choose to open a menu)
         await disconnect();
         return;
       }
@@ -305,7 +309,6 @@ export function initNolaWallet(options = {}) {
 // Auto-init when module is loaded in the browser (works for script type=module)
 if (typeof window !== 'undefined') {
   window.addEventListener('DOMContentLoaded', () => {
-    // only auto-init if there are connect buttons
     if (document.querySelectorAll('.connect-wallet').length > 0) {
       initNolaWallet();
     }
