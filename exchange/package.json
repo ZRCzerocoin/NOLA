@@ -1,0 +1,32 @@
+{
+  "name": "nola-dapp",
+  "version": "1.0.0",
+  "description": "NOLA DApp with WalletConnect v3 using AppKit",
+  "type": "module",
+  "homepage": "https://ZRCzerocoin.github.io/NOLA",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "keywords": [
+    "walletconnect",
+    "appkit",
+    "dapp",
+    "vite",
+    "github-pages"
+  ],
+  "author": "<Your Name>",
+  "license": "MIT",
+  "dependencies": {
+    "@reown/appkit": "^1.0.0",
+    "@reown/appkit-adapter-ethers": "^1.0.0",
+    "ethers": "^6.0.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "gh-pages": "^5.0.0"
+  }
+}
