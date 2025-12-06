@@ -1,13 +1,32 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>NOLA Connect Wallet</title>
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="utf-8">
+  <title>AppKit CDN Test</title>
 </head>
 <body>
-  <button class="connect-wallet connect-btn">Connect Wallet</button>
-  <script type="module" src="wallet.js"></script>
+  <button id="connect-wallet">Connect Wallet</button>
+
+  <script type="module">
+    import { createAppKit } from 'https://cdn.jsdelivr.net/npm/@reown/appkit@latest/dist/appkit.mjs';
+    import { walletConnectAdapter } from 'https://cdn.jsdelivr.net/npm/@reown/appkit-adapter-walletconnect@latest/dist/appkit-adapter-walletconnect.mjs';
+
+    const appKit = createAppKit({
+      projectId: 'YOUR_PROJECT_ID',
+      adapters: [walletConnectAdapter()],
+      metadata: {
+        name: 'Test DApp',
+        description: 'Testing AppKit on CDN',
+        url: window.location.origin,
+        icons: [],
+      }
+    });
+
+    window.appKit = appKit;
+
+    document.getElementById('connect-wallet').onclick = () => {
+      appKit.open();
+    };
+  </script>
 </body>
 </html>
