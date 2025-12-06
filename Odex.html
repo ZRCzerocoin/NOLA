@@ -9,11 +9,11 @@
 
   <script type="module">
     import { createAppKit } from 'https://cdn.jsdelivr.net/npm/@reown/appkit@latest/dist/appkit.mjs';
-    import { walletConnectAdapter } from 'https://cdn.jsdelivr.net/npm/@reown/appkit-adapter-walletconnect@latest/dist/appkit-adapter-walletconnect.mjs';
+    import { walletConnectAdapter } from 'https://cdn.jsdelivr.net/npm/@reown/appkit-adapter-ethers/dist/appkit-adapter-ethers.mjs';
 
     const appKit = createAppKit({
       projectId: '9ae9b4de3d3181b8ea8fda287858f35e',
-      adapters: [walletConnectAdapter()],
+      adapters: [EthersAdapter()],
       metadata: {
         name: 'Test DApp',
         description: 'Testing AppKit on CDN',
