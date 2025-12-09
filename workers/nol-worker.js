@@ -1,120 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>NOL space — Crypto & Finance Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<style>
-  body, html { margin:0; padding:0; font-family: Arial, sans-serif; background: #f5f6fa; color: #222; }
-  header { background: rgba(44, 62, 80, 0.85); color: white; padding: 1rem; text-align: center; backdrop-filter: blur(8px); }
-  #layout { display: flex; height: calc(100vh - 100px); }
-  #sidebar { width: 200px; background: rgba(52, 73, 94, 0.85); color: white; padding: 1rem; box-sizing: border-box; backdrop-filter: blur(8px); border-right: 1px solid rgba(255,255,255,0.1); }
-  #sidebar h2 { font-size: 1.2rem; margin-top: 0; }
-  #sidebar ul { list-style: none; padding: 0; }
-  #sidebar li { margin: 0.5rem 0; cursor: pointer; }
-  #sidebar li:hover { text-decoration: underline; }
-  #main { flex: 1; overflow-y: auto; padding: 1rem; box-sizing: border-box; }
-  .section { margin-bottom: 2rem; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 1rem; }
-  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 1rem; display: flex; flex-direction: column; position: relative; }
-  .card h3 { margin: 0 0 0.5rem 0; font-size:1rem; }
-  .meta { font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; }
-  .positive { color: green; }
-  .negative { color: red; }
-  .neutral { color: gray; }
-  a { text-decoration: none; color: #2980b9; margin-top: auto; font-weight: bold; font-size:0.8rem; }
-  canvas { width: 100%; height: 40px; }
-  footer { background: rgba(44, 62, 80, 0.85); color: white; padding: 1rem; text-align: center; backdrop-filter: blur(8px); }
-  footer a { color: #f39c12; margin: 0 0.5rem; text-decoration: none; }
-</style>
-</head>
-<body>
-<header><h1>NOL space</h1></header>
-<div id="layout">
-  <div id="sidebar">
-    <h2>Sections</h2>
-    <ul>
-      <li data-section="xtrends">X Trends</li>
-      <li data-section="news">News</li>
-      <li data-section="polygon">Polygon</li>
-      <li data-section="ethereum">Ethereum</li>
-      <li data-section="solana">Solana</li>
-    </ul>
-  </div>
-  <div id="main"><p>Loading dashboard...</p></div>
-</div>
-<footer>
-  NOLA © All Rights Reserved.  
-  <a href="https://nol.pages.dev" target="_blank">Website</a> | 
-  <a href="https://x.com/NOLA_CHAIN" target="_blank">X</a> | 
-  <a href="mailto:support@nola.work.gd">Support</a>
-</footer>
+// workers/nol-worker.js (Module Worker - paste into your repo)
+export default {
+  async fetch(request, env) {
+    const CACHE_TTL = 24 * 60 * 60; // 24h
+    const TOPIC_KEYWORDS = [
+      "nft","nfts","crypto","defi","web3","investment","investing","stocks","finance",
+      "bitcoin","btc","polygon","matic","solana","ethereum","eth","trading","coins","tokens","pos","pol"
+    ];
+    const CHAINS = {
+      ethereum: ["ETH","ETHEREUM"],
+      polygon: ["POL","MATIC","POLYGON"],
+      solana: ["SOL","SOLANA"]
+    };
 
-<script>
-const WORKER_URL = "https://<your-worker-subdomain>.workers.dev"; // replace with your Worker URL
-let currentSection='xtrends';
+    // Helpful debug flag: ?force=1 to bypass cache (for testing)
+    const url = new URL(request.url);
+    const force = url.searchParams.get("force") === "1";
 
-// Sentiment estimation
-function estimateSentiment(text){
-  const lower=text.toLowerCase();
-  if(/bull|moon|pump|rally|gain|up/i.test(lower)) return {label:'Bullish',class:'positive',icon:'▲'};
-  if(/bear|dump|crash|down|loss/i.test(lower)) return {label:'Bearish',class:'negative',icon:'▼'};
-  return {label:'Neutral',class:'neutral',icon:'●'};
-}
+    // Resolve bindings from env
+    const KV = env.TWEETS_KV; // <-- binding name must be exactly TWEETS_KV
+    const CLOUDFLARE_ID = env["CLOUDFLARE-ID"] || env.CLOUDFLARE_ID || "unknown";
+    const TOKEN = env.BARRIER_KEY || env.X_BEARER_TOKEN || env.X_BEARER || null; // try common names
 
-// Fetch data from Worker
-async function fetchWorkerData(){
-  try{
-    const res = await fetch(WORKER_URL);
-    const data = await res.json();
-    return data;
-  }catch(e){ console.error(e); return {tweets:[], chains:{}, topTrending:[]}; }
-}
+    // Basic validation
+    if (!KV) {
+      return new Response(JSON.stringify({ ok:false, error: "KV binding TWEETS_KV not found in env" }), { status:500, headers: jsonHeaders() });
+    }
+    if (!TOKEN) {
+      return new Response(JSON.stringify({ ok:false, error: "Bearer token secret not found (expected env.BARRIER_KEY)" }), { status:500, headers: jsonHeaders() });
+    }
 
-// Render X Trends
-function renderXTrends(data){
-  const tweets = data.topTrending || [];
-  if(!tweets.length) return '<div class="section"><h2>🔺 X Trends</h2><p>No data.</p></div>';
-  return `<div class="section"><h2>🔺 X Trends</h2><div class="grid">${tweets.map(t=>{
-    const s=estimateSentiment(t.text||'');
-    return `<div class="card"><h3>${s.icon} ${t.text}</h3><div class="meta ${s.class}">Sentiment: ${s.label}</div></div>`;
-  }).join('')}</div></div>`;
-}
+    const cacheKey = `tweets_${CLOUDFLARE_ID}`;
 
-// Render chain section
-function renderChainSection(chainName, tweets){
-  if(!tweets || !tweets.length) return `<div class="section"><h2>${chainName}</h2><p>No data.</p></div>`;
-  return `<div class="section"><h2>${chainName}</h2><div class="grid">${tweets.map(t=>{
-    const s=estimateSentiment(t.text);
-    return `<div class="card"><h3>${s.icon} ${t.text}</h3><div class="meta ${s.class}">Sentiment: ${s.label}</div></div>`;
-  }).join('')}</div></div>`;
-}
+    try {
+      // Check cache
+      if (!force) {
+        const cached = await KV.get(cacheKey, { type: "json" });
+        if (cached && Array.isArray(cached.tweets)) {
+          // Return cached plus metadata
+          return new Response(JSON.stringify({
+            ok: true,
+            source: "kv",
+            cached_at: cached.cached_at || null,
+            tweets: cached.tweets,
+            chains: cached.chains || {},
+            topTrending: cached.topTrending || []
+          }), { status:200, headers: jsonHeaders() });
+        }
+      }
 
-// Load section
-async function loadSection(section){
-  const main = document.getElementById('main');
-  main.innerHTML='<p>Loading...</p>';
-  const data = await fetchWorkerData();
-  if(section==='news'){
-    main.innerHTML = '<div class="section"><h2>📰 News</h2><p>Soon</p></div>';
-  } else if(section==='xtrends'){
-    main.innerHTML = renderXTrends(data);
-  } else if(['polygon','ethereum','solana'].includes(section)){
-    main.innerHTML = renderChainSection(section.charAt(0).toUpperCase() + section.slice(1), data.chains[section]);
+      // Build X query
+      const query = encodeURIComponent(TOPIC_KEYWORDS.join(" OR "));
+      const xUrl = `https://api.twitter.com/2/tweets/search/recent?query=${query}&max_results=100&tweet.fields=created_at,text,public_metrics,author_id`;
+
+      const res = await fetch(xUrl, { headers: { "Authorization": `Bearer ${TOKEN}` } });
+
+      if (!res.ok) {
+        // Return full error info for debugging
+        const txt = await res.text().catch(()=>null);
+        return new Response(JSON.stringify({
+          ok:false,
+          status: res.status,
+          statusText: res.statusText,
+          body: txt
+        }), { status:502, headers: jsonHeaders() });
+      }
+
+      const j = await res.json();
+      const tweets = Array.isArray(j.data) ? j.data : [];
+
+      // Compute engagement and sort
+      tweets.forEach(t => {
+        const pm = t.public_metrics || {};
+        t._engagement = (pm.retweet_count||0) + (pm.reply_count||0) + (pm.like_count||0) + (pm.quote_count||0);
+      });
+      tweets.sort((a,b) => (b._engagement||0) - (a._engagement||0));
+
+      // chain filters
+      const chains = {
+        ethereum: tweets.filter(t => containsAny(t.text, CHAINS.ethereum)),
+        polygon: tweets.filter(t => containsAny(t.text, CHAINS.polygon)),
+        solana: tweets.filter(t => containsAny(t.text, CHAINS.solana))
+      };
+
+      const topTrending = tweets.slice(0, 50);
+
+      // Save to KV
+      const payload = { tweets, chains, topTrending, cached_at: Date.now() };
+      await KV.put(cacheKey, JSON.stringify(payload), { expirationTtl: CACHE_TTL });
+
+      return new Response(JSON.stringify({
+        ok: true,
+        source: "fresh",
+        tweets,
+        chains,
+        topTrending
+      }), { status:200, headers: jsonHeaders() });
+
+    } catch (err) {
+      // Unexpected error
+      return new Response(JSON.stringify({ ok:false, error: String(err), stack: (err.stack||null) }), { status:500, headers: jsonHeaders() });
+    }
+
+    // helpers
+    function containsAny(text, arr) {
+      if (!text) return false;
+      const t = text.toUpperCase();
+      return arr.some(s => t.includes(String(s).toUpperCase()));
+    }
+
+    function jsonHeaders() {
+      return {
+        "Content-Type": "application/json;charset=utf-8",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      };
+    }
   }
-  currentSection = section;
-}
-
-// Sidebar click
-document.querySelectorAll('#sidebar li').forEach(li=>{
-  li.addEventListener('click', e=> loadSection(e.target.getAttribute('data-section')));
-});
-
-// Default load
-window.addEventListener('load', ()=>loadSection('xtrends'));
-
-// Auto-refresh every 12h
-setInterval(()=>loadSection(currentSection), 12*60*60*1000);
-</script>
-</body>
-</html>
+};
