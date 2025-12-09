@@ -61,145 +61,137 @@
 <script>
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const CHAINS = {
-  ethereum: { name: 'Ethereum', filter: coin => true },
-  polygon:  { name: 'Polygon', filter: coin => coin.platforms && coin.platforms['polygon-pos'] || coin.symbol.toUpperCase().includes('MATIC') },
-  solana:   { name: 'Solana', filter: coin => coin.platforms && coin.platforms.solana || coin.symbol.toUpperCase().includes('SOL') }
+  ethereum: { name: 'Ethereum', symbols: ['ETH'] },
+  polygon: { name: 'Polygon', symbols: ['MATIC'] },
+  solana: { name: 'Solana', symbols: ['SOL'] }
 };
 
 let currentSection = 'news';
 
+// Fetch coins from CoinGecko
 async function fetchCoins() {
   try {
     const res = await fetch(`${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=200&page=1&sparkline=false`);
     return await res.json();
-  } catch(e) {
+  } catch (e) {
     console.error('Error fetching coins:', e);
     return [];
   }
 }
 
+// Sort coins by 24h change
 function sortByChange(coins) {
-  const sorted = coins.slice().sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-  const top = sorted.filter(c => c.price_change_percentage_24h>0);
-  const bottom = sorted.filter(c => c.price_change_percentage_24h<0);
+  const top = coins.filter(c => c.price_change_percentage_24h > 0).sort((a,b)=>b.price_change_percentage_24h - a.price_change_percentage_24h);
+  const bottom = coins.filter(c => c.price_change_percentage_24h < 0).sort((a,b)=>a.price_change_percentage_24h - b.price_change_percentage_24h);
   return { top, bottom };
 }
 
+// Generate coin card HTML
 function cardHtml(c) {
   const change = c.price_change_percentage_24h || 0;
   return `
     <div class="card">
       <h3>${c.name} (${c.symbol.toUpperCase()})</h3>
       <div class="meta">Price: $${c.current_price.toLocaleString()}</div>
-      <div class="meta">24h Change: <span class="${change >= 0 ? 'positive' : 'negative'}">${change.toFixed(2)}%</span></div>
+      <div class="meta">24h Change: <span class="${change>=0?'positive':'negative'}">${change.toFixed(2)}%</span></div>
       <div class="meta">Market Cap: $${c.market_cap.toLocaleString()}</div>
       <a href="https://www.coingecko.com/en/coins/${c.id}" target="_blank">Details</a>
     </div>`;
 }
 
+// Render chain section
 function renderChainSection(chainKey, coins) {
-  const { name } = CHAINS[chainKey];
-  const filtered = coins.filter(CHAINS[chainKey].filter);
+  const chain = CHAINS[chainKey];
+  const filtered = coins.filter(c => chain.symbols.includes(c.symbol.toUpperCase()));
   const { top, bottom } = sortByChange(filtered);
   return `
     <div class="section">
-      <h2>Top Gainers — ${name}</h2>
-      <div class="grid">${ top.map(c => cardHtml(c)).join('') }</div>
+      <h2>Top Gainers — ${chain.name}</h2>
+      <div class="grid">${top.map(cardHtml).join('')}</div>
     </div>
     <div class="section">
-      <h2>Top Losers — ${name}</h2>
-      <div class="grid">${ bottom.map(c => cardHtml(c)).join('') }</div>
+      <h2>Top Losers — ${chain.name}</h2>
+      <div class="grid">${bottom.map(cardHtml).join('')}</div>
     </div>`;
 }
 
 // X Trend Sentiment Estimation
-function estimateSentiment(name) {
+function estimateSentiment(name){
   const lower = name.toLowerCase();
-  if (/bull|moon|pump|rally|gain|up/i.test(lower)) return { label: 'Bullish', class: 'positive', icon: '▲' };
-  if (/bear|dump|crash|down|loss/i.test(lower)) return { label: 'Bearish', class: 'negative', icon: '▼' };
-  return { label: 'Neutral', class: 'neutral', icon: '●' };
+  if(/bull|moon|pump|rally|gain|up/i.test(lower)) return { label:'Bullish', class:'positive', icon:'▲' };
+  if(/bear|dump|crash|down|loss/i.test(lower)) return { label:'Bearish', class:'negative', icon:'▼' };
+  return { label:'Neutral', class:'neutral', icon:'●' };
 }
 
-async function fetchXTrends() {
-  try {
+// Fetch X trends (fallback to static if CORS fails)
+async function fetchXTrends(){
+  try{
     const resp = await fetch('https://trendstools.net/json/twitter/global');
     const data = await resp.json();
-    return (data.trends || []).filter(t => /crypto|bitcoin|ethereum|stock|finance|trading|investment|market/i.test(t.name)).slice(0, 20);
-  } catch(e) {
-    console.error('Error fetching X trends', e);
-    return [];
+    return (data.trends || []).filter(t=>/crypto|bitcoin|ethereum|stock|finance|trading|investment|market/i.test(t.name)).slice(0,20);
+  }catch(e){
+    console.error('Error fetching X trends, using fallback', e);
+    return [
+      {name:'Bitcoin'},
+      {name:'Ethereum'},
+      {name:'Polygon'},
+      {name:'Solana'},
+      {name:'Crypto Market'},
+      {name:'Stocks'},
+      {name:'Investments'}
+    ];
   }
 }
 
-function renderXTrends(trends) {
+function renderXTrends(trends){
   return `
     <div class="section">
       <h2>🔺 X Trends (crypto / finance)</h2>
-      <div class="grid">${trends.map(t => {
+      <div class="grid">${trends.map(t=>{
         const s = estimateSentiment(t.name);
-        return `
-        <div class="card">
+        return `<div class="card">
           <h3>${s.icon} #${t.name}</h3>
           <div class="meta ${s.class}">Sentiment: ${s.label}</div>
-          <div class="meta">Tweet volume: ${t.tweet_volume || 'N/A'}</div>
+          <div class="meta">Tweet volume: ${t.tweet_volume||'N/A'}</div>
         </div>`}).join('')}</div>
     </div>`;
 }
 
-async function fetchNews() {
-  // Placeholder: replace with your free RSS or JSON feed
-  return [];
+// Placeholder news
+async function fetchNews(){ return []; }
+function renderNews(articles){
+  if(!articles.length) return '<div class="section"><h2>📰 News</h2><p>No news feed configured (yet).</p></div>';
+  return `<div class="section"><h2>📰 Crypto / Finance News</h2>
+    <div class="grid">${articles.map(a=>`
+      <div class="card">
+        <h3>${a.title}</h3>
+        <div class="meta">Source: ${a.source} — ${new Date(a.publishedAt).toLocaleString()}</div>
+        <p>${a.description||''}</p>
+        <a href="${a.url}" target="_blank">Read more</a>
+      </div>`).join('')}</div></div>`;
 }
 
-function renderNews(articles) {
-  if (!articles.length) {
-    return '<div class="section"><h2>📰 News</h2><p>No news feed configured (yet).</p></div>';
-  }
-  return `
-    <div class="section">
-      <h2>📰 Crypto / Finance News</h2>
-      <div class="grid">${articles.map(a => `
-        <div class="card">
-          <h3>${a.title}</h3>
-          <div class="meta">Source: ${a.source} — ${new Date(a.publishedAt).toLocaleString()}</div>
-          <p>${a.description || ''}</p>
-          <a href="${a.url}" target="_blank">Read more</a>
-        </div>`).join('')}</div>
-    </div>`;
-}
-
-async function loadSection(section) {
+// Load section
+async function loadSection(section){
   currentSection = section;
   const main = document.getElementById('main');
   main.innerHTML = '<p>Loading...</p>';
   const coins = await fetchCoins();
-
-  if (section==='news') {
-    const articles = await fetchNews();
-    main.innerHTML = renderNews(articles);
-  }
-  else if (section==='xtrends') {
-    const trends = await fetchXTrends();
-    main.innerHTML = renderXTrends(trends);
-  }
-  else if (CHAINS[section]) {
-    main.innerHTML = renderChainSection(section, coins);
-  }
+  if(section==='news'){ const articles = await fetchNews(); main.innerHTML = renderNews(articles); }
+  else if(section==='xtrends'){ const trends = await fetchXTrends(); main.innerHTML = renderXTrends(trends); }
+  else if(CHAINS[section]) main.innerHTML = renderChainSection(section, coins);
 }
 
-// Sidebar click logic
-document.querySelectorAll('#sidebar li').forEach(li => {
-  li.addEventListener('click', e => {
-    const section = e.target.getAttribute('data-section');
-    loadSection(section);
-  });
+// Sidebar click
+document.querySelectorAll('#sidebar li').forEach(li=>{
+  li.addEventListener('click', e=> loadSection(e.target.getAttribute('data-section')));
 });
 
-// On load, default to News section
-window.addEventListener('load', () => loadSection('news'));
+// Default load
+window.addEventListener('load', ()=> loadSection('news'));
 
-// Friendly auto-refresh every 60 seconds
-setInterval(() => { loadSection(currentSection); }, 60000);
+// Auto-refresh every 60s
+setInterval(()=>{ loadSection(currentSection); },60000);
 </script>
 </body>
 </html>
