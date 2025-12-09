@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Crypto & Finance Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body, html { margin:0; padding:0; font-family:Arial,sans-serif; background:#f7f7f7; }
+  header { background:#4b0082; color:white; padding:1rem; text-align:center; }
+  main { padding:1rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1rem; }
+  .card { background:white; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); padding:1rem; display:flex; flex-direction:column; }
+  .card h3 { margin:0.5rem 0; }
+  .meta { font-size:0.85rem; color:#555; margin-bottom:0.5rem; }
+  .trend { font-weight:bold; color:#4b0082; margin-bottom:0.5rem; }
+  a { text-decoration:none; color:#4b0082; margin-top:auto; font-weight:bold; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Crypto & Finance Dashboard</h1>
+</header>
+<main id="dashboard">
+  <!-- Cards injected here -->
+</main>
+
+<script>
+// Sentiment library if needed
+async function fetchCoinGeckoTop(limit=10) {
+  try {
+    const resp = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${limit}&page=1&sparkline=false`);
+    const data = await resp.json();
+    return data.map(c => ({
+      name: c.name,
+      symbol: c.symbol.toUpperCase(),
+      price: c.current_price,
+      change24h: c.price_change_percentage_24h,
+      marketCap: c.market_cap,
+      volume: c.total_volume,
+      url: `https://www.coingecko.com/en/coins/${c.id}`
+    }));
+  } catch(err) {
+    console.error('CoinGecko API error', err);
+    return [];
+  }
+}
+
+// Example: X trending topics (crypto/finance-related)
+// Using community endpoint / or dummy trending JSON (replace with real source if available)
+async function fetchXTrends() {
+  try {
+    // Community open source example JSON feed (crypto/finance tags)
+    const resp = await fetch('https://trendstools.net/json/twitter/global'); // can filter later
+    const data = await resp.json();
+    // Filter for finance/crypto related tags
+    return (data.trends || []).filter(t => 
+      /crypto|bitcoin|ethereum|stock|investment|finance|market|trading/i.test(t.name)
+    ).slice(0, 10);
+  } catch(err) {
+    console.error('X Trends fetch error', err);
+    return [];
+  }
+}
+
+function renderDashboard(coins, trends) {
+  const container = document.getElementById('dashboard');
+  container.innerHTML = '';
+
+  coins.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <h3>${c.name} (${c.symbol})</h3>
+      <div class="meta">Price: $${c.price.toLocaleString()} | 24h: ${c.change24h.toFixed(2)}%</div>
+      <div class="meta">Market Cap: $${c.marketCap.toLocaleString()} | Volume: $${c.volume.toLocaleString()}</div>
+      <a href="${c.url}" target="_blank">View on CoinGecko</a>
+    `;
+    container.appendChild(card);
+  });
+
+  trends.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <h3>#${t.name}</h3>
+      <div class="trend">Trending on X (finance/crypto)</div>
+      <div class="meta">Volume: ${t.tweet_volume || 'N/A'}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+async function loadDashboard() {
+  const [coins, trends] = await Promise.all([fetchCoinGeckoTop(10), fetchXTrends()]);
+  renderDashboard(coins, trends);
+}
+
+window.addEventListener('load', loadDashboard);
+</script>
+</body>
+</html>
