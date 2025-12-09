@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NOLA — Terms of Service & Privacy Policy</title>
+  <style>
+    :root{
+      --bg1: #2b0b42;
+      --bg2: #4b2a6a;
+      --card: rgba(255,255,255,0.07);
+      --accent: #b88cff;
+      --text: #e9e7ff;
+      --muted: #cfc8f7;
+      --radius: 12px;
+      --logo-size: 44px;
+    }
+    html,body{
+      margin:0;
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto;
+      background: radial-gradient(1000px 500px at 15% 10%, rgba(184,140,255,0.15), transparent 60%),
+                  linear-gradient(180deg,var(--bg1) 0%, var(--bg2) 100%);
+      color:var(--text);
+      line-height:1.6;
+    }
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      background-image:
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,0.015) 0 1px, transparent 1px),
+        linear-gradient(135deg, rgba(255,255,255,0.03), transparent 40%);
+      opacity:0.6;
+      pointer-events:none;
+      mix-blend-mode:overlay;
+    }
+    .container{
+      max-width:960px;
+      margin:40px auto;
+      padding:28px;
+      border-radius:var(--radius);
+      backdrop-filter:blur(7px);
+      background:rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.05);
+      box-shadow:0 8px 30px rgba(0,0,0,0.55);
+    }
+    header{display:flex;gap:18px;align-items:center;margin-bottom:22px;}
+    .logo{
+      width:var(--logo-size);
+      height:var(--logo-size);
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid rgba(255,255,255,0.1);
+      box-shadow:0 4px 14px rgba(0,0,0,0.45);
+    }
+    h1{margin:0;font-size:22px;}
+    p.lead{color:var(--muted);margin-top:6px;font-size:14px;}
+
+    section.card{
+      background:rgba(255,255,255,0.03);
+      padding:18px;
+      border-radius:var(--radius);
+      border:1px solid rgba(255,255,255,0.05);
+      margin-bottom:20px;
+    }
+    h2{margin:0 0 10px;font-size:17px;color:#fff;}
+    h3{margin:14px 0 6px;font-size:14px;color:var(--accent);}
+    ul{margin:0 0 0 1.1rem;color:var(--muted);}
+    li{margin-bottom:7px;}
+    .muted{color:var(--muted);}
+    footer{text-align:center;margin-top:20px;color:var(--muted);font-size:13px;}
+    a{color:var(--accent);text-decoration:none;}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <img src="https://nol.pages.dev/Link/logo.gif" class="logo" alt="NOLA Logo" />
+    <div>
+      <h1>NOLA — Terms of Service & Privacy Policy</h1>
+      <p class="lead">Last updated: December 9, 2025</p>
+    </div>
+  </header>
+
+  <!-- Terms -->
+  <section class="card">
+    <h2>Terms of Service</h2>
+    <p class="muted">
+      These Terms govern use of NOLA’s products including website, routing system, DEX aggregation, APIs, and connected Web3 functionalities.
+    </p>
+
+    <h3>Eligibility</h3>
+    <ul>
+      <li>You must be at least 18 years old to use the Services.</li>
+      <li>You must comply with all applicable laws in your jurisdiction.</li>
+    </ul>
+
+    <h3>User Responsibilities</h3>
+    <ul>
+      <li>You hold full responsibility for your wallet, private keys, and on-chain activity.</li>
+      <li>NOLA never stores private keys or seed phrases.</li>
+      <li>Aggregated swap quotes and liquidity routes are subject to third-party protocols.</li>
+    </ul>
+
+    <h3>Service Usage</h3>
+    <ul>
+      <li>No malicious usage, exploits, front-running, or network abuse.</li>
+      <li>No circumventing rate limits, API restrictions, or security measures.</li>
+    </ul>
+
+    <h3>Liability</h3>
+    <p class="muted">
+      NOLA is not liable for lost funds, blockchain reorgs, failed transactions, slippage, gas fees, or third-party platform failures.  
+      Services are provided “as-is” with no warranties.
+    </p>
+  </section>
+
+  <!-- Privacy -->
+  <section class="card">
+    <h2>Privacy Policy</h2>
+    <p class="muted">
+      This Privacy Policy explains how NOLA collects, processes, and protects information across all DEX and Web3 tools we provide.
+    </p>
+
+    <h3>Data We Collect</h3>
+    <ul>
+      <li>Public blockchain data (wallet address, tx hashes, gas, signatures).</li>
+      <li>Device data (IP address, browser type, OS, analytics logs).</li>
+      <li>Optional email only if provided for support or account-related features.</li>
+    </ul>
+
+    <h3>How We Use Data</h3>
+    <ul>
+      <li>Execute routing, swapping, and DEX aggregation features.</li>
+      <li>Detect fraud, enhance security, and prevent abuse.</li>
+      <li>Improve product performance and user experience.</li>
+    </ul>
+
+    <h3>Cookies & Analytics</h3>
+    <p class="muted">
+      We may use minimal analytics tools and cookies strictly for performance, anti-abuse, and load distribution.  
+      No tracking profiles are built without consent.
+    </p>
+
+    <h3>Security</h3>
+    <ul>
+      <li>TLS 1.2+ enforced for transport encryption.</li>
+      <li>Encrypted logs and strict role-based infrastructure access.</li>
+      <li>NOLA never requests or stores private keys.</li>
+    </ul>
+
+    <h3>Your Rights</h3>
+    <p class="muted">
+      You may request deletion of your off-chain data or email records by contacting support.
+    </p>
+  </section>
+
+  <!-- Contact & Socials -->
+  <section class="card">
+    <h2>Contact & Socials</h2>
+
+    <h3>Support Email</h3>
+    <p class="muted"><strong>support@nola.work.gd</strong></p>
+
+    <h3>Official Website</h3>
+    <p><a href="https://nol.pages.dev" target="_blank">https://nol.pages.dev</a></p>
+
+    <h3>Official X (Twitter)</h3>
+    <p><a href="https://x.com/NOLA_CHAIN" target="_blank">@NOLA_CHAIN</a></p>
+  </section>
+
+  <footer>
+    © 2025 NOLA — All Rights Reserved  
+  </footer>
+</div>
+
+</body>
+</html>
