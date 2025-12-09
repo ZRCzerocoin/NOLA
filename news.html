@@ -40,6 +40,8 @@
   .neutral { color: gray; }
   a { text-decoration: none; color: #2980b9; margin-top: auto; font-weight: bold; font-size:0.8rem; }
   canvas { width: 100%; height: 40px; }
+  footer { background: rgba(44, 62, 80, 0.85); color: white; padding: 1rem; text-align: center; font-size:0.8rem; backdrop-filter: blur(8px); margin-top:auto;}
+  footer a { color: #f39c12; margin: 0 0.5rem; text-decoration: none;}
 </style>
 </head>
 <body>
@@ -60,6 +62,13 @@
   </div>
 </div>
 
+<footer>
+  © 2025 NOLA. All rights reserved.  
+  <a href="https://nol.pages.dev" target="_blank">Website</a> | 
+  <a href="https://x.com/NOLA_CHAIN" target="_blank">X</a> | 
+  <a href="mailto:support@nola.work.gd">Support</a>
+</footer>
+
 <script>
 const COINGECKO_API = 'https://api.coingecko.com/api/v3';
 const CHAINS = {
@@ -68,9 +77,17 @@ const CHAINS = {
   solana: { name:'Solana', symbols:['SOL'] }
 };
 
+const KEYWORDS = [
+  "nft","NftNFT","crypto","Defi","defi","web3",
+  "crypto_project","investment","investing",
+  "stocks","finance","Bitcoin","BTC","btc",
+  "pos","pol","POS","Polygon","Matic",
+  "solana","blockchain","trading","coins","tokens"
+];
+
 let currentSection='news';
 
-// Fetch coins
+// ------------------ CoinGecko ------------------
 async function fetchCoins(){
   try{
     const res = await fetch(`${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=1&sparkline=false`);
@@ -78,7 +95,6 @@ async function fetchCoins(){
   }catch(e){ console.error(e); return []; }
 }
 
-// Fetch sparkline for coin
 async function fetchSparkline(id){
   try{
     const res = await fetch(`${COINGECKO_API}/coins/${id}/market_chart?vs_currency=usd&days=1&interval=hourly`);
@@ -87,7 +103,6 @@ async function fetchSparkline(id){
   }catch(e){ return []; }
 }
 
-// Draw sparkline on canvas
 function drawSparkline(canvas, prices){
   if(!prices.length) return;
   const ctx=canvas.getContext('2d');
@@ -105,14 +120,12 @@ function drawSparkline(canvas, prices){
   ctx.stroke();
 }
 
-// Sort coins by 24h
 function sortByChange(coins){
   const top = coins.filter(c=>c.price_change_percentage_24h>0).sort((a,b)=>b.price_change_percentage_24h-a.price_change_percentage_24h);
   const bottom = coins.filter(c=>c.price_change_percentage_24h<0).sort((a,b)=>a.price_change_percentage_24h-b.price_change_percentage_24h);
   return {top,bottom};
 }
 
-// Coin card with sparkline placeholder
 function cardHtml(c){
   const change=c.price_change_percentage_24h||0;
   return `
@@ -126,7 +139,6 @@ function cardHtml(c){
   </div>`;
 }
 
-// Render chain
 async function renderChainSection(chainKey, coins){
   const chain=CHAINS[chainKey];
   const filtered=coins.filter(c=>chain.symbols.includes(c.symbol.toUpperCase()));
@@ -136,7 +148,6 @@ async function renderChainSection(chainKey, coins){
     <div class="section"><h2>Top Losers — ${chain.name}</h2><div class="grid">${bottom.map(cardHtml).join('')}</div></div>`;
   document.getElementById('main').innerHTML=html;
 
-  // Render sparklines
   for(const c of filtered){
     const canvas=document.getElementById(`spark-${c.id}`);
     if(canvas){
@@ -146,40 +157,72 @@ async function renderChainSection(chainKey, coins){
   }
 }
 
-// Sentiment
-function estimateSentiment(name){
-  const lower=name.toLowerCase();
+// ------------------ Sentiment ------------------
+function estimateSentiment(text){
+  const lower=text.toLowerCase();
   if(/bull|moon|pump|rally|gain|up/i.test(lower)) return {label:'Bullish',class:'positive',icon:'▲'};
   if(/bear|dump|crash|down|loss/i.test(lower)) return {label:'Bearish',class:'negative',icon:'▼'};
   return {label:'Neutral',class:'neutral',icon:'●'};
 }
 
-// X Trends
-async function fetchXTrends(){
+// ------------------ Tweets / X Trends ------------------
+const CHAINS_FILTERS = {
+  polygon: ["pol","POL","matic","MATIC","Polygon"],
+  ethereum: ["eth","ETH","ethereum","ETHEREUM"],
+  solana: ["sol","SOL","solana","SOLANA"]
+};
+
+// Simulated tweet fetch (replace with real X API)
+async function fetchTweets(keywords=[], max=50){
   try{
-    const resp=await fetch('https://trendstools.net/json/twitter/global');
-    const data=await resp.json();
-    return (data.trends||[]).filter(t=>/crypto|bitcoin|ethereum|polygon|solana|stock|finance|trading|investment|market|token|nft/i.test(t.name)).slice(0,20);
-  }catch(e){
-    console.error(e);
-    return [{name:'Bitcoin'},{name:'Ethereum'},{name:'Polygon'},{name:'Solana'},{name:'Crypto Market'},{name:'Stocks'},{name:'Investments'}];
+    // Simulated tweets
+    let tweets=[];
+    for(let i=1;i<=max;i++){
+      const text = `${keywords[i%keywords.length]} trending crypto tweet #${i}`;
+      tweets.push({
+        text, user:{screen_name:`user${i}`}, retweet_count:i*2, favorite_count:i*5, id_str:`${1000+i}`
+      });
+    }
+    return tweets;
+  }catch(e){ console.error(e); return []; }
+}
+
+function filterTweetsByChain(tweets, chainKey){
+  const filters = CHAINS_FILTERS[chainKey];
+  return tweets.filter(t => filters.some(f => t.text.toLowerCase().includes(f.toLowerCase())));
+}
+
+function renderTweets(tweets, title){
+  return `
+    <div class="section"><h2>${title}</h2>
+      <div class="grid">
+        ${tweets.map(t => {
+          const sentiment = estimateSentiment(t.text);
+          return `<div class="card">
+            <h3>${sentiment.icon} @${t.user.screen_name}</h3>
+            <div class="meta ${sentiment.class}">Sentiment: ${sentiment.label}</div>
+            <p>${t.text}</p>
+            <div class="meta">Retweets: ${t.retweet_count} — Likes: ${t.favorite_count}</div>
+            <a href="https://twitter.com/${t.user.screen_name}/status/${t.id_str}" target="_blank">View Tweet</a>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+async function loadXSection(){
+  const tweets = await fetchTweets(KEYWORDS, 100);
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  main.innerHTML += renderTweets(tweets.slice(0,20), "🔺 X Global Crypto/Finance Trends");
+
+  for(const chainKey of Object.keys(CHAINS_FILTERS)){
+    const filtered = filterTweetsByChain(tweets, chainKey);
+    main.innerHTML += renderTweets(filtered.slice(0,20), `#${CHAINS[chainKey].name} Tweets`);
   }
 }
 
-function renderXTrends(trends){
-  return `
-    <div class="section"><h2>🔺 X Trends (crypto / finance)</h2>
-      <div class="grid">${trends.map(t=>{
-        const s=estimateSentiment(t.name);
-        const volume=t.tweet_volume||'N/A';
-        return `<div class="card">
-          <h3>${s.icon} #${t.name}</h3>
-          <div class="meta ${s.class}">Sentiment: ${s.label}</div>
-          <div class="meta">Volume: ${volume}</div>
-        </div>`}).join('')}</div></div>`;
-}
-
-// News placeholder
+// ------------------ News placeholder ------------------
 async function fetchNews(){ return []; }
 function renderNews(articles){
   if(!articles.length) return '<div class="section"><h2>📰 News</h2><p>No news feed configured (yet).</p></div>';
@@ -191,18 +234,18 @@ function renderNews(articles){
       <a href="${a.url}" target="_blank">Read more</a></div>`).join('')}</div></div>`;
 }
 
-// Load section
+// ------------------ Load section ------------------
 async function loadSection(section){
   currentSection=section;
   const main=document.getElementById('main');
   main.innerHTML='<p>Loading...</p>';
   const coins=await fetchCoins();
   if(section==='news'){ const articles=await fetchNews(); main.innerHTML=renderNews(articles); }
-  else if(section==='xtrends'){ const trends=await fetchXTrends(); main.innerHTML=renderXTrends(trends); }
+  else if(section==='xtrends'){ await loadXSection(); }
   else if(CHAINS[section]) await renderChainSection(section, coins);
 }
 
-// Sidebar click
+// ------------------ Sidebar ------------------
 document.querySelectorAll('#sidebar li').forEach(li=>li.addEventListener('click',e=>loadSection(e.target.getAttribute('data-section'))));
 
 // Default load
