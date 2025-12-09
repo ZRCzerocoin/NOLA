@@ -1,99 +1,120 @@
-/**
- * Cloudflare Worker for NOL space
- * - Pulls X (Twitter) tweets via Bearer token
- * - Filters crypto & Web3 topics
- * - Caches in KV for 24h
- * - Returns JSON { tweets: [...] } for dashboard
- */
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NOL space — Crypto & Finance Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body, html { margin:0; padding:0; font-family: Arial, sans-serif; background: #f5f6fa; color: #222; }
+  header { background: rgba(44, 62, 80, 0.85); color: white; padding: 1rem; text-align: center; backdrop-filter: blur(8px); }
+  #layout { display: flex; height: calc(100vh - 100px); }
+  #sidebar { width: 200px; background: rgba(52, 73, 94, 0.85); color: white; padding: 1rem; box-sizing: border-box; backdrop-filter: blur(8px); border-right: 1px solid rgba(255,255,255,0.1); }
+  #sidebar h2 { font-size: 1.2rem; margin-top: 0; }
+  #sidebar ul { list-style: none; padding: 0; }
+  #sidebar li { margin: 0.5rem 0; cursor: pointer; }
+  #sidebar li:hover { text-decoration: underline; }
+  #main { flex: 1; overflow-y: auto; padding: 1rem; box-sizing: border-box; }
+  .section { margin-bottom: 2rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 1rem; }
+  .card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 1rem; display: flex; flex-direction: column; position: relative; }
+  .card h3 { margin: 0 0 0.5rem 0; font-size:1rem; }
+  .meta { font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; }
+  .positive { color: green; }
+  .negative { color: red; }
+  .neutral { color: gray; }
+  a { text-decoration: none; color: #2980b9; margin-top: auto; font-weight: bold; font-size:0.8rem; }
+  canvas { width: 100%; height: 40px; }
+  footer { background: rgba(44, 62, 80, 0.85); color: white; padding: 1rem; text-align: center; backdrop-filter: blur(8px); }
+  footer a { color: #f39c12; margin: 0 0.5rem; text-decoration: none; }
+</style>
+</head>
+<body>
+<header><h1>NOL space</h1></header>
+<div id="layout">
+  <div id="sidebar">
+    <h2>Sections</h2>
+    <ul>
+      <li data-section="xtrends">X Trends</li>
+      <li data-section="news">News</li>
+      <li data-section="polygon">Polygon</li>
+      <li data-section="ethereum">Ethereum</li>
+      <li data-section="solana">Solana</li>
+    </ul>
+  </div>
+  <div id="main"><p>Loading dashboard...</p></div>
+</div>
+<footer>
+  NOLA © All Rights Reserved.  
+  <a href="https://nol.pages.dev" target="_blank">Website</a> | 
+  <a href="https://x.com/NOLA_CHAIN" target="_blank">X</a> | 
+  <a href="mailto:support@nola.work.gd">Support</a>
+</footer>
 
-const BEARER_TOKEN = process.env.BEARER_KEY; // Secret in Cloudflare
-const KV_NAMESPACE = process.env.kv; // KV binding name
-const CACHE_TTL = 24 * 60 * 60; // 24h in seconds
-const TOPIC_KEYWORDS = [
-  "crypto","defi","web3","investment","investing","stocks","finance","trade","trading","cryptocurrency"
-  "bitcoin","btc","polygon","matic","solana","ethereum","eth","trading","coins","tokens","pos","pol","nft","nfts",
-];
+<script>
+const WORKER_URL = "https://<your-worker-subdomain>.workers.dev"; // replace with your Worker URL
+let currentSection='xtrends';
 
-async function fetchXTweets() {
-  const query = encodeURIComponent(TOPIC_KEYWORDS.join(" OR "));
-  const url = `https://api.twitter.com/2/tweets/search/recent?query=${query}&max_results=100&tweet.fields=created_at,text,public_metrics,author_id`;
-  
-  const res = await fetch(url, {
-    headers: { "Authorization": `Bearer ${BEARER_KEY}` }
-  });
-
-  if (!res.ok) throw new Error(`X API error: ${res.status} ${res.statusText}`);
-  
-  const data = await res.json();
-  return data.data || [];
+// Sentiment estimation
+function estimateSentiment(text){
+  const lower=text.toLowerCase();
+  if(/bull|moon|pump|rally|gain|up/i.test(lower)) return {label:'Bullish',class:'positive',icon:'▲'};
+  if(/bear|dump|crash|down|loss/i.test(lower)) return {label:'Bearish',class:'negative',icon:'▼'};
+  return {label:'Neutral',class:'neutral',icon:'●'};
 }
 
-function sortTweetsByEngagement(tweets) {
-  return tweets.sort((a,b) => {
-    const engagementA = (a.public_metrics?.retweet_count||0) + (a.public_metrics?.like_count||0);
-    const engagementB = (b.public_metrics?.retweet_count||0) + (b.public_metrics?.like_count||0);
-    return engagementB - engagementA; // Descending
-  });
+// Fetch data from Worker
+async function fetchWorkerData(){
+  try{
+    const res = await fetch(WORKER_URL);
+    const data = await res.json();
+    return data;
+  }catch(e){ console.error(e); return {tweets:[], chains:{}, topTrending:[]}; }
 }
 
-function filterTweetsByChain(tweets, chainSymbols) {
-  return tweets.filter(t => {
-    const text = t.text.toUpperCase();
-    return chainSymbols.some(s => text.includes(s));
-  });
+// Render X Trends
+function renderXTrends(data){
+  const tweets = data.topTrending || [];
+  if(!tweets.length) return '<div class="section"><h2>🔺 X Trends</h2><p>No data.</p></div>';
+  return `<div class="section"><h2>🔺 X Trends</h2><div class="grid">${tweets.map(t=>{
+    const s=estimateSentiment(t.text||'');
+    return `<div class="card"><h3>${s.icon} ${t.text}</h3><div class="meta ${s.class}">Sentiment: ${s.label}</div></div>`;
+  }).join('')}</div></div>`;
 }
 
-async function getCachedTweets() {
-  const cached = await KV_NAMESPACE.get("tweets", "json");
-  if (cached) return cached;
-  return null;
+// Render chain section
+function renderChainSection(chainName, tweets){
+  if(!tweets || !tweets.length) return `<div class="section"><h2>${chainName}</h2><p>No data.</p></div>`;
+  return `<div class="section"><h2>${chainName}</h2><div class="grid">${tweets.map(t=>{
+    const s=estimateSentiment(t.text);
+    return `<div class="card"><h3>${s.icon} ${t.text}</h3><div class="meta ${s.class}">Sentiment: ${s.label}</div></div>`;
+  }).join('')}</div></div>`;
 }
 
-async function setCachedTweets(tweets) {
-  await KV_NAMESPACE.put("tweets", JSON.stringify(tweets), { expirationTtl: CACHE_TTL });
-}
-
-async function handleRequest() {
-  try {
-    // Check cache first
-    let tweets = await getCachedTweets();
-    if (!tweets) {
-      // Fetch from X
-      const fetched = await fetchXTweets();
-
-      // Sort by engagement
-      tweets = sortTweetsByEngagement(fetched);
-
-      // Save to KV
-      await setCachedTweets(tweets);
-    }
-
-    // Prepare JSON for dashboard
-    const chains = {
-      ethereum: filterTweetsByChain(tweets, ["ETH","ETHEREUM"]),
-      polygon: filterTweetsByChain(tweets, ["POL","MATIC","POLYGON"]),
-      solana: filterTweetsByChain(tweets, ["SOL","SOLANA"])
-    };
-
-    const topTrending = tweets.slice(0, 50); // top 50 overall
-
-    return new Response(JSON.stringify({
-      tweets: tweets,
-      chains,
-      topTrending
-    }), {
-      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=0" }
-    });
-
-  } catch (err) {
-    console.error(err);
-    return new Response(JSON.stringify({ tweets: [], chains: {}, topTrending: [], error: err.message }), {
-      headers: { "Content-Type": "application/json" },
-      status: 500
-    });
+// Load section
+async function loadSection(section){
+  const main = document.getElementById('main');
+  main.innerHTML='<p>Loading...</p>';
+  const data = await fetchWorkerData();
+  if(section==='news'){
+    main.innerHTML = '<div class="section"><h2>📰 News</h2><p>Soon</p></div>';
+  } else if(section==='xtrends'){
+    main.innerHTML = renderXTrends(data);
+  } else if(['polygon','ethereum','solana'].includes(section)){
+    main.innerHTML = renderChainSection(section.charAt(0).toUpperCase() + section.slice(1), data.chains[section]);
   }
+  currentSection = section;
 }
 
-addEventListener("fetch", event => {
-  event.respondWith(handleRequest());
+// Sidebar click
+document.querySelectorAll('#sidebar li').forEach(li=>{
+  li.addEventListener('click', e=> loadSection(e.target.getAttribute('data-section')));
 });
+
+// Default load
+window.addEventListener('load', ()=>loadSection('xtrends'));
+
+// Auto-refresh every 12h
+setInterval(()=>loadSection(currentSection), 12*60*60*1000);
+</script>
+</body>
+</html>
