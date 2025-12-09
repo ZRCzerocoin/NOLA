@@ -2,99 +2,211 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Crypto & Finance Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOL space — Crypto & Finance Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body, html { margin:0; padding:0; font-family:Arial,sans-serif; background:#f7f7f7; }
-  header { background:#4b0082; color:white; padding:1rem; text-align:center; }
-  main { padding:1rem; display:grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap:1rem; }
-  .card { background:white; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.15); padding:1rem; display:flex; flex-direction:column; }
-  .card h3 { margin:0.5rem 0; }
-  .meta { font-size:0.85rem; color:#555; margin-bottom:0.5rem; }
-  .trend { font-weight:bold; color:#4b0082; margin-bottom:0.5rem; }
-  a { text-decoration:none; color:#4b0082; margin-top:auto; font-weight:bold; }
+  body, html { margin:0; padding:0; font-family: Arial, sans-serif; background: #f5f6fa; color: #222; }
+  header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
+  #layout { display: flex; height: calc(100vh - 60px); }
+  #sidebar {
+    width: 200px;
+    background: #34495e;
+    color: white;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  #sidebar h2 { font-size: 1.2rem; margin-top: 0; }
+  #sidebar ul { list-style: none; padding: 0; }
+  #sidebar li { margin: 0.5rem 0; cursor: pointer; }
+  #sidebar li:hover { text-decoration: underline; }
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  .section { margin-bottom: 2rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px,1fr)); gap: 1rem; }
+  .card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .card h3 { margin: 0 0 0.5rem 0; }
+  .meta { font-size: 0.85rem; color: #555; margin-bottom: 0.5rem; }
+  .positive { color: green; }
+  .negative { color: red; }
+  .neutral { color: gray; }
+  a { text-decoration: none; color: #2980b9; margin-top: auto; font-weight: bold; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Crypto & Finance Dashboard</h1>
-</header>
-<main id="dashboard">
-  <!-- Cards injected here -->
-</main>
+<header><h1>NOL space</h1></header>
+<div id="layout">
+  <div id="sidebar">
+    <h2>Chains / Sections</h2>
+    <ul>
+      <li data-section="ethereum">Ethereum</li>
+      <li data-section="polygon">Polygon</li>
+      <li data-section="solana">Solana</li>
+      <li data-section="bnb">BNB</li>
+      <li data-section="xtrends">X Trends</li>
+      <li data-section="news">Crypto & Finance News</li>
+    </ul>
+  </div>
+  <div id="main">
+    <p>Loading dashboard...</p>
+  </div>
+</div>
 
 <script>
-// Sentiment library if needed
-async function fetchCoinGeckoTop(limit=10) {
+const COINGECKO_API = 'https://api.coingecko.com/api/v3';
+const CHAINS = {
+  ethereum: { name: 'Ethereum', filter: coin => true },
+  polygon:  { name: 'Polygon', filter: coin => coin.symbol.toUpperCase().includes('MATIC') },
+  solana:   { name: 'Solana', filter: coin => coin.symbol.toUpperCase().includes('SOL') },
+  bnb:      { name: 'BNB', filter: coin => coin.symbol.toUpperCase().includes('BNB') }
+};
+
+let currentSection = 'ethereum';
+
+async function fetchCoins() {
   try {
-    const resp = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${limit}&page=1&sparkline=false`);
-    const data = await resp.json();
-    return data.map(c => ({
-      name: c.name,
-      symbol: c.symbol.toUpperCase(),
-      price: c.current_price,
-      change24h: c.price_change_percentage_24h,
-      marketCap: c.market_cap,
-      volume: c.total_volume,
-      url: `https://www.coingecko.com/en/coins/${c.id}`
-    }));
-  } catch(err) {
-    console.error('CoinGecko API error', err);
+    const res = await fetch(`${COINGECKO_API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=200&page=1&sparkline=false`);
+    return await res.json();
+  } catch(e) {
+    console.error('Error fetching coins:', e);
     return [];
   }
 }
 
-// Example: X trending topics (crypto/finance-related)
-// Using community endpoint / or dummy trending JSON (replace with real source if available)
+function sortByChange(coins, n=10) {
+  const sorted = coins.slice().sort((a,b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
+  const top = sorted.slice(0, n);
+  const bottom = sorted.slice(-n);
+  return { top, bottom };
+}
+
+function cardHtml(c) {
+  const change = c.price_change_percentage_24h || 0;
+  return `
+    <div class="card">
+      <h3>${c.name} (${c.symbol.toUpperCase()})</h3>
+      <div class="meta">Price: $${c.current_price.toLocaleString()}</div>
+      <div class="meta">24h Change: <span class="${change >= 0 ? 'positive' : 'negative'}">${change.toFixed(2)}%</span></div>
+      <div class="meta">Market Cap: $${c.market_cap.toLocaleString()}</div>
+      <a href="https://www.coingecko.com/en/coins/${c.id}" target="_blank">Details</a>
+    </div>`;
+}
+
+function renderChainSection(chainKey, coins) {
+  const { name } = CHAINS[chainKey];
+  const filtered = coins.filter(CHAINS[chainKey].filter);
+  const { top, bottom } = sortByChange(filtered, 10);
+  return `
+    <div class="section">
+      <h2>Top 10 Movers (24h) — ${name}</h2>
+      <div class="grid">${ top.map(c => cardHtml(c)).join('') }</div>
+    </div>
+    <div class="section">
+      <h2>Top 10 Losers (24h) — ${name}</h2>
+      <div class="grid">${ bottom.map(c => cardHtml(c)).join('') }</div>
+    </div>`;
+}
+
+// Estimate sentiment for X trends
+function estimateSentiment(name) {
+  const lower = name.toLowerCase();
+  if (/bull|moon|pump|rally|gain|up/i.test(lower)) return { label: 'Bullish', class: 'positive', icon: '▲' };
+  if (/bear|dump|crash|down|loss/i.test(lower)) return { label: 'Bearish', class: 'negative', icon: '▼' };
+  return { label: 'Neutral', class: 'neutral', icon: '●' };
+}
+
 async function fetchXTrends() {
   try {
-    // Community open source example JSON feed (crypto/finance tags)
-    const resp = await fetch('https://trendstools.net/json/twitter/global'); // can filter later
+    const resp = await fetch('https://trendstools.net/json/twitter/global');
     const data = await resp.json();
-    // Filter for finance/crypto related tags
-    return (data.trends || []).filter(t => 
-      /crypto|bitcoin|ethereum|stock|investment|finance|market|trading/i.test(t.name)
-    ).slice(0, 10);
-  } catch(err) {
-    console.error('X Trends fetch error', err);
+    return (data.trends || []).filter(t => /crypto|bitcoin|ethereum|stock|finance|trading|investment|market/i.test(t.name)).slice(0, 20);
+  } catch(e) {
+    console.error('Error fetching X trends', e);
     return [];
   }
 }
 
-function renderDashboard(coins, trends) {
-  const container = document.getElementById('dashboard');
-  container.innerHTML = '';
-
-  coins.forEach(c => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <h3>${c.name} (${c.symbol})</h3>
-      <div class="meta">Price: $${c.price.toLocaleString()} | 24h: ${c.change24h.toFixed(2)}%</div>
-      <div class="meta">Market Cap: $${c.marketCap.toLocaleString()} | Volume: $${c.volume.toLocaleString()}</div>
-      <a href="${c.url}" target="_blank">View on CoinGecko</a>
-    `;
-    container.appendChild(card);
-  });
-
-  trends.forEach(t => {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.innerHTML = `
-      <h3>#${t.name}</h3>
-      <div class="trend">Trending on X (finance/crypto)</div>
-      <div class="meta">Volume: ${t.tweet_volume || 'N/A'}</div>
-    `;
-    container.appendChild(card);
-  });
+function renderXTrends(trends) {
+  return `
+    <div class="section">
+      <h2>🔺 X Trends (crypto / finance)</h2>
+      <div class="grid">${trends.map(t => {
+        const s = estimateSentiment(t.name);
+        return `
+        <div class="card">
+          <h3>${s.icon} #${t.name}</h3>
+          <div class="meta ${s.class}">Sentiment: ${s.label}</div>
+          <div class="meta">Tweet volume: ${t.tweet_volume || 'N/A'}</div>
+        </div>`}).join('')}</div>
+    </div>`;
 }
 
-async function loadDashboard() {
-  const [coins, trends] = await Promise.all([fetchCoinGeckoTop(10), fetchXTrends()]);
-  renderDashboard(coins, trends);
+async function fetchNews() {
+  // Placeholder: replace with your free RSS or JSON feed
+  return [];
 }
 
-window.addEventListener('load', loadDashboard);
+function renderNews(articles) {
+  if (!articles.length) {
+    return '<div class="section"><h2>News</h2><p>No news feed configured (yet).</p></div>';
+  }
+  return `
+    <div class="section">
+      <h2>📰 Crypto / Finance News</h2>
+      <div class="grid">${articles.map(a => `
+        <div class="card">
+          <h3>${a.title}</h3>
+          <div class="meta">Source: ${a.source} — ${new Date(a.publishedAt).toLocaleString()}</div>
+          <p>${a.description || ''}</p>
+          <a href="${a.url}" target="_blank">Read more</a>
+        </div>`).join('')}</div>
+    </div>`;
+}
+
+async function loadSection(section) {
+  currentSection = section;
+  const main = document.getElementById('main');
+  main.innerHTML = '<p>Loading...</p>';
+  const coins = await fetchCoins();
+
+  if (CHAINS[section]) {
+    main.innerHTML = renderChainSection(section, coins);
+  }
+  else if (section === 'xtrends') {
+    const trends = await fetchXTrends();
+    main.innerHTML = renderXTrends(trends);
+  }
+  else if (section === 'news') {
+    const articles = await fetchNews();
+    main.innerHTML = renderNews(articles);
+  }
+}
+
+// Sidebar click logic
+document.querySelectorAll('#sidebar li').forEach(li => {
+  li.addEventListener('click', e => {
+    const section = e.target.getAttribute('data-section');
+    loadSection(section);
+  });
+});
+
+// On load, default to Ethereum chain
+window.addEventListener('load', () => loadSection('ethereum'));
+
+// Friendly auto-refresh every 60 seconds
+setInterval(() => {
+  loadSection(currentSection);
+}, 60000);
 </script>
 </body>
 </html>
