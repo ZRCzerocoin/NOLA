@@ -1,80 +1,91 @@
 /**
- * NOL space Worker — pull X tweets, filter crypto topics, cache in KV
- * Uses existing KV: kv
- * Uses secret: BARRIER_KEY
+ * Cloudflare Worker for NOL space
+ * - Pulls X (Twitter) tweets via Bearer token
+ * - Filters crypto & Web3 topics
+ * - Caches in KV for 24h
+ * - Returns JSON { tweets: [...] } for dashboard
  */
 
+const BEARER_TOKEN = process.env.BEARER_KEY; // Secret in Cloudflare
+const KV_NAMESPACE = process.env.kv; // KV binding name
+const CACHE_TTL = 24 * 60 * 60; // 24h in seconds
 const TOPIC_KEYWORDS = [
-  "nft","nfts","crypto","defi","web3","investment","investing","stocks","finance",
-  "bitcoin","btc","polygon","matic","solana","ethereum","eth","trading","coins","tokens","pos","pol"
+  "crypto","defi","web3","investment","investing","stocks","finance","trade","trading","cryptocurrency"
+  "bitcoin","btc","polygon","matic","solana","ethereum","eth","trading","coins","tokens","pos","pol","nft","nfts",
 ];
 
-const CHAINS = {
-  ethereum: ["ETH","ETHEREUM"],
-  polygon: ["POL","MATIC","POLYGON"],
-  solana: ["SOL","SOLANA"]
-};
-
-const CACHE_TTL = 24 * 60 * 60; // 24h
-
 async function fetchXTweets() {
-  const token = BARRIER_KEY; // Cloudflare secret
   const query = encodeURIComponent(TOPIC_KEYWORDS.join(" OR "));
   const url = `https://api.twitter.com/2/tweets/search/recent?query=${query}&max_results=100&tweet.fields=created_at,text,public_metrics,author_id`;
+  
+  const res = await fetch(url, {
+    headers: { "Authorization": `Bearer ${BEARER_KEY}` }
+  });
 
-  const res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
   if (!res.ok) throw new Error(`X API error: ${res.status} ${res.statusText}`);
+  
   const data = await res.json();
   return data.data || [];
 }
 
-function sortByEngagement(tweets) {
+function sortTweetsByEngagement(tweets) {
   return tweets.sort((a,b) => {
-    const eA = (a.public_metrics?.retweet_count||0) + (a.public_metrics?.like_count||0);
-    const eB = (b.public_metrics?.retweet_count||0) + (b.public_metrics?.like_count||0);
-    return eB - eA;
+    const engagementA = (a.public_metrics?.retweet_count||0) + (a.public_metrics?.like_count||0);
+    const engagementB = (b.public_metrics?.retweet_count||0) + (b.public_metrics?.like_count||0);
+    return engagementB - engagementA; // Descending
   });
 }
 
-function filterByChain(tweets, symbols) {
+function filterTweetsByChain(tweets, chainSymbols) {
   return tweets.filter(t => {
-    const text = t.text?.toUpperCase()||'';
-    return symbols.some(s => text.includes(s));
+    const text = t.text.toUpperCase();
+    return chainSymbols.some(s => text.includes(s));
   });
 }
 
 async function getCachedTweets() {
-  const cached = await kv.get("tweets", "json");
+  const cached = await KV_NAMESPACE.get("tweets", "json");
   if (cached) return cached;
   return null;
 }
 
 async function setCachedTweets(tweets) {
-  await kv.put("tweets", JSON.stringify(tweets), { expirationTtl: CACHE_TTL });
+  await KV_NAMESPACE.put("tweets", JSON.stringify(tweets), { expirationTtl: CACHE_TTL });
 }
 
 async function handleRequest() {
   try {
+    // Check cache first
     let tweets = await getCachedTweets();
     if (!tweets) {
+      // Fetch from X
       const fetched = await fetchXTweets();
-      tweets = sortByEngagement(fetched);
+
+      // Sort by engagement
+      tweets = sortTweetsByEngagement(fetched);
+
+      // Save to KV
       await setCachedTweets(tweets);
     }
 
+    // Prepare JSON for dashboard
     const chains = {
-      ethereum: filterByChain(tweets, CHAINS.ethereum),
-      polygon: filterByChain(tweets, CHAINS.polygon),
-      solana: filterByChain(tweets, CHAINS.solana)
+      ethereum: filterTweetsByChain(tweets, ["ETH","ETHEREUM"]),
+      polygon: filterTweetsByChain(tweets, ["POL","MATIC","POLYGON"]),
+      solana: filterTweetsByChain(tweets, ["SOL","SOLANA"])
     };
 
-    const topTrending = tweets.slice(0,50);
+    const topTrending = tweets.slice(0, 50); // top 50 overall
 
-    return new Response(JSON.stringify({ tweets, chains, topTrending }), {
-      headers: { "Content-Type": "application/json" }
+    return new Response(JSON.stringify({
+      tweets: tweets,
+      chains,
+      topTrending
+    }), {
+      headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=0" }
     });
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     return new Response(JSON.stringify({ tweets: [], chains: {}, topTrending: [], error: err.message }), {
       headers: { "Content-Type": "application/json" },
