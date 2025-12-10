@@ -7,39 +7,30 @@
 <script src="config.js"></script>
 
 <style>
-  body, html { margin:0; padding:0; font-family: Arial, sans-serif; background: #f5f6fa; color:#222; }
-  header { background:#2c3e50; color:white; padding:1rem; text-align:center; }
-  #layout { display:flex; height:calc(100vh - 100px); }
-  #sidebar {
-    width:200px; background:#34495e; color:white; padding:1rem; box-sizing:border-box;
-  }
-  #sidebar h2 { font-size:1.2rem; margin:0 0 1rem 0; }
-  #sidebar ul { padding:0; margin:0; list-style:none; }
-  #sidebar li {
-    padding:0.5rem 0; cursor:pointer;
-  }
-  #sidebar li:hover { text-decoration:underline; }
-  #main { flex:1; overflow-y:auto; padding:1rem; }
-
-  .section { margin-bottom:2rem; }
-  .grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:1rem; }
-  .card {
-    background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1);
-    padding:1rem; display:flex; flex-direction:column;
-  }
-  .meta { font-size:0.8rem; color:#555; margin:0.3rem 0; }
-  .positive { color:green; }
-  .negative { color:red; }
-  footer {
-    background:#2c3e50; color:white; padding:1rem; text-align:center;
-  }
-  footer a { color:#f39c12; text-decoration:none; margin:0 0.5rem; }
+body, html {margin:0; padding:0; font-family:Arial,sans-serif; background:#f5f6fa; color:#222;}
+header {background:#2c3e50; color:white; padding:1rem; text-align:center; display:flex; align-items:center; justify-content:center;}
+header img {width:30px; height:30px; border-radius:50%; margin-right:10px;}
+#layout {display:flex; height:calc(100vh - 100px);}
+#sidebar {width:200px; background:#34495e; color:white; padding:1rem; box-sizing:border-box;}
+#sidebar h2 {font-size:1.2rem; margin:0 0 1rem 0;}
+#sidebar ul {padding:0; margin:0; list-style:none;}
+#sidebar li {padding:0.5rem 0; cursor:pointer;}
+#sidebar li:hover {text-decoration:underline;}
+#main {flex:1; overflow-y:auto; padding:1rem;}
+.section {margin-bottom:2rem;}
+.grid {display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:1rem;}
+.card {background:white; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.1); padding:1rem; display:flex; flex-direction:column;}
+.meta {font-size:0.8rem; color:#555; margin:0.3rem 0;}
+.positive {color:green;}
+.negative {color:red;}
+.neutral {color:gray;}
+footer {background:#2c3e50; color:white; padding:1rem; text-align:center;}
+footer a {color:#f39c12; text-decoration:none; margin:0 0.5rem;}
 </style>
 </head>
-
 <body>
 
-<header><h1>NOL space</h1></header>
+<header><img src="/Link/logo.gif" alt="NOL Logo"><h1>NOL Space</h1></header>
 
 <div id="layout">
   <div id="sidebar">
@@ -50,163 +41,130 @@
       <li data-sec="ethereum">Ethereum</li>
       <li data-sec="polygon">Polygon</li>
       <li data-sec="solana">Solana</li>
+      <li data-sec="bnb">BNB</li>
     </ul>
   </div>
-
-  <div id="main">
-    <p>Loading dashboard...</p>
-  </div>
+  <div id="main"><p>Loading dashboard...</p></div>
 </div>
 
 <footer>
-  NOLA © All Rights Reserved.
-  <a href="https://nol.pages.dev" target="_blank">Website</a> |
-  <a href="https://x.com/NOLA_CHAIN" target="_blank">X</a> |
-  <a href="mailto:support@nola.work.gd">Support</a>
+NOLA © All Rights Reserved.
+<a href="https://nol.pages.dev" target="_blank">Website</a> |
+<a href="https://x.com/NOLA_CHAIN" target="_blank">X</a> |
+<a href="mailto:support@nola.work.gd">Support</a>
 </footer>
 
 <script>
-// ========== CONFIG ==========
+// ===== CONFIG =====
 const CACHE_KEY = "NOL_CACHE";
-const CACHE_HOURS = 9;
-const X_ENDPOINT =
-  "https://api.x.com/2/tweets/search/recent?query=crypto OR bitcoin OR eth OR solana OR polygon OR web3&max_results=25";
+const CACHE_HOURS = 9; // cache duration
+const X_ENDPOINT = "https://api.x.com/2/tweets/search/recent?query=crypto OR bitcoin OR eth OR solana OR polygon OR web3 OR defi OR nfts OR trading OR elon OR trump OR fed OR bank OR investment OR stocks OR bnb&max_results=50";
 
-// Chains filters
+// Chains and keyword lists
 const CHAINS = {
-  ethereum: ["ETH", "ETHEREUM"],
-  polygon: ["MATIC", "POL", "POLYGON"],
-  solana: ["SOL", "SOLANA"]
+  ethereum:["ETH","ETHEREUM","$ETH","ethereum","ETH2","ETH2.0","L2","LAYER2"],
+  polygon:["POL","MATIC","POLYGON","#MATIC","#POL","#POLYGON"],
+  solana:["SOL","SOLANA","#SOL","#SOLANA"],
+  bnb:["BNB","BINANCECOIN","$BNB","#BNB"]
 };
 
-// ========== SENTIMENT ==========
-function estimateSentiment(txt) {
-  txt = txt.toLowerCase();
-  if(/pump|moon|up|gain|rocket/.test(txt)) return {label:"Bullish", class:"positive", icon:"🚀"};
-  if(/dump|down|crash|bear/.test(txt)) return {label:"Bearish", class:"negative", icon:"📉"};
+// Extra X Trends keywords
+const TREND_KEYWORDS = [
+  "crypto","bitcoin","eth","sol","polygon","bnb","web3","defi","nft","trading","stocks","investment","elon","trump","fed","bank","nasdaq","sec","tesla","coinbase","staking","layer2"
+];
+
+// ====== SENTIMENT =====
+function estimateSentiment(txt){
+  const lower=txt.toLowerCase();
+  if(/pump|moon|up|gain|rocket|bull|rally|hodl/.test(lower)) return {label:"Bullish", class:"positive", icon:"🚀"};
+  if(/dump|down|crash|bear|loss|sell/.test(lower)) return {label:"Bearish", class:"negative", icon:"📉"};
   return {label:"Neutral", class:"neutral", icon:"•"};
 }
 
-// ========== CACHE ==========
-function getCache() {
-  let d = localStorage.getItem(CACHE_KEY);
+// ===== CACHE =====
+function getCache(){ 
+  let d=localStorage.getItem(CACHE_KEY);
   if(!d) return null;
-  d = JSON.parse(d);
-  const age = (Date.now() - d.time) / (1000*60*60);
-  if(age > CACHE_HOURS) return null;
+  d=JSON.parse(d);
+  const age=(Date.now()-d.time)/(1000*60*60);
+  if(age>CACHE_HOURS) return null;
   return d.data;
 }
 
-function setCache(data) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({
-    time: Date.now(), data
-  }));
+function setCache(data){
+  localStorage.setItem(CACHE_KEY,JSON.stringify({time:Date.now(), data}));
 }
 
-// ========== FETCH X DIRECTLY ==========
-async function fetchTweets() {
-  // use local cache if valid
-  const cached = getCache();
+// ===== FETCH TWEETS =====
+async function fetchTweets(){
+  const cached=getCache();
   if(cached) return cached;
 
   const bearer = window.BARRIER_KEY;
-  if(!bearer) {
-    console.error("BARRIER KEY missing");
-    return [];
-  }
+  if(!bearer){ console.error("BARRIER_KEY missing"); return []; }
 
-  try {
-    const res = await fetch(X_ENDPOINT, {
-      headers: {
-        "Authorization": `Bearer ${bearer}`
-      }
+  try{
+    const res = await fetch(X_ENDPOINT,{
+      headers:{"Authorization":`Bearer ${bearer}`}
     });
     const json = await res.json();
     const tweets = json.data || [];
-
     setCache(tweets);
     return tweets;
-  } catch(e) {
-    console.error("API error:", e);
-    return [];
-  }
+  } catch(e){ console.error("X API error",e); return []; }
 }
 
-// ========== RENDER SECTIONS ==========
-function renderX(tweets) {
-  return `
-    <div class="section">
-      <h2>🔥 X Trends</h2>
-      <div class="grid">
-        ${tweets.map(t => {
-          const s = estimateSentiment(t.text);
-          return `
-          <div class="card">
-            <h3>${s.icon} ${t.text}</h3>
-            <div class="meta ${s.class}">Sentiment: ${s.label}</div>
-          </div>`;
-        }).join("")}
-      </div>
-    </div>
-  `;
+// ===== SMART MATCHING =====
+function filterTweetsByChain(tweets,chain){
+  const keywords = CHAINS[chain];
+  return tweets.filter(t=>{
+    const text=t.text.toUpperCase();
+    return keywords.some(k=>text.includes(k.toUpperCase()));
+  });
 }
 
-function renderChain(tweets, chainKey) {
-  const symbols = CHAINS[chainKey];
-  const filtered = tweets.filter(t =>
-    symbols.some(s => t.text.toUpperCase().includes(s))
-  );
-
-  if(!filtered.length)
-    return `<p>No ${chainKey} tweets found.</p>`;
-
-  return `
-    <div class="section">
-      <h2>${chainKey.toUpperCase()}</h2>
-      <div class="grid">
-        ${filtered.map(t => {
-          const s = estimateSentiment(t.text);
-          return `
-          <div class="card">
-            <h3>${s.icon} ${t.text}</h3>
-            <div class="meta ${s.class}">Sentiment: ${s.label}</div>
-          </div>`;
-        }).join("")}
-      </div>
-    </div>
-  `;
+function renderTweetsSection(title,tweets){
+  if(!tweets.length) return `<div class="section"><h2>${title}</h2><p>No tweets found.</p></div>`;
+  return `<div class="section"><h2>${title}</h2><div class="grid">${tweets.map(t=>{
+    const s=estimateSentiment(t.text);
+    return `<div class="card"><h3>${s.icon} ${t.text}</h3><div class="meta ${s.class}">Sentiment: ${s.label}</div></div>`;
+  }).join("")}</div></div>`;
 }
 
-function renderNews() {
-  return `
-    <div class="section">
-      <h2>📰 News</h2>
-      <p>Soon</p>
-    </div>
-  `;
-}
-
-// ========== LOAD SECTION ==========
-async function loadSection(section) {
+// ====== RENDER DASHBOARD =====
+async function loadSection(section){
   const main = document.getElementById("main");
-  main.innerHTML = "<p>Loading...</p>";
-
+  main.innerHTML="<p>Loading...</p>";
   const tweets = await fetchTweets();
 
-  if(section === "xtrends") main.innerHTML = renderX(tweets);
-  else if(section === "news") main.innerHTML = renderNews();
-  else if(CHAINS[section]) main.innerHTML = renderChain(tweets, section);
-  else main.innerHTML = "<p>Unknown section.</p>";
+  let html="";
+  if(section==="xtrends"){
+    // All unmatched or extra keywords
+    const xtrends=tweets.filter(t=>{
+      const txt=t.text.toUpperCase();
+      return !Object.keys(CHAINS).some(c=>CHAINS[c].some(k=>txt.includes(k.toUpperCase()))) ||
+             TREND_KEYWORDS.some(k=>txt.includes(k.toUpperCase()));
+    });
+    html+=renderTweetsSection("🔥 X Trends",xtrends);
+  }
+  else if(section==="news"){
+    html+=`<div class="section"><h2>📰 News</h2><p>Soon</p></div>`;
+  }
+  else if(CHAINS[section]){
+    const filtered=filterTweetsByChain(tweets,section);
+    html+=renderTweetsSection(section.toUpperCase(),filtered);
+  }
+  else html="<p>Unknown section.</p>";
+
+  main.innerHTML=html;
 }
 
-// Sidebar click
-document.querySelectorAll("#sidebar li").forEach(li => {
-  li.addEventListener("click", () => {
-    loadSection(li.getAttribute("data-sec"));
-  });
+// ===== SIDEBAR CLICK =====
+document.querySelectorAll("#sidebar li").forEach(li=>{
+  li.addEventListener("click",()=>loadSection(li.getAttribute("data-sec")));
 });
 
-// Default load
+// ===== DEFAULT LOAD =====
 loadSection("xtrends");
 </script>
 
