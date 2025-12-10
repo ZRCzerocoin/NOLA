@@ -5,63 +5,116 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>NOLA News Space</title>
 <script src="config.js"></script>
-<link rel="icon" href="/Link/logo.gif">
+<link rel="icon" href="/Link/logo.gif" />
 <style>
-:root{
-  --bg1:#0b0720; --bg2:#120a2b;
-  --glass: rgba(255,255,255,0.03);
-  --accent-purple:#7c5cff; --accent-blue:#1e90ff;
-  --muted:#9aa6b2; --good:#3ddc84; --bad:#ff6b6b;
-  --card-radius:12px;
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#eaf2ff}
-header{height:72px;display:flex;align-items:center;gap:12px;padding:12px 20px;background:linear-gradient(90deg, rgba(124,92,255,0.14), rgba(30,144,255,0.08));backdrop-filter:blur(8px);border-bottom:1px solid rgba(255,255,255,0.03);position:sticky;top:0;z-index:90}
-header img{width:40px;height:40px;border-radius:50%;object-fit:cover;box-shadow:0 8px 26px rgba(0,0,0,0.6)}
-.header-title{display:flex;flex-direction:column}
-.header-title h1{margin:0;font-size:18px}
-.header-title .sub{font-size:12px;color:var(--muted)}
-#app{display:flex;gap:16px;padding:16px;height:calc(100vh - 72px)}
-nav{width:260px;padding:16px;border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);backdrop-filter:blur(8px);box-shadow:0 10px 40px rgba(2,6,23,0.6);overflow:auto}
-nav h3{margin:0 0 12px 0;color:var(--muted);font-size:13px}
-.nav-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-.nav-item{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;cursor:pointer;color:#eef6ff;font-weight:700;font-size:13px;transition:all .14s}
-.nav-item:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(8,12,28,0.6);background:linear-gradient(90deg, rgba(124,92,255,0.06), rgba(30,144,255,0.03))}
-.badge{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
-.meta-row{margin-top:12px;font-size:12px;color:var(--muted)}
-main{flex:1;overflow:auto;padding:8px 6px;display:flex;flex-direction:column;gap:12px}
-.topbar{display:flex;justify-content:space-between;align-items:center}
-.topbar .title{font-weight:800}
-.topbar .status{font-size:13px;color:var(--muted)}
-.price-row{display:flex;gap:10px;align-items:center}
-.price-card{min-width:140px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);display:flex;flex-direction:column;gap:6px}
-.price-card .t{font-size:12px;color:var(--muted)}
-.price-card .v{font-weight:800;font-size:14px}
-.sections-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px}
-.section{border-radius:14px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);backdrop-filter:blur(6px)}
-.section h2{margin:0 0 10px 0;font-size:15px}
-.tweets-grid{display:flex;flex-direction:column;gap:12px}
-.tweet-wrap{position:relative;border-radius:12px;overflow:visible;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));padding:8px;border:1px solid rgba(255,255,255,0.02);box-shadow:0 8px 28px rgba(2,6,23,0.6)}
-.tweet-embed{border-radius:12px;overflow:hidden;position:relative;background:rgba(0,0,0,0.04)}
-.tweet-embed::before{content:"";position:absolute;inset:0;border-radius:12px;pointer-events:none;background:linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.12));mix-blend-mode:overlay}
-.analytics{margin-top:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(255,255,255,0.02)}
-.chips{display:flex;gap:8px;flex-wrap:wrap}
-.chip{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);color:var(--muted)}
-.sentiment{font-weight:700;padding:6px 10px;border-radius:999px}
-.sentiment.positive{background:linear-gradient(90deg, rgba(61,220,132,0.08), rgba(61,220,132,0.03));color:var(--good)}
-.sentiment.negative{background:linear-gradient(90deg, rgba(255,107,107,0.06), rgba(255,107,107,0.02));color:var(--bad)}
-.sentiment.neutral{background:rgba(255,255,255,0.02);color:var(--muted)}
-.small{font-size:12px;color:var(--muted)}
-.footer{padding:12px;text-align:center;color:var(--muted)}
-@media (max-width:1100px){#app{flex-direction:column}nav{width:auto;order:2}main{order:1}.sections-grid{grid-template-columns:1fr}}
+  /* Modern purple-blue glass theme */
+  :root{
+    --bg-1:#0a0718; --bg-2:#0f0a22;
+    --glass-1: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.04);
+    --accent-purple:#8a5cff; --accent-blue:#2ea0ff;
+    --muted:#9fb0c6;
+    --good:#40d47e; --bad:#ff6b6b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#e8f2ff}
+  header{
+    height:72px;display:flex;align-items:center;gap:12px;padding:12px 20px;
+    background:linear-gradient(90deg, rgba(138,92,255,0.12), rgba(46,160,255,0.08));
+    border-bottom:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(6px);
+    position:sticky;top:0;z-index:99;
+  }
+  header img{width:44px;height:44px;border-radius:50%;object-fit:cover;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+  header .title {display:flex;flex-direction:column}
+  header h1{margin:0;font-size:18px;font-weight:800}
+  header .sub{font-size:12px;color:var(--muted)}
+
+  #app{display:flex;gap:18px;padding:18px;height:calc(100vh - 72px)}
+  nav{
+    width:260px;padding:16px;border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(8px);box-shadow:0 14px 40px rgba(2,6,23,0.6);overflow:auto;
+  }
+  nav h3{margin:0 0 10px 0;color:var(--muted);font-size:13px}
+  .nav-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+  .nav-item{
+    display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;cursor:pointer;
+    color:#eef6ff;font-weight:700;font-size:13px;transition:all .14s;
+  }
+  .nav-item.active{background:linear-gradient(90deg, rgba(138,92,255,0.08), rgba(46,160,255,0.04));transform:translateY(-2px)}
+  .nav-item:hover{transform:translateY(-2px)}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
+  .meta-row{margin-top:12px;font-size:12px;color:var(--muted)}
+
+  main{flex:1;overflow:auto;padding:6px 2px;display:flex;flex-direction:column;gap:12px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .topbar .title{font-weight:900}
+  .status{font-size:13px;color:var(--muted)}
+
+  .price-strip{display:flex;gap:10px;align-items:center}
+  .price-card{min-width:140px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)}
+  .price-card .t{font-size:12px;color:var(--muted)}
+  .price-card .v{font-weight:800;font-size:15px}
+
+  .sections-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(460px,1fr));gap:16px}
+  .section{border-radius:12px;padding:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);backdrop-filter: blur(6px)}
+  .section h2{margin:0 0 8px 0;font-size:15px}
+  .tweets-grid{display:flex;flex-direction:column;gap:12px}
+
+  .tweet-wrap{position:relative;border-radius:10px;overflow:visible;background:linear-gradient(180deg, rgba(255,255,255,0.005), rgba(255,255,255,0.002));padding:8px;border:1px solid rgba(255,255,255,0.02);box-shadow:0 10px 30px rgba(2,6,23,0.6)}
+  .tweet-embed{border-radius:10px;overflow:hidden;position:relative;background:rgba(0,0,0,0.04)}
+  .tweet-embed::before{content:"";position:absolute;inset:0;border-radius:10px;pointer-events:none;background:linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.12));mix-blend-mode:overlay}
+
+  .analytics{margin-top:8px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid rgba(255,255,255,0.02)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{font-size:12px;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);color:var(--muted)}
+  .sentiment{font-weight:700;padding:6px 10px;border-radius:999px}
+  .sentiment.positive{background:linear-gradient(90deg, rgba(64,212,126,0.08), rgba(64,212,126,0.03));color:var(--good)}
+  .sentiment.negative{background:linear-gradient(90deg, rgba(255,107,107,0.06), rgba(255,107,107,0.02));color:var(--bad)}
+  .sentiment.neutral{background:rgba(255,255,255,0.02);color:var(--muted)}
+  .small{font-size:12px;color:var(--muted)}
+
+  /* NOL AI animation area */
+  .nola-ai { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; padding:16px; border-radius:12px; background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02)); border:1px solid rgba(255,255,255,0.02);}
+  .robot { width:110px; height:110px; position:relative; }
+  /* simple robot SVG animation controlled by CSS */
+  .robot svg { width:100%; height:100%; display:block; }
+  .robot .eye { transform-origin:50% 50%; animation: lookAround 4s ease-in-out infinite; }
+  .robot .head { animation: bob 4s ease-in-out infinite; transform-origin:50% 50%;}
+  .soon { font-weight:900; color:#fff; font-size:20px; opacity:0; transform:translateY(8px); animation: soonAppear 4s ease-in-out infinite; }
+  @keyframes lookAround {
+    0%{ transform:translate(-8px,-2px) }
+    20%{ transform:translate(6px,2px) }
+    40%{ transform:translate(0px,6px) }
+    60%{ transform:translate(-6px,2px) }
+    80%{ transform:translate(6px,-4px) }
+    100%{ transform:translate(-8px,-2px) }
+  }
+  @keyframes bob {
+    0%{ transform:rotate(-2deg) }
+    50%{ transform:rotate(2deg) }
+    100%{ transform:rotate(-2deg) }
+  }
+  @keyframes soonAppear {
+    0%{ opacity:0; transform:translateY(8px) }
+    15%{ opacity:0 }
+    25%{ opacity:1; transform:translateY(0) }
+    50%{ opacity:1 }
+    75%{ opacity:0; transform:translateY(-6px) }
+    100%{ opacity:0; transform:translateY(8px) }
+  }
+
+  footer{padding:12px;text-align:center;color:var(--muted);border-top:1px solid rgba(255,255,255,0.02)}
+  @media (max-width:1100px){#app{flex-direction:column}nav{width:auto;order:2}main{order:1}.sections-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
   <header>
     <img src="/Link/logo.gif" alt="logo"/>
-    <div class="header-title">
+    <div class="title">
       <h1>NOLA News Space</h1>
-      <div class="sub small">Curated retweets — live analytics</div>
+      <div class="sub">Curated retweets — live analytics</div>
     </div>
   </header>
 
@@ -69,7 +122,7 @@ main{flex:1;overflow:auto;padding:8px 6px;display:flex;flex-direction:column;gap
     <nav>
       <h3>Sections</h3>
       <ul class="nav-list" id="nav-list">
-        <li class="nav-item" data-sec="xtrends">X Trends <span class="badge" id="count-xtrends">0</span></li>
+        <li class="nav-item active" data-sec="xtrends">X Trends <span class="badge" id="count-xtrends">0</span></li>
         <li class="nav-item" data-sec="news">News <span class="badge" id="count-news">—</span></li>
         <li class="nav-item" data-sec="ethereum">Ethereum <span class="badge" id="count-ethereum">0</span></li>
         <li class="nav-item" data-sec="polygon">Polygon <span class="badge" id="count-polygon">0</span></li>
@@ -77,7 +130,7 @@ main{flex:1;overflow:auto;padding:8px 6px;display:flex;flex-direction:column;gap
         <li class="nav-item" data-sec="bnb">BNB <span class="badge" id="count-bnb">0</span></li>
       </ul>
 
-      <div class="meta-row small" style="margin-top:14px">
+      <div class="meta-row">
         Requests left: <strong id="req-left">—</strong><br/>
         Budget started: <span id="last-fetch">—</span>
       </div>
@@ -86,9 +139,39 @@ main{flex:1;overflow:auto;padding:8px 6px;display:flex;flex-direction:column;gap
         <h3 style="margin-bottom:8px;color:var(--muted)">Market snapshots</h3>
         <div id="price-area" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
+
+      <div style="margin-top:14px">
+        <h3 style="margin-bottom:8px;color:var(--muted)">NOL AI</h3>
+        <div class="nola-ai">
+          <div class="robot" aria-hidden="true">
+            <!-- Simple SVG robot: eyes move, head bobs -->
+            <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="g1" x1="0" x2="1">
+                  <stop offset="0" stop-color="#8a5cff"/>
+                  <stop offset="1" stop-color="#2ea0ff"/>
+                </linearGradient>
+              </defs>
+              <g class="head">
+                <rect x="12" y="18" rx="12" ry="12" width="96" height="72" fill="url(#g1)" opacity="0.12"/>
+                <rect x="22" y="28" rx="8" ry="8" width="76" height="52" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
+                <!-- eyes group -->
+                <g transform="translate(0,0)" class="eye">
+                  <circle cx="44" cy="52" r="6" fill="#fff"/>
+                  <circle cx="76" cy="52" r="6" fill="#fff"/>
+                  <circle cx="44" cy="52" r="3" fill="#0b0720"/>
+                  <circle cx="76" cy="52" r="3" fill="#0b0720"/>
+                </g>
+                <rect x="46" y="76" width="28" height="6" rx="3" fill="rgba(255,255,255,0.04)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="soon">SOON</div>
+        </div>
+      </div>
     </nav>
 
-    <main id="main">
+    <main>
       <div class="topbar">
         <div class="title">X Trends — curated</div>
         <div class="status small" id="status-indicator">Initializing…</div>
@@ -98,120 +181,185 @@ main{flex:1;overflow:auto;padding:8px 6px;display:flex;flex-direction:column;gap
     </main>
   </div>
 
-  <div class="footer">
+  <footer>
     NOLA © All Rights Reserved — <a href="https://nol.pages.dev" target="_blank" style="color:var(--accent-blue)">Website</a> | Support: support@nola.work.gd
-  </div>
+  </footer>
 
 <script>
-/* ===== CONFIG & STATE ===== */
+/* ========== CONFIG & STATE ========== */
 const BARRIER = window.BARRIER_KEY || null;
 const COINGECKO = window.COINGECKO || null;
 const NEWS_API = window.NEWS || null;
-const MONITORED_USERNAME = "PEN2VA"; // not shown in UI
+const CONTRACT_MAP = window.CONTRACT_MAP || {}; // optional mapping of contract -> chain id (e.g. { "0xabc...":"polygon" })
+const MONITORED_USERNAME = "PEN2VA"; // hidden; don't display
 const MONTHLY_LIMIT = 100;
-const BUDGET_STORAGE = "NOLA_BUDGET_V5";
-const CACHE_KEY = "NOLA_RETWEETS_CACHE_V5";
-const CACHE_TTL_MS = 3*24*60*60*1000;
+const BUDGET_KEY = "NOLA_BUDGET_V6";
+const CACHE_KEY = "NOLA_RETWEETS_CACHE_V6";
+const CACHE_TTL = 3*24*60*60*1000; // 3 days in ms
 const MAX_PER_SECTION = 10;
 const SECTIONS = ["xtrends","ethereum","polygon","solana","bnb"];
 const CHAINS = {
   ethereum:["ETH","ETHEREUM","$ETH","#ETH","Ξ"],
-  polygon:["MATIC","POL","POLYGON","#MATIC"],
+  polygon:["MATIC","POL","POLYGON","#MATIC","$MATIC"],
   solana:["SOL","SOLANA","#SOL"],
   bnb:["BNB","BINANCE","#BNB"]
 };
-const COINGECKO_IDS = { ethereum:"ethereum", polygon:"polygon", solana:"solana", bnb:"binancecoin" };
+const COINGECKO_IDS = { ethereum:"ethereum", polygonCandidates:["polygon","matic-network","matic"], solana:"solana", bnb:"binancecoin" };
 
-/* ===== utils ===== */
-const log=(...a)=>console.debug("[NOLA]",...a);
-const error=(...a)=>console.error("[NOLA]",...a);
-const nowTs=()=>Date.now();
+/* ========== UTIL ========== */
+const log = (...a)=>console.debug("[NOLA]",...a);
+const err = (...a)=>console.error("[NOLA]",...a);
+const now = ()=>Date.now();
 
-/* ===== budget helpers ===== */
-function loadBudget(){ try{ const raw=localStorage.getItem(BUDGET_STORAGE); if(!raw){ const b={firstTs:nowTs(),used:0}; localStorage.setItem(BUDGET_STORAGE,JSON.stringify(b)); return b; } const b=JSON.parse(raw); if(nowTs()-b.firstTs>30*24*60*60*1000){ const nb={firstTs:nowTs(),used:0}; localStorage.setItem(BUDGET_STORAGE,JSON.stringify(nb)); return nb; } return b; }catch(e){ const b={firstTs:nowTs(),used:0}; localStorage.setItem(BUDGET_STORAGE,JSON.stringify(b)); return b; } }
+/* ========== BUDGET ========== */
+function loadBudget(){
+  try{
+    const raw = localStorage.getItem(BUDGET_KEY);
+    if(!raw){ const b={firstTs:now(),used:0}; localStorage.setItem(BUDGET_KEY,JSON.stringify(b)); return b; }
+    const b = JSON.parse(raw);
+    if(now()-b.firstTs > 30*24*60*60*1000){ const nb={firstTs:now(),used:0}; localStorage.setItem(BUDGET_KEY,JSON.stringify(nb)); return nb; }
+    return b;
+  }catch(e){ const b={firstTs:now(),used:0}; localStorage.setItem(BUDGET_KEY,JSON.stringify(b)); return b; }
+}
 function canRequest(){ const b=loadBudget(); return b.used < MONTHLY_LIMIT; }
-function recordRequest(){ const b=loadBudget(); b.used=(b.used||0)+1; localStorage.setItem(BUDGET_STORAGE,JSON.stringify(b)); updateBudgetUI(); return b; }
+function recordRequest(){ const b=loadBudget(); b.used=(b.used||0)+1; localStorage.setItem(BUDGET_KEY,JSON.stringify(b)); updateBudgetUI(); return b; }
 function updateBudgetUI(){ const b=loadBudget(); document.getElementById("req-left").textContent = Math.max(0, MONTHLY_LIMIT - (b.used||0)); document.getElementById("last-fetch").textContent = new Date(b.firstTs).toLocaleString(); }
 
-/* ===== cache helpers ===== */
-function loadCache(){ try{ const raw=localStorage.getItem(CACHE_KEY); if(!raw) return {}; const obj=JSON.parse(raw); const now=nowTs(); Object.keys(obj).forEach(k=>{ if(k==="__meta__") return; if((now - (obj[k].time||0)) > CACHE_TTL_MS) delete obj[k]; }); return obj; }catch(e){ return {}; } }
-function saveCache(obj){ localStorage.setItem(CACHE_KEY,JSON.stringify(obj)); }
-function getSectionTweets(section){ const c=loadCache(); return (c[section] && Array.isArray(c[section].tweets))? c[section].tweets : []; }
-function saveSectionTweets(section,tweets){ const c=loadCache(); c[section]={time:nowTs(),tweets:tweets.slice(0,MAX_PER_SECTION)}; saveCache(c); const el=document.getElementById("count-"+section); if(el) el.textContent=(tweets||[]).length; }
+/* ========== CACHE helpers (per-section) ========== */
+function loadCache(){
+  try{
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return {};
+    const obj = JSON.parse(raw);
+    // prune expired
+    const nowTs = now();
+    Object.keys(obj).forEach(k=>{
+      if(k==="__meta__") return;
+      if((nowTs - (obj[k].time||0)) > CACHE_TTL) delete obj[k];
+    });
+    return obj;
+  }catch(e){ return {}; }
+}
+function saveCache(obj){ localStorage.setItem(CACHE_KEY, JSON.stringify(obj)); }
+function getSectionTweets(section){ const c = loadCache(); return (c[section] && Array.isArray(c[section].tweets)) ? c[section].tweets : []; }
+function saveSectionTweets(section, tweets){ const c = loadCache(); c[section] = { time: now(), tweets: tweets.slice(0, MAX_PER_SECTION) }; saveCache(c); const el = document.getElementById("count-"+section); if(el) el.textContent = (tweets||[]).length; }
 
-/* ===== X API helper (budget protected) ===== */
+/* ========== X API (budget-protected) ========== */
 async function apiFetch(url, opts){
-  if(!canRequest()){ log("Budget exhausted - skipping API call", url); return null; }
+  if(!canRequest()){ log("Budget exhausted - skipping", url); return null; }
   try{
     const res = await fetch(url, opts);
     recordRequest();
-    if(!res.ok){ const txt=await res.text().catch(()=>null); error("API error", res.status, txt); return null; }
+    if(!res.ok){ const txt = await res.text().catch(()=>null); err("API error", res.status, txt); return null; }
     const j = await res.json().catch(()=>null);
     return j;
-  }catch(e){ error("fetch failed", e); return null; }
+  }catch(e){ err("Network/API error", e); return null; }
 }
 
-/* ===== resolve monitored user id (cached meta) ===== */
+/* ========== RESOLVE monitored user id (cached meta) ========== */
 async function resolveUserId(username){
-  const c = loadCache();
-  if(c.__meta__ && c.__meta__.userId) return c.__meta__.userId;
-  if(!BARRIER){ error("BARRIER_KEY missing in config.js"); return null; }
+  const cache = loadCache();
+  if(cache.__meta__ && cache.__meta__.userId) return cache.__meta__.userId;
+  if(!BARRIER) { err("BARRIER_KEY missing (config.js)"); return null; }
   const url = `https://api.x.com/2/users/by/username/${username}`;
   const j = await apiFetch(url, { headers: { "Authorization": `Bearer ${BARRIER}` }});
-  if(j && j.data && j.data.id){ const cache=loadCache(); cache.__meta__=cache.__meta__||{}; cache.__meta__.userId=j.data.id; saveCache(cache); return j.data.id; }
+  if(j && j.data && j.data.id){ cache.__meta__ = cache.__meta__ || {}; cache.__meta__.userId = j.data.id; saveCache(cache); return j.data.id; }
   return null;
 }
 
-/* ===== fetch retweeted originals only ===== */
-async function fetchOnlyRetweetsFromUser(username, limit=50){
+/* ========== FETCH ONLY NEW RETWEET IDs (lightweight) ==========
+   1) fetch recent user tweets (limit small) and collect referenced_tweets ids of type 'retweeted'
+   2) compare with cache.meta.lastRefs; if no new ids -> cancel heavy fetch
+   3) if new ids exist -> fetch originals for those ids only (heavy)
+*/
+async function fetchRecentReferencedRetweetIds(username, limit=10){
   const uid = await resolveUserId(username);
   if(!uid) return [];
-  const url = `https://api.x.com/2/users/${uid}/tweets?max_results=${Math.min(100,Math.max(5,limit))}&tweet.fields=created_at,referenced_tweets,public_metrics,text,entities`;
+  const url = `https://api.x.com/2/users/${uid}/tweets?max_results=${Math.min(100, Math.max(5, limit))}&tweet.fields=referenced_tweets,created_at`;
   const j = await apiFetch(url, { headers:{ "Authorization": `Bearer ${BARRIER}` }});
   if(!j || !j.data) return [];
-  // collect referenced ids that are retweets
-  const refIds = [];
+  const ids = [];
   for(const t of j.data){
     if(Array.isArray(t.referenced_tweets)){
-      for(const r of t.referenced_tweets){
-        if(r.type === "retweeted" && r.id) refIds.push(r.id);
-      }
+      for(const r of t.referenced_tweets) if(r.type === "retweeted" && r.id) ids.push(r.id);
     }
   }
-  const unique = Array.from(new Set(refIds));
-  if(!unique.length) return [];
-  // batch fetch originals
+  return Array.from(new Set(ids));
+}
+
+/* fetch original tweets by ids (batched) */
+async function fetchOriginalsByIds(ids){
+  if(!ids || !ids.length) return [];
+  const batches = [];
+  for(let i=0;i<ids.length;i+=100) batches.push(ids.slice(i,i+100));
   const originals = [];
-  for(let i=0;i<unique.length;i+=100){
-    const batch = unique.slice(i,i+100);
-    const idsParam = batch.join(",");
-    const url2 = `https://api.x.com/2/tweets?ids=${encodeURIComponent(idsParam)}&tweet.fields=created_at,text,public_metrics,entities`;
-    const j2 = await apiFetch(url2, { headers:{ "Authorization": `Bearer ${BARRIER}` }});
-    if(j2 && j2.data) originals.push(...j2.data);
+  for(const b of batches){
+    const idsParam = b.join(",");
+    const url = `https://api.x.com/2/tweets?ids=${encodeURIComponent(idsParam)}&tweet.fields=created_at,text,public_metrics,entities`;
+    const j = await apiFetch(url, { headers:{ "Authorization": `Bearer ${BARRIER}` }});
+    if(j && j.data) originals.push(...j.data);
   }
   return originals;
 }
 
-/* ===== categorize and sentiment ===== */
+/* HIGH LEVEL: fetch only retweets new since last seen */
+async function fetchOnlyRetweetsNew(username, limit=20){
+  // step 1: get recent referenced retweet ids (light)
+  const recentRefs = await fetchRecentReferencedRetweetIds(username, limit);
+  if(!recentRefs.length) return []; // nothing referenced => no retweets
+  // compare to cache meta
+  const cache = loadCache();
+  const meta = cache.__meta__ || {};
+  const known = new Set(meta.lastRefs || []);
+  // find new ids
+  const newIds = recentRefs.filter(id => !known.has(id));
+  if(!newIds.length) return []; // no new retweets -> cancel heavy fetch
+  // fetch originals for only new ids
+  const originals = await fetchOriginalsByIds(newIds);
+  // update meta.lastRefs (store union of recentRefs and previous)
+  meta.lastRefs = Array.from(new Set([...(meta.lastRefs||[]), ...recentRefs]));
+  cache.__meta__ = meta;
+  saveCache(cache);
+  return originals;
+}
+
+/* ========== categorize & sentiment ========== */
+function detectContractAddresses(text){
+  // naive hex address detection 0x + 40 hex chars
+  const re = /0x[a-fA-F0-9]{40}/g;
+  const found = text.match(re);
+  return found || [];
+}
 function categorizeText(text){
   const t = (text||"").toUpperCase();
+  // check chains symbols
   for(const sec of Object.keys(CHAINS)){
     for(const k of CHAINS[sec]) if(t.includes(k.toUpperCase())) return sec;
   }
-  const keywords = ["CRYPTO","BITCOIN","DEFI","WEB3","NFT","TRADING","INVEST","ELON","TRUMP","FED","BANK","STOCK"];
-  for(const kw of keywords) if(t.includes(kw)) return "xtrends";
-  if(/\$\w{2,6}/.test(text)) return "xtrends";
-  return "xtrends";
+  // check contract map (if contract present and mapped)
+  const contracts = detectContractAddresses(text);
+  for(const c of contracts){
+    const mapped = CONTRACT_MAP[c.toLowerCase()];
+    if(mapped && mapped.toLowerCase() === 'polygon') return 'polygon';
+    if(mapped && mapped.toLowerCase() === 'ethereum') return 'ethereum';
+    if(mapped && mapped.toLowerCase() === 'solana') return 'solana';
+    if(mapped && mapped.toLowerCase() === 'bnb') return 'bnb';
+  }
+  // keyword fallback
+  const kws = ["CRYPTO","BITCOIN","DEFI","WEB3","NFT","TRADING","INVEST","ELON","TRUMP","FED","BANK","STOCK"];
+  for(const kw of kws) if(t.includes(kw)) return 'xtrends';
+  if(/\$\w{2,6}/.test(text)) return 'xtrends';
+  return 'xtrends';
 }
 function sentimentFor(text){
-  const t=(text||"").toLowerCase();
-  if(/pump|moon|gain|rocket|rally|bull|hodl/.test(t)) return {cls:"positive",label:"Bullish",icon:"🚀"};
-  if(/dump|crash|down|bear|loss|sell|liquidation/.test(t)) return {cls:"negative",label:"Bearish",icon:"📉"};
-  if(/trump|elon|musk|fed|sec|bank/.test(t)) return {cls:"neutral",label:"Important",icon:"⭐"};
-  return {cls:"neutral",label:"Neutral",icon:"•"};
+  const t = (text||"").toLowerCase();
+  if(/pump|moon|gain|rocket|rally|bull|hodl/.test(t)) return {cls:'positive',label:'Bullish',icon:'🚀'};
+  if(/dump|crash|down|bear|loss|sell|liquidation/.test(t)) return {cls:'negative',label:'Bearish',icon:'📉'};
+  if(/trump|elon|musk|fed|sec|bank/.test(t)) return {cls:'neutral',label:'Important',icon:'⭐'};
+  return {cls:'neutral',label:'Neutral',icon:'•'};
 }
 
-/* ===== merge logic: add tweet -> keep newest-first -> max N per section ===== */
+/* ========== merge Into Section (append, unique, evict oldest if >MAX_PER_SECTION) ========== */
 function mergeIntoSection(section, tweet){
   if(!tweet || !tweet.id) return false;
   const cur = getSectionTweets(section);
@@ -222,11 +370,9 @@ function mergeIntoSection(section, tweet){
   return true;
 }
 
-/* ===== update live public_metrics for displayed tweets =====
-   - fetch tweets by ids currently in cache, update metrics & save, update UI
-*/
+/* ========== Refresh public metrics for displayed tweets ========== */
 async function refreshPublicMetrics(){
-  // collect all displayed ids
+  // gather all displayed ids
   const cache = loadCache();
   const ids = [];
   for(const s of SECTIONS){
@@ -234,24 +380,20 @@ async function refreshPublicMetrics(){
     for(const t of list) if(t && t.id) ids.push(t.id);
   }
   if(!ids.length) return;
-  // avoid huge single call; batch up to 100
-  const batches = [];
-  for(let i=0;i<ids.length;i+=100) batches.push(ids.slice(i,i+100));
-  let updated = false;
-  for(const b of batches){
-    if(!canRequest()) { log("Budget exhausted while refreshing metrics"); break; }
-    const url = `https://api.x.com/2/tweets?ids=${b.join(",")}&tweet.fields=public_metrics,created_at,text`;
+  // batch fetch
+  for(let i=0;i<ids.length;i+=100){
+    if(!canRequest()) break;
+    const batch = ids.slice(i,i+100);
+    const url = `https://api.x.com/2/tweets?ids=${batch.join(",")}&tweet.fields=public_metrics,created_at`;
     const j = await apiFetch(url, { headers:{ "Authorization": `Bearer ${BARRIER}` }});
     if(!j || !j.data) continue;
-    // update cache tweets
     const cacheObj = loadCache();
+    let updated = false;
     for(const t of j.data){
-      // find and replace in cache sections
       for(const s of SECTIONS){
         if(!cacheObj[s] || !Array.isArray(cacheObj[s].tweets)) continue;
-        const idx = cacheObj[s].tweets.findIndex(x => x.id === t.id);
+        const idx = cacheObj[s].tweets.findIndex(x=>x.id===t.id);
         if(idx !== -1){
-          // merge new metrics & text
           cacheObj[s].tweets[idx] = Object.assign({}, cacheObj[s].tweets[idx], t);
           updated = true;
         }
@@ -259,106 +401,108 @@ async function refreshPublicMetrics(){
     }
     if(updated) saveCache(cacheObj);
   }
-  if(updated) {
-    await renderAll(currentSection); // re-render to show metrics
-    log("Public metrics refreshed and UI updated");
-  }
+  await renderAll(currentSection);
 }
 
-/* ===== Coingecko market data every 7 minutes ===== */
-let marketData = {};
+/* ========== MARKET DATA from Coingecko (every 7 minutes) ========= */
+let market = {};
 async function fetchMarket(){
   try{
-    const ids = Object.values(COINGECKO_IDS).join(",");
+    // prefer mapping for polygon candidate ids
+    const polygonId = COINGECKO_IDS.polygonCandidates.find(id => id);
+    const ids = [COINGECKO_IDS.ethereum, polygonId, COINGECKO_IDS.solana, COINGECKO_IDS.bnb].filter(Boolean).join(",");
     const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&order=market_cap_desc&per_page=100&page=1&sparkline=true&price_change_percentage=24h`;
     const r = await fetch(url);
-    if(!r.ok){ error("Coingecko status", r.status); return; }
-    const j = await r.json();
-    marketData = {};
-    j.forEach(it=> marketData[it.id] = it);
+    if(!r.ok){ err("Coingecko status", r.status); return; }
+    const data = await r.json();
+    market = {};
+    data.forEach(it => market[it.id] = it);
     renderPriceArea();
-  }catch(e){ error("Coingecko fetch failed", e); }
+  }catch(e){ err("Coingecko error", e); }
 }
 function renderPriceArea(){
-  const area = document.getElementById("price-area");
-  area.innerHTML = "";
-  const ids = { ethereum:"ethereum", polygon:"polygon", solana:"solana", bnb:"binancecoin" };
-  for(const key in ids){
-    const id = ids[key];
-    const it = marketData[id];
+  const area = document.getElementById("price-area"); if(!area) return; area.innerHTML = "";
+  const ids = { ethereum:COINGECKO_IDS.ethereum, polygon:COINGECKO_IDS.polygonCandidates[0], solana:COINGECKO_IDS.solana, bnb:COINGECKO_IDS.bnb };
+  for(const k in ids){
+    const id = ids[k];
+    const it = market[id];
     const el = document.createElement("div"); el.className="price-card";
-    el.innerHTML = `<div class="t">${id.toUpperCase()}</div>
-      <div class="v">${it ? ('$'+Number(it.current_price).toLocaleString()):'—'}</div>
-      <div class="small">${it && it.price_change_percentage_24h ? (it.price_change_percentage_24h>=0?'+':'')+it.price_change_percentage_24h.toFixed(2)+'% (24h)': ''}</div>`;
+    el.innerHTML = `<div class="t">${k.toUpperCase()}</div>
+      <div class="v">${it ? ('$'+Number(it.current_price).toLocaleString()) : '—'}</div>
+      <div class="small">${it && it.price_change_percentage_24h ? (it.price_change_percentage_24h>=0?'+':'')+it.price_change_percentage_24h.toFixed(2)+'% (24h)' : ''}</div>`;
     area.appendChild(el);
   }
 }
 
-/* ===== render UI pieces ===== */
+/* ========== RENDER functions ========== */
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
 async function renderSectionUI(section){
   const wrap = document.createElement("div"); wrap.className="section";
   const list = getSectionTweets(section);
   wrap.innerHTML = `<h2>${section.toUpperCase()} <span style="color:var(--muted);font-size:12px;margin-left:8px">(${list.length})</span></h2>`;
   const grid = document.createElement("div"); grid.className="tweets-grid";
   for(const t of list){
-    const twrap = document.createElement("div"); twrap.className="tweet-wrap";
+    const tw = document.createElement("div"); tw.className="tweet-wrap";
     const embed = document.createElement("div"); embed.className="tweet-embed";
     embed.innerHTML = `<blockquote class="twitter-tweet"><a href="https://twitter.com/i/web/status/${t.id}"></a></blockquote>`;
-    twrap.appendChild(embed);
+    tw.appendChild(embed);
+
     const analytics = document.createElement("div"); analytics.className="analytics";
     const left = document.createElement("div"); left.style.display="flex"; left.style.flexDirection="column"; left.style.gap="6px";
     const chips = document.createElement("div"); chips.className="chips";
-    // detect chains present
     const present = [];
     for(const sec of Object.keys(CHAINS)){
       for(const k of CHAINS[sec]) if((t.text||"").toUpperCase().includes(k.toUpperCase())){ present.push(sec); break; }
     }
-    (present.length?present:["xtrends"]).forEach(p=> { const ch=document.createElement("span"); ch.className="chip"; ch.textContent=p.toUpperCase(); chips.appendChild(ch);});
+    const contracts = detectContractAddresses(t.text||"");
+    for(const c of contracts){
+      const mapped = CONTRACT_MAP[c.toLowerCase()];
+      if(mapped && !present.includes(mapped)) present.push(mapped);
+    }
+    (present.length?present:["xtrends"]).forEach(p=>{ const cEl = document.createElement("span"); cEl.className="chip"; cEl.textContent = p.toUpperCase(); chips.appendChild(cEl); });
+    left.appendChild(chips);
     const priceInfo = document.createElement("div"); priceInfo.className="small";
     if(present.length){
-      const id = COINGECKO_IDS[present[0]];
-      if(marketData[id]) priceInfo.textContent = `$${Number(marketData[id].current_price).toLocaleString()} • 24h ${marketData[id].price_change_percentage_24h?.toFixed(2) || '—'}% • Vol ${Number(marketData[id].total_volume).toLocaleString()}`;
+      const candidate = present[0];
+      const id = candidate === 'polygon' ? COINGECKO_IDS.polygonCandidates[0] : COINGECKO_IDS[candidate];
+      if(market[id]) priceInfo.textContent = `$${Number(market[id].current_price).toLocaleString()} • 24h ${market[id].price_change_percentage_24h?.toFixed(2) || '—'}% • Vol ${Number(market[id].total_volume).toLocaleString()}`;
     }
-    left.appendChild(chips); left.appendChild(priceInfo);
+    left.appendChild(priceInfo);
+
     const right = document.createElement("div"); right.style.textAlign="right";
     const s = sentimentFor(t.text||"");
     const sent = document.createElement("div"); sent.className=`sentiment ${s.cls}`; sent.textContent = `${s.icon} ${s.label}`;
-    // metrics
     const metrics = document.createElement("div"); metrics.className="small"; metrics.style.marginTop="6px";
     const pm = t.public_metrics || {};
-    metrics.textContent = `❤ ${pm.like_count||0} • 🔁 ${pm.retweet_count||0} • 💬 ${pm.reply_count||0} • 🔁q ${pm.quote_count||0}`;
+    metrics.textContent = `❤ ${pm.like_count||0} • 🔁 ${pm.retweet_count||0} • 💬 ${pm.reply_count||0} • q ${pm.quote_count||0}`;
     right.appendChild(sent); right.appendChild(metrics);
 
     analytics.appendChild(left); analytics.appendChild(right);
-    twrap.appendChild(analytics);
-    grid.appendChild(twrap);
+    tw.appendChild(analytics);
+    grid.appendChild(tw);
   }
   wrap.appendChild(grid);
   return wrap;
 }
 
-/* ===== news section render ===== */
 async function renderNewsSection(){
-  const wrap = document.createElement("div"); wrap.className="section"; wrap.innerHTML=`<h2>News</h2>`;
+  const wrap = document.createElement("div"); wrap.className="section"; wrap.innerHTML = `<h2>News</h2>`;
   const content = document.createElement("div"); content.className="tweets-grid";
   if(!NEWS_API){ content.innerHTML = `<p class="small">News endpoint not configured.</p>`; wrap.appendChild(content); return wrap; }
   try{
     const r = await fetch(NEWS_API);
-    if(!r.ok){ content.innerHTML = `<p class="small">Failed to load news (${r.status})</p>`; wrap.appendChild(content); return wrap; }
+    if(!r.ok){ content.innerHTML = `<p class="small">Failed to load news (${r.status}).</p>`; wrap.appendChild(content); return wrap; }
     const items = await r.json();
     if(!Array.isArray(items) || !items.length){ content.innerHTML = `<p class="small">No news.</p>`; wrap.appendChild(content); return wrap; }
     const cards = document.createElement("div"); cards.style.display="grid"; cards.style.gridTemplateColumns="repeat(auto-fill,minmax(300px,1fr))"; cards.style.gap="12px";
     for(const it of items){
-      const card = document.createElement("a"); card.className="tweet-wrap"; card.href=it.url||"#"; card.target="_blank"; card.style.display="block";
+      const card = document.createElement("a"); card.className="tweet-wrap"; card.href = it.url||"#"; card.target="_blank"; card.style.display="block";
       card.innerHTML = `<div style="display:flex;gap:12px;align-items:center">
-        <div style="flex:1">
-          <div style="font-weight:800;color:#eaf2ff">${escapeHtml(it.title||"Untitled")}</div>
-          <div class="small" style="margin-top:6px;color:var(--muted)">${escapeHtml(it.source||"")} • ${it.publishedAt? new Date(it.publishedAt).toLocaleString() : ""}</div>
-          <div class="small" style="margin-top:8px;color:var(--muted)">${escapeHtml((it.description||"").slice(0,220))}${(it.description||"").length>220?"…":""}</div>
-        </div>
-        <div style="width:110px;height:70px;flex:0 0 110px;border-radius:8px;overflow:hidden;background:#0a0a12">
-          <img src="${it.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/>
-        </div>
+        <div style="flex:1"><div style="font-weight:800;color:#eaf2ff">${escapeHtml(it.title||"Untitled")}</div>
+        <div class="small" style="margin-top:6px;color:var(--muted)">${escapeHtml(it.source||"")} • ${it.publishedAt? new Date(it.publishedAt).toLocaleString() : ""}</div>
+        <div class="small" style="margin-top:8px;color:var(--muted)">${escapeHtml((it.description||"").slice(0,220))}${(it.description||"").length>220?"…":""}</div></div>
+        <div style="width:110px;height:70px;flex:0 0 110px;border-radius:8px;overflow:hidden;background:#0a0a12"><img src="${it.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"/></div>
       </div>`;
       cards.appendChild(card);
     }
@@ -367,75 +511,65 @@ async function renderNewsSection(){
   }catch(e){ content.innerHTML=`<p class="small">News fetch error.</p>`; wrap.appendChild(content); return wrap; }
 }
 
-/* ===== render full UI (active section first) ===== */
 async function renderAll(active="xtrends"){
   document.getElementById("status-indicator").textContent = "Updated: "+new Date().toLocaleString();
   const parent = document.getElementById("sections-grid"); parent.innerHTML = "";
   const activeEl = active === "news" ? await renderNewsSection() : await renderSectionUI(active);
   parent.appendChild(activeEl);
-  for(const s of SECTIONS){ if(s===active) continue; const el = await renderSectionUI(s); parent.appendChild(el); }
+  for(const s of SECTIONS) if(s !== active) { const el = await renderSectionUI(s); parent.appendChild(el); }
   const newsEl = await renderNewsSection(); parent.appendChild(newsEl);
   if(window.twttr && window.twttr.widgets && window.twttr.widgets.load) window.twttr.widgets.load();
-  else {
-    const script = document.createElement("script"); script.src="https://platform.twitter.com/widgets.js"; script.async=true;
-    script.onload = ()=> { if(window.twttr && window.twttr.widgets && window.twttr.widgets.load) window.twttr.widgets.load(); };
-    document.body.appendChild(script);
-  }
+  else { const script = document.createElement("script"); script.src = "https://platform.twitter.com/widgets.js"; script.async=true; script.onload=()=>{ if(window.twttr && window.twttr.widgets && window.twttr.widgets.load) window.twttr.widgets.load(); }; document.body.appendChild(script); }
   updateBudgetUI();
 }
 
-/* ===== initial boot: ensure caches exist and run initial fetch if needed (safe) ===== */
+/* ========== Initialization & loops ========== */
+let currentSection = "xtrends";
+document.querySelectorAll(".nav-item").forEach(n=>n.addEventListener("click", async (e)=>{ document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active")); n.classList.add("active"); currentSection = n.getAttribute("data-sec"); await renderAll(currentSection); }));
+
 async function initialBoot(){
   updateBudgetUI();
+  // ensure cache buckets exist (do not delete old cache)
   const cache = loadCache();
   for(const s of SECTIONS){ if(!cache[s]) saveSectionTweets(s, getSectionTweets(s)); }
+  // if no cached tweets anywhere and budget allows -> initial fetch of retweets up to 50
   let hasAny=false; for(const s of SECTIONS){ if(getSectionTweets(s).length){ hasAny=true; break; } }
   if(!hasAny && canRequest()){
-    log("Initial fetching retweeted originals (up to 50)...");
-    const originals = await fetchOnlyRetweetsFromUser(MONITORED_USERNAME,50);
+    log("Initial fetch of retweeted originals (up to 50)...");
+    const originals = await fetchOnlyRetweetsFromUser(MONITORED_USERNAME, 50);
     if(originals && originals.length) for(const t of originals){ const sec = categorizeText(t.text||""); mergeIntoSection(sec,t); }
-  } else {
-    log("Cache present or budget low; skipping heavy initial fetch.");
-  }
+  } else log("Cache present or budget low; skipping heavy initial fetch.");
   await fetchMarket();
   await renderAll(currentSection);
 }
 
-/* ===== head-check: incremental fetch for new retweets (runs every 60s but budget-protected) ===== */
-async function headCheck(){
-  if(!canRequest()) return;
-  const originals = await fetchOnlyRetweetsFromUser(MONITORED_USERNAME,5);
-  if(!originals || !originals.length) return;
-  let added=0;
-  for(const t of originals){ const sec=categorizeText(t.text||""); if(mergeIntoSection(sec,t)) added++; }
-  if(added){ log("headCheck: added", added, "new originals"); await renderAll(currentSection); }
+/* ========== head-check loop: optimized every 60s ========== */
+async function headCheckLoop(){
+  try{
+    if(!canRequest()) { log("Budget exhausted — skipping head-check"); return; }
+    // fetch only new referenced retweet ids (lightweight)
+    const newOriginals = await fetchOnlyRetweetsNew(MONITORED_USERNAME, 10);
+    if(!newOriginals || newOriginals.length === 0) { log("No new retweets detected — skipping"); return; }
+    let added = 0;
+    for(const t of newOriginals){ const sec = categorizeText(t.text||""); if(mergeIntoSection(sec,t)) added++; }
+    if(added){ log("Merged",added,"new retweeted originals"); await renderAll(currentSection); }
+  }catch(e){ err("headCheck error", e); }
 }
 
-/* ===== daily incremental (3 originals every 24h) ===== */
-async function dailyIncrement(){ if(!canRequest()) return; const originals = await fetchOnlyRetweetsFromUser(MONITORED_USERNAME,3); if(!originals) return; let added=0; for(const t of originals){ const sec=categorizeText(t.text||""); if(mergeIntoSection(sec,t)) added++; } if(added) await renderAll(currentSection); }
+/* ========== daily incremental & periodic jobs ========== */
+async function dailyIncrement(){ if(!canRequest()) return; try{ const originals = await fetchOnlyRetweetsFromUser(MONITORED_USERNAME,3); if(!originals) return; let added=0; for(const t of originals){ const sec = categorizeText(t.text||""); if(mergeIntoSection(sec,t)) added++; } if(added) await renderAll(currentSection); }catch(e){ err("daily increment",e); } }
 
-/* ===== refresh public metrics periodically (every 60s if budget) ===== */
-setInterval(()=>{ if(canRequest()) refreshPublicMetrics().catch(e=>error(e)); }, 60*1000);
-
-/* ===== schedules ===== */
+/* schedules */
 initialBoot().then(()=>{
-  setInterval(()=>{ headCheck().catch(e=>error(e)); }, 60*1000); // head-check 60s
-  setInterval(()=>{ dailyIncrement().catch(e=>error(e)); }, 24*60*60*1000); // daily increment
-  setInterval(()=>{ fetchMarket().catch(e=>error(e)); }, 7*60*1000); // coingecko every 7 min
+  setInterval(()=>{ headCheckLoop().catch(e=>err(e)); }, 60*1000);      // every 60s (optimized)
+  setInterval(()=>{ dailyIncrement().catch(e=>err(e)); }, 24*60*60*1000); // daily
+  setInterval(()=>{ fetchMarket().catch(e=>err(e)); }, 7*60*1000);       // market every 7 min
+  setInterval(()=>{ if(canRequest()) refreshPublicMetrics().catch(e=>err(e)); }, 60*1000); // metrics refresh every 60s
   log("NOLA News Space started");
-}).catch(e=>error("startup failed", e));
+}).catch(e=>err("startup failed",e));
 
-/* ===== UI wiring for nav items ===== */
-let currentSection = "xtrends";
-document.querySelectorAll(".nav-item").forEach(node=>{
-  node.addEventListener("click", async ()=>{
-    currentSection = node.getAttribute("data-sec");
-    await renderAll(currentSection);
-  });
-});
-
-/* ===== helpers ===== */
-function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+/* ========== helpers ========== */
+function detectContractAddresses(text){ const re=/0x[a-fA-F0-9]{40}/g; const found = text.match(re); return found || []; }
 </script>
 </body>
 </html>
