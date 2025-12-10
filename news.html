@@ -1,243 +1,503 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>NOL space — Crypto & X Trends</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOL space — PEN2VA Feed (Smart Dashboard)</title>
 <script src="config.js"></script>
 <link rel="icon" href="/Link/logo.gif">
 <style>
-body, html {margin:0;padding:0;font-family:Arial,sans-serif;background:#f5f6fa;color:#222;}
-header {background:#2c3e50;color:white;padding:1rem;text-align:center;display:flex;align-items:center;justify-content:center;}
-header img {width:24px;height:24px;margin-right:0.5rem;border-radius:50%;}
-#layout {display:flex;height:calc(100vh - 100px);}
-#sidebar {width:200px;background:#34495e;color:white;padding:1rem;box-sizing:border-box;}
-#sidebar h2 {font-size:1.2rem;margin:0 0 1rem 0;}
-#sidebar ul {padding:0;margin:0;list-style:none;}
-#sidebar li {padding:0.5rem 0;cursor:pointer;}
-#sidebar li:hover {text-decoration:underline;}
-#main {flex:1;overflow-y:auto;padding:1rem;}
-.section {margin-bottom:2rem;}
-.grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;}
-.card {background:white;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,0.1);padding:1rem;display:flex;flex-direction:column;}
-.meta {font-size:0.8rem;color:#555;margin:0.3rem 0;}
-.positive{color:green;}.negative{color:red;}.neutral{color:gray;}
-footer {background:#2c3e50;color:white;padding:1rem;text-align:center;}
-footer a {color:#f39c12;text-decoration:none;margin:0 0.5rem;}
+  :root{
+    --bg:#0f1724; --card:#0b1220; --glass: rgba(255,255,255,0.04);
+    --accent:#7c5cff; --muted:#9aa6b2; --good:#37b24d; --bad:#ef4444;
+    --glass-border: rgba(255,255,255,0.06);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%; margin:0; font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial; background:linear-gradient(180deg,#071021 0%, #0f1724 100%); color:#e6eef6;}
+  header{display:flex;align-items:center;gap:12px;padding:18px 24px;position:sticky;top:0;background:linear-gradient(180deg, rgba(11,18,32,0.6), rgba(11,18,32,0.35));backdrop-filter:blur(6px);border-bottom:1px solid var(--glass-border);z-index:40}
+  header img{width:36px;height:36px;border-radius:50%;object-fit:cover;box-shadow:0 6px 20px rgba(0,0,0,0.6)}
+  header h1{font-size:18px;margin:0;color:#fff;letter-spacing:0.4px}
+  #app{display:flex;height:calc(100vh - 76px);gap:18px;padding:18px}
+  nav{width:220px;padding:16px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));box-shadow:0 6px 30px rgba(0,0,0,0.6);border:1px solid var(--glass-border);height:100%;position:sticky;top:78px;overflow:auto}
+  nav h2{margin:0 0 10px 0;font-size:14px;color:var(--muted)}
+  .nav-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+  .nav-item{padding:10px 12px;border-radius:8px;color:#e6eef6;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:14px}
+  .nav-item:hover{background:linear-gradient(90deg, rgba(124,92,255,0.08), rgba(124,92,255,0.02));transform:translateY(-2px);transition:all .18s}
+  .badge{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted)}
+  main{flex:1;height:100%;overflow:auto;padding:6px}
+  .section-row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  .price-card{min-width:160px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:10px;padding:10px;border:1px solid var(--glass-border);display:flex;flex-direction:column;gap:6px}
+  .price-row{display:flex;align-items:center;gap:8px}
+  .price-row h3{margin:0;font-size:14px}
+  .price-row .small{font-size:12px;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:14px;border:1px solid var(--glass-border);box-shadow:0 10px 30px rgba(2,6,23,0.6);transition:transform .18s,box-shadow .18s}
+  .card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(2,6,23,0.7)}
+  .card .meta{font-size:12px;color:var(--muted);margin-top:8px}
+  .tweet-text{font-size:14px;line-height:1.25;color:#e6eef6}
+  .chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .chip{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);font-size:12px;color:var(--muted)}
+  .sentiment{display:inline-block;padding:4px 8px;border-radius:8px;font-weight:600}
+  .sentiment.positive{background:linear-gradient(90deg, rgba(55,178,77,0.12), rgba(55,178,77,0.06));color:var(--good)}
+  .sentiment.negative{background:linear-gradient(90deg, rgba(239,68,68,0.06), rgba(239,68,68,0.02));color:var(--bad)}
+  .sentiment.neutral{background:rgba(255,255,255,0.02);color:var(--muted)}
+  .footer-row{position:sticky;bottom:0;padding:12px;text-align:center;background:linear-gradient(180deg, rgba(11,18,32,0.02), transparent)}
+  .small-muted{font-size:12px;color:var(--muted)}
+  @media (max-width:880px){nav{display:none}#app{padding:12px} .grid{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}}
 </style>
 </head>
 <body>
-<header><img src="/Link/logo.gif" alt="NOL Logo"/><h1>NOL space</h1></header>
+  <header>
+    <img src="/Link/logo.gif" alt="NOL logo">
+    <div>
+      <h1 style="margin:0">NOL Space</h1>
+      <div style="font-size:12px;color:#9aa6b2;margin-top:4px">@PEN2VA — curated crypto & markets feed</div>
+    </div>
+  </header>
 
-<div id="layout">
-<div id="sidebar">
-<h2>Sections</h2>
-<ul>
-<li data-sec="xtrends">X Trends</li>
-<li data-sec="news">News</li>
-<li data-sec="ethereum">Ethereum</li>
-<li data-sec="polygon">Polygon</li>
-<li data-sec="solana">Solana</li>
-<li data-sec="bnb">BNB</li>
-</ul>
-</div>
+  <div id="app">
+    <nav>
+      <h2>Sections</h2>
+      <ul class="nav-list">
+        <li class="nav-item" data-sec="xtrends">X Trends <span id="count-xtrends" class="badge">0</span></li>
+        <li class="nav-item" data-sec="news">News <span id="count-news" class="badge">—</span></li>
+        <li class="nav-item" data-sec="ethereum">Ethereum <span id="count-ethereum" class="badge">0</span></li>
+        <li class="nav-item" data-sec="polygon">Polygon <span id="count-polygon" class="badge">0</span></li>
+        <li class="nav-item" data-sec="solana">Solana <span id="count-solana" class="badge">0</span></li>
+        <li class="nav-item" data-sec="bnb">BNB <span id="count-bnb" class="badge">0</span></li>
+      </ul>
 
-<div id="main"><p>Loading dashboard...</p></div>
-</div>
+      <div style="margin-top:16px">
+        <h2 style="margin-bottom:8px;font-size:13px;color:var(--muted)">Live Prices</h2>
+        <div class="price-card" id="price-area" aria-live="polite">
+          <div class="price-row"><h3>Loading prices...</h3><div style="flex:1"></div></div>
+        </div>
+      </div>
 
-<footer>
-NOLA © All Rights Reserved. 
-<a href="https://nol.pages.dev" target="_blank">Website</a> |
-<a href="https://x.com/NOLA_CHAIN" target="_blank">X</a> |
-<a href="mailto:support@nola.work.gd">Support</a>
-</footer>
+      <div style="margin-top:16px" class="small-muted">Requests left: <span id="req-left">—</span></div>
+      <div style="margin-top:8px" class="small-muted">Last fetch: <span id="last-fetch">—</span></div>
+    </nav>
+
+    <main id="main">
+      <!-- dynamic content -->
+    </main>
+  </div>
+
+  <footer style="padding:14px;text-align:center;color:var(--muted)">
+    NOLA © All rights reserved — <a href="https://nol.pages.dev" target="_blank" style="color:var(--accent)">Website</a>
+  </footer>
 
 <script>
-// ===== CONFIG =====
-const CACHE_KEY = "NOL_CACHE";
-const CACHE_DAYS = 3;
-const SECTION_KEYS = ["xtrends","ethereum","polygon","solana","bnb"];
-const X_ACCOUNT = "@PEN2VA"; // monitored account
-const MAX_TWEETS_PER_SECTION = 10;
+/* ===== CONFIG/ENV (from config.js) ===== */
+const BARRIER_KEY = window.BARRIER_KEY || null;
+const COINGECKO_KEY = window.COINGECKO || null; // optional
+const USERNAME = "PEN2VA";
 
-// Multi-chain symbols
+/* ===== SETTINGS ===== */
+const MAX_PER_SECTION = 10;
+const SECTIONS = ["xtrends","ethereum","polygon","solana","bnb"];
 const CHAINS = {
-  ethereum:["ETH","ETHEREUM"],
-  polygon:["MATIC","POL","POLYGON"],
-  solana:["SOL","SOLANA"],
-  bnb:["BNB","BINANCE"]
+  ethereum: ["ETH","ETHEREUM","$ETH","#ETH","Ξ"],
+  polygon: ["MATIC","POL","POLYGON","#MATIC"],
+  solana: ["SOL","SOLANA","#SOL"],
+  bnb: ["BNB","BINANCE","#BNB"]
 };
-
-// Coingecko IDs for live prices
-const COINS = {
-  ethereum:"ethereum",
-  polygon:"polygon",
-  solana:"solana",
-  bnb:"binancecoin"
-};
-
-// Keywords for smart categorization
+/* big smart keyword list (150+ tokens & phrases) */
 const KEYWORDS = [
-"crypto","bitcoin","btc","ethereum","eth","polygon","matic","solana","bnb","binance",
-"defi","web3","trading","stocks","investment","investing","nft","nftproject","tokens","coins",
-"elon musk","trump","federal reserve","fed","bank","official","market","rally","pump","moon",
-"dump","bear","crash","up","gain","loss","rocket","bull","bear","financial","coinbase","kraken",
-"staking","yield","liquidity","fund","venture","governance","dao","metaverse","layer1","layer2",
-"smart contract","dapp","tokenomics","airdrop","mint","hodl","decentralized","centralized",
-"treasury","satoshi","hodler","rekt","liquidation","margin","fomo","fud","whale","shill","altcoin",
-"altcoins","token","eth2","bitcoin cash","dogecoin","ripple","cardano","sol","maticnetwork",
-"crypto regulation","securities","sec","ceo","cfo","cex","dex","staking rewards","apy","apr",
-"price prediction","crypto news","financial news","trading signals","market cap","volume",
-"derivatives","futures","options","stablecoin","usdt","usdc","coin listing","token launch","ico",
-"ieo","crypto adoption","nft marketplace","degen","gaming","play to earn","p2e","layer2 scaling",
-"cross chain","bridge","validator","node","blockchain protocol","gas fee","tx fee","oracle",
-"price feed","market data","on chain","off chain","cex listing","burn","tokenomics event","airdrops",
-"portfolio","rebalancing","financial literacy","institutional investor","crypto ETF","bitcoin ETF"
+  "crypto","bitcoin","btc","ethereum","eth","solana","sol","polygon","matic","bnb","binance",
+  "defi","web3","nft","nfts","nftdrop","airdrop","staking","yield","yield farming","liquidity",
+  "exchange","dex","cex","coinbase","kraken","binance","futures","options","margin","leverage",
+  "trading","trader","pump","dump","moon","hodl","rekt","whale","shill","moonshot","rugpull",
+  "elon","musk","trump","federal reserve","fed","sec","nasdaq","stock market","stocks","investment",
+  "investing","investor","institutional","etf","bitcoin etf","halving","merge","ethereummarge","l2","layer2",
+  "bridge","crosschain","oracle","chainlink","price feed","gas fee","tx fee","smart contract","audit",
+  "tokenomics","airdrops","opensea","magic eden","marketcap","market cap","volume","onchain","on-chain",
+  "offchain","burn","burned","supply","circulating","total supply","token launch","ico","ido","nft mint",
+  "governance","dao","governance token","staking rewards","apy","apr","staking pool","liquid staking",
+  "validator","node","rpc","rpc node","bridge exploit","hack","exploit","vulnerability","security",
+  "regulation","compliance","tax","taxation","crypto law","sec lawsuit","bankruptcy","bank run","bank",
+  "fed policy","interest rate","inflation","deflation","monetary policy","treasury","cpi","gdp",
+  "macro","macro news","macroeconomics","institutional buyer","market maker","iceberg order",
+  "tradingview","chart","candles","pattern","support","resistance","breakout","liquidity pool",
+  "yield aggregator","curve","aave","compound","uni","uniswap","sushiswap","pancakeswap","pancake",
+  "token","tokens","altcoin","altcoins","doge","shiba","pepe","meme coin","memecoins","gamefi","p2e",
+  "play to earn","gaming nft","metaverse","sandbox","decentraland","op","optimism","arbitrum","zkrollup",
+  "zk","zkproof","zk-snark","zk-rollup","rollup","privacy","layer1","layer 1","layer 2","evm","evm compatible",
+  "rpc","gas","validator","staking rewards","liquid staking","staking yield","stablecoin","usdt","usdc",
+  "tether","usd coin","central bank","central bank digital currency","cbdc"
 ];
 
-// Sentiment analysis
-function estimateSentiment(txt){
-  txt = txt.toLowerCase();
-  if(/pump|moon|up|gain|rocket/.test(txt)) return {label:"Bullish",class:"positive",icon:"🚀"};
-  if(/dump|down|crash|bear|loss/.test(txt)) return {label:"Bearish",class:"negative",icon:"📉"};
-  return {label:"Neutral",class:"neutral",icon:"•"};
-}
+/* ===== Coingecko coin mapping (IDs) ===== */
+const COIN_IDS = { ethereum:"ethereum", polygon:"polygon", solana:"solana", bnb:"binancecoin" };
 
-// ===== CACHE =====
-function getCache(){
-  let d = localStorage.getItem(CACHE_KEY);
-  if(!d) return {};
-  try { d = JSON.parse(d); } catch(e){ return {}; }
-  // remove old caches
-  const now = Date.now();
-  Object.keys(d).forEach(k=>{
-    if((now - d[k].time)/(1000*60*60*24) > CACHE_DAYS) delete d[k];
-  });
-  return d;
-}
+/* ===== BUDGET (protect X quota) ===== */
+const MONTHLY_LIMIT = 100; // your known monthly limit
+const BUDGET_KEY = "NOL_REQ_BUDGET";
+/* budget object: {firstTs:ms, used:int} */
 
-function saveCache(cache){
-  localStorage.setItem(CACHE_KEY,JSON.stringify(cache));
-}
+/* ===== CACHE (per-section) =====
+   stored under key NOL_CACHE with shape:
+   { sectionName: { time: ms, tweets: [ {id,text,created_at,author_id,...,price?} ] }, ... }
+================================ */
+const CACHE_KEY = "NOL_CACHE_V2";
+const CACHE_LIFETIME_DAYS = 3;
 
-function getSectionCache(section){
-  const cache = getCache();
-  return cache[section]?.tweets || [];
-}
+/* ===== STATE ===== */
+let currentSection = "xtrends";
+let userId = null;
 
-function saveSectionCache(section,tweets){
-  const cache = getCache();
-  cache[section] = {tweets,time:Date.now()};
-  saveCache(cache);
-}
+/* ===== UTILITIES & LOGGING ===== */
+function log(...args){ console.debug("[NOL]", ...args); }
+function error(...args){ console.error("[NOL]", ...args); }
+function now(){ return Date.now(); }
 
-// ===== FETCH X TWEETS =====
-async function fetchXAccountTweets(){
+/* ===== Budget helpers ===== */
+function loadBudget(){
   try{
-    const bearer = window.BARRIER_KEY;
-    if(!bearer){ console.error("BARRIER_KEY missing"); return []; }
-    const url = `https://api.x.com/2/tweets?ids=${X_ACCOUNT}&tweet.fields=created_at,author_id`;
-    const res = await fetch(url,{headers:{"Authorization":`Bearer ${bearer}`}});
-    const data = await res.json();
-    return data.data || [];
-  } catch(e){ console.error(e); return []; }
+    const raw=localStorage.getItem(BUDGET_KEY);
+    if(!raw){ const b={firstTs:now(),used:0}; localStorage.setItem(BUDGET_KEY,JSON.stringify(b)); return b; }
+    const b=JSON.parse(raw);
+    // reset after 30 days
+    if(now()-b.firstTs > 30*24*60*60*1000){ const nb={firstTs:now(),used:0}; localStorage.setItem(BUDGET_KEY,JSON.stringify(nb)); return nb; }
+    return b;
+  }catch(e){ const b={firstTs:now(),used:0}; localStorage.setItem(BUDGET_KEY,JSON.stringify(b)); return b; }
 }
+function canRequest(){
+  const b=loadBudget();
+  return b.used < MONTHLY_LIMIT;
+}
+function recordRequest(){
+  const b=loadBudget(); b.used = (b.used||0)+1; localStorage.setItem(BUDGET_KEY,JSON.stringify(b)); updateBudgetUI(); return b;
+}
+function updateBudgetUI(){ const b=loadBudget(); const left = Math.max(0, MONTHLY_LIMIT - (b.used||0)); document.getElementById("req-left").textContent = left; document.getElementById("last-fetch").textContent = b.firstTs? new Date(b.firstTs).toLocaleString() : "—"; }
 
-// ===== FETCH COIN PRICE =====
-async function fetchCoinPrice(coin){
-  if(!COINGECKO) return null;
+/* ===== Cache helpers ===== */
+function loadCache(){
   try{
-    const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coin}&vs_currencies=usd`);
-    const data = await res.json();
-    return data[coin]?.usd || null;
-  } catch(e){ console.error("Coingecko error",e); return null; }
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(!raw) return {};
+    const obj = JSON.parse(raw);
+    // prune expired sections
+    const nowTs = now();
+    Object.keys(obj).forEach(sec=>{
+      if((nowTs - obj[sec].time) > CACHE_LIFETIME_DAYS*24*60*60*1000) delete obj[sec];
+    });
+    return obj;
+  }catch(e){ return {}; }
+}
+function saveCache(obj){ localStorage.setItem(CACHE_KEY, JSON.stringify(obj)); }
+function getSectionTweets(sec){ const c = loadCache(); return (c[sec] && Array.isArray(c[sec].tweets))? c[sec].tweets : []; }
+function saveSectionTweets(sec, tweets){
+  const c = loadCache(); c[sec] = { time: now(), tweets: tweets.slice(0, MAX_PER_SECTION) }; saveCache(c);
+  // update counters
+  document.getElementById("count-"+sec).textContent = (tweets||[]).length;
 }
 
-// ===== CATEGORIZE TWEETS =====
-function categorizeTweet(tweet){
-  const txt = tweet.text.toLowerCase();
-  for(const chain in CHAINS){
-    if(CHAINS[chain].some(sym=>txt.includes(sym.toLowerCase()))) return chain;
+/* ===== Render helpers ===== */
+function makeChip(text){ return `<span class="chip">${escapeHtml(text)}</span>`; }
+function escapeHtml(s){ return String(s||"").replace(/[&<>"']/g, (m)=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+function sentimentFor(text){
+  const t=text.toLowerCase();
+  if(/pump|moon|gain|rocket|rally|bull|hodl/.test(t)) return {cls:'positive',label:'Bullish',icon:'🚀'};
+  if(/dump|crash|down|bear|sell|loss|liquidation/.test(t)) return {cls:'negative',label:'Bearish',icon:'📉'};
+  return {cls:'neutral',label:'Neutral',icon:'•'};
+}
+
+/* ===== X API: resolve user id then fetch tweets ===== */
+async function apiFetch(url, opts){
+  if(!canRequest()){ log("Request budget exhausted — skipping API call"); return null; }
+  try{
+    const res = await fetch(url, opts);
+    recordRequest();
+    log("API", res.status, url);
+    if(!res.ok){
+      const txt = await res.text().catch(()=>null);
+      error("API error", res.status, txt);
+      return null;
+    }
+    const j = await res.json().catch(()=>null);
+    return j;
+  }catch(e){ error("Network/API fetch failed", e); return null; }
+}
+
+async function resolveUserId(){
+  if(userId) return userId;
+  if(!BARRIER_KEY){ error("Missing BARRIER_KEY (config.js)"); return null; }
+  const cached = loadCache();
+  if(cached.__meta__ && cached.__meta__.userId) { userId = cached.__meta__.userId; return userId; }
+  const url = `https://api.x.com/2/users/by/username/${USERNAME}`;
+  const j = await apiFetch(url, { headers: { "Authorization": `Bearer ${BARRIER_KEY}` }});
+  if(j && j.data && j.data.id){ userId = j.data.id; cached.__meta__ = cached.__meta__||{}; cached.__meta__.userId = userId; saveCache(cached); return userId; }
+  return null;
+}
+
+async function fetchLatestTweets(limit=25){
+  const uid = await resolveUserId();
+  if(!uid) return [];
+  // prefer recent tweets endpoint; include text & created_at
+  const url = `https://api.x.com/2/users/${uid}/tweets?max_results=${Math.min(100,Math.max(5,limit))}&tweet.fields=created_at,text,public_metrics`;
+  const j = await apiFetch(url, { headers: { "Authorization": `Bearer ${BARRIER_KEY}` }});
+  return (j && j.data) ? j.data : [];
+}
+
+/* ===== Categorization (very smart) ===== */
+function categorizeText(text){
+  const t = (text||"").toUpperCase();
+  // check chain cashtags/hashtags/symbols/emojis
+  for(const sec of Object.keys(CHAINS)){
+    for(const k of CHAINS[sec]){
+      if(t.includes(k.toUpperCase())) return sec;
+    }
   }
-  // check keywords for xtrends
+  // check big keywords (words and phrases)
   for(const kw of KEYWORDS){
-    if(txt.includes(kw.toLowerCase())) return "xtrends";
+    if(t.includes(kw.toUpperCase())) return "xtrends";
   }
+  // check cashtags $TICKER pattern e.g. $BTC $ETH
+  if(/\$\w{2,6}/.test(text)) return "xtrends";
+  // fallback
   return "xtrends";
 }
 
-// ===== MERGE NEW TWEETS =====
-function mergeTweet(section,tweet){
-  const tweets = getSectionCache(section);
-  if(tweets.some(t=>t.id===tweet.id)) return;
-  tweets.unshift(tweet);
-  if(tweets.length>MAX_TWEETS_PER_SECTION) tweets.pop();
-  saveSectionCache(section,tweets);
+/* ===== Merge logic: keep unique, limit to MAX_PER_SECTION, remove oldest on overflow ===== */
+function mergeIntoSection(section, tweet){
+  if(!tweet || !tweet.id) return false;
+  const tweets = getSectionTweets(section);
+  if(tweets.find(t=>t.id===tweet.id)) return false; // already present
+  tweets.unshift(tweet); // newest front
+  if(tweets.length>MAX_PER_SECTION) tweets.splice(MAX_PER_SECTION); // keep top N
+  saveSectionTweets(section, tweets);
+  return true;
 }
 
-// ===== ADD PRICES TO TWEETS =====
-async function addPricesToTweets(section){
-  const tweets = getSectionCache(section);
-  for(const tweet of tweets){
-    for(const chain in CHAINS){
-      if(CHAINS[chain].some(sym=>tweet.text.toUpperCase().includes(sym))){
-        tweet.price = await fetchCoinPrice(COINS[chain]);
-      }
-    }
-  }
-  saveSectionCache(section,tweets);
+/* ===== Price & sparkline helpers ===== */
+async function fetchPrices(){
+  // No api key needed for simple price endpoint; we still honor COINGECKO var if present
+  const ids = Object.values(COIN_IDS || COIN_IDS) || Object.values(COIN_IDS);
+  const url = `https://api.coingecko.com/api/v3/simple/price?ids=ethereum,polygon,solana,binancecoin&vs_currencies=usd&include_24hr_change=true`;
+  try{
+    const r = await fetch(url);
+    if(!r.ok) { error("Coingecko status", r.status); return {}; }
+    const j = await r.json();
+    return j || {};
+  }catch(e){ error("Coingecko fetch failed", e); return {}; }
 }
-
-// ===== RENDER =====
-function renderSection(section){
-  const tweets = getSectionCache(section);
-  if(!tweets.length) return `<div class="section"><h2>${section.toUpperCase()}</h2><p>No tweets.</p></div>`;
-  return `<div class="section"><h2>${section.toUpperCase()}</h2><div class="grid">
-  ${tweets.map(t=>{
-    const s = estimateSentiment(t.text);
-    const priceHtml = t.price ? `<div class="meta">Price: $${t.price}</div>` : "";
-    return `<div class="card"><h3>${s.icon} ${t.text}</h3>${priceHtml}<div class="meta ${s.class}">Sentiment: ${s.label}</div></div>`;
-  }).join("")}
-  </div></div>`;
+async function fetchSparkline(id){
+  // 24h sparkline small
+  try{
+    const r = await fetch(`https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=1&interval=hourly`);
+    if(!r.ok) return null;
+    const j = await r.json();
+    return (j.prices||[]).map(p=>p[1]);
+  }catch(e){ return null; }
 }
-
-function renderNews(){ return `<div class="section"><h2>📰 News</h2><p>Soon</p></div>`; }
-
-// ===== LOAD SECTION =====
-async function loadSection(section){
-  const main = document.getElementById("main");
-  main.innerHTML="<p>Loading...</p>";
-
-  const liveTweets = await fetchXAccountTweets();
-  liveTweets.forEach(tweet=>{
-    const sec = categorizeTweet(tweet);
-    mergeTweet(sec,tweet);
+function drawSparkline(canvas, data){
+  if(!canvas || !data || !data.length) return;
+  const ctx = canvas.getContext("2d");
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const max=Math.max(...data), min=Math.min(...data);
+  ctx.beginPath();
+  data.forEach((v,i)=>{
+    const x = (i/(data.length-1))*w;
+    const y = h - ((v-min)/(max-min||1))*h;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
   });
-
-  if(section==="news") main.innerHTML = renderNews();
-  else main.innerHTML = renderSection(section);
+  ctx.strokeStyle = "rgba(124,92,255,0.95)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
-// ===== AUTO REFRESH =====
-setInterval(async()=>{
-  for(const sec of SECTION_KEYS){
-    const liveTweets = await fetchXAccountTweets();
-    liveTweets.forEach(tweet=>{
-      const secCat = categorizeTweet(tweet);
-      mergeTweet(secCat,tweet);
-    });
-    await addPricesToTweets(sec);
-  }
-  if(currentSection) loadSection(currentSection);
-},24*60*60*1000); // 24h
+/* ===== UI rendering for sections and cards ===== */
+function renderCard(tweet, section, price){
+  const text = tweet.text || "";
+  const s = sentimentFor(text);
+  const created = tweet.created_at ? new Date(tweet.created_at).toLocaleString() : "";
+  const metrics = tweet.public_metrics ? ` • ${tweet.public_metrics.retweet_count || 0} RTs` : "";
+  const priceHtml = price ? `<div class="meta small-muted">Price: $${Number(price).toLocaleString()}</div>` : "";
+  return `
+    <div class="card" data-id="${tweet.id}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;color:#cfe3ff">${escapeHtml(text)}</div>
+        <div style="text-align:right">
+          <div class="sentiment ${s.cls}">${s.icon} ${s.label}</div>
+          <div class="meta" style="margin-top:6px">${created}${metrics}</div>
+        </div>
+      </div>
+      ${priceHtml}
+    </div>
+  `;
+}
 
-let currentSection = "xtrends";
-document.querySelectorAll("#sidebar li").forEach(li=>{
-  li.addEventListener("click",()=>{ currentSection=li.getAttribute("data-sec"); loadSection(currentSection); });
+async function renderSectionUI(section){
+  const area = document.createElement("div");
+  area.className = "section";
+  const tweets = getSectionTweets(section);
+  if(!tweets.length){
+    area.innerHTML = `<h2 style="margin:0 0 8px 0">${section.toUpperCase()}</h2><p class="small-muted">No tweets yet</p>`;
+    return area;
+  }
+  // for coin sections, fetch price for the coin once
+  let price = null;
+  if(COIN_IDS[section]) price = (await fetchPrices())[COIN_IDS[section]]?.usd || null;
+  let html = `<h2 style="margin:0 0 8px 0">${section.toUpperCase()}</h2><div class="grid">`;
+  for(const t of tweets){
+    // attach price if coin mentioned specifically
+    let cardPrice = price;
+    html += renderCard(t, section, cardPrice);
+  }
+  html += "</div>";
+  area.innerHTML = html;
+  return area;
+}
+
+/* ===== Top-level render main view ===== */
+async function renderMain(section){
+  const main = document.getElementById("main");
+  main.innerHTML = ""; // clear
+  // top row: prices header
+  const prices = await fetchPrices();
+  const priceRow = document.createElement("div"); priceRow.className = "section-row";
+  const coins = ["ethereum","polygon","solana","binancecoin"];
+  for(const coin of coins){
+    const priceObj = prices[coin];
+    const priceVal = priceObj ? priceObj.usd : null;
+    const change = priceObj ? priceObj.usd_24h_change : null;
+    const pc = document.createElement("div"); pc.className="price-card";
+    pc.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <strong style="font-size:14px">${coin.toUpperCase()}</strong>
+      <div style="flex:1"></div>
+      <div class="${change>=0?'positive':'negative'}" style="font-weight:600">${priceVal?('$'+Number(priceVal).toLocaleString()):'—'}</div>
+    </div>
+    <div class="small-muted">24h ${change? (change>=0?'+':'')+change.toFixed(2)+'%':'—'}</div>
+    <canvas width="160" height="40" data-coin="${coin}" style="margin-top:8px;border-radius:6px;background:transparent"></canvas>`;
+    priceRow.appendChild(pc);
+  }
+  main.appendChild(priceRow);
+
+  // draw sparklines
+  for(const canvas of main.querySelectorAll("canvas[data-coin]")){
+    const coin = canvas.getAttribute("data-coin");
+    const id = (coin==="binancecoin" ? "binancecoin" : coin);
+    fetchSparkline(id).then(data=>{ if(data) drawSparkline(canvas, data); });
+  }
+
+  // render requested section first, then show other sections below
+  const selectedArea = await renderSectionUI(section);
+  main.appendChild(selectedArea);
+
+  // Also show small previews of other sections
+  const others = SECTIONS.filter(s=>s!==section);
+  for(const s of others){
+    const el = await renderSectionUI(s);
+    main.appendChild(el);
+  }
+
+  // update counters UI
+  for(const s of SECTIONS){
+    document.getElementById("count-"+s).textContent = getSectionTweets(s).length;
+  }
+}
+
+/* ===== Main flow: initial boot, merging, polling ===== */
+async function initialBoot(){
+  updateBudgetUI();
+  // ensure all section caches exist
+  const cached = loadCache();
+  for(const s of SECTIONS){
+    if(!cached[s]) saveSectionTweets(s, []);
+  }
+
+  // Initial full fetch if nothing cached at all
+  let hasAny = false;
+  for(const s of SECTIONS){ if(getSectionTweets(s).length) { hasAny = true; break; } }
+  if(!hasAny && canRequest()){
+    log("Initial fetch — no cached tweets, fetching up to 50 tweets");
+    const tweets = await fetchLatestTweets(50);
+    if(tweets && tweets.length){
+      for(const t of tweets){
+        const sec = categorizeText(t.text || "");
+        mergeIntoSection(sec, t);
+      }
+    } else log("Initial fetch returned no tweets");
+  } else {
+    log("Cache present, skipping initial heavy fetch");
+  }
+
+  // render UI
+  await renderMain(currentSection);
+}
+
+/* ===== head-check loop: lightweight incremental checks for new tweets =====
+   - runs every 60s but only executes API call if budget allows
+   - fetches latest 5 tweets and merges newly-seen ones
+*/
+let headCheckTimer = null;
+async function headCheck(){
+  if(!canRequest()) { log("Budget exhausted — skipping head check"); return; }
+  log("Head-check: fetching latest 5 tweets");
+  const tweets = await fetchLatestTweets(5);
+  if(!tweets || !tweets.length) return;
+  let mergedCount = 0;
+  for(const t of tweets){
+    const sec = categorizeText(t.text || "");
+    const merged = mergeIntoSection(sec, t);
+    if(merged) mergedCount++;
+  }
+  if(mergedCount>0){ log("Merged", mergedCount, "new tweets"); await renderMain(currentSection); }
+}
+function startHeadChecks(){
+  if(headCheckTimer) clearInterval(headCheckTimer);
+  headCheckTimer = setInterval(()=>{ headCheck().catch(e=>error(e)); }, 60*1000); // every 60s
+  // run once immediately (but only if budget)
+  headCheck().catch(e=>error(e));
+}
+
+/* ===== daily incremental fetch (3 tweets) to ensure growth after initial period ===== */
+let dailyTimer = null;
+async function dailyIncrement(){
+  if(!canRequest()) return;
+  log("Daily incremental: fetching 3 tweets");
+  const tweets = await fetchLatestTweets(3);
+  if(!tweets || !tweets.length) return;
+  let added=0;
+  for(const t of tweets){
+    const sec = categorizeText(t.text || "");
+    if(mergeIntoSection(sec, t)) added++;
+  }
+  if(added) renderMain(currentSection);
+}
+function startDailyIncrement(){
+  // schedule every 24h, run once after 30s
+  dailyIncrement().catch(e=>error(e));
+  dailyTimer = setInterval(()=>dailyIncrement().catch(e=>error(e)), 24*60*60*1000);
+}
+
+/* ===== UI wiring for nav clicks ===== */
+document.querySelectorAll(".nav-item").forEach(node=>{
+  node.addEventListener("click", async (ev)=>{
+    const sec = node.getAttribute("data-sec");
+    currentSection = sec;
+    await renderMain(sec);
+  });
 });
 
-// Initial load
-loadSection(currentSection);
+/* ===== setInterval for prices (15s refresh) and re-render header sparklines ===== */
+setInterval(async ()=>{
+  // refresh price header canvas and price values while keeping content
+  // simple approach: re-render main for currentSection (fast)
+  try{ await renderMain(currentSection); } catch(e){ error("price refresh error", e); }
+}, 15000);
+
+/* ===== start everything ===== */
+initialBoot().then(()=>{
+  startHeadChecks();
+  startDailyIncrement();
+  updateBudgetUI();
+  log("NOL dashboard started");
+}).catch(e=>error("Initial boot failed", e));
+
 </script>
 </body>
 </html>
