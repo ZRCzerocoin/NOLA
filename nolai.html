@@ -1,176 +1,486 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NOL AI Market Dashboard</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOL AI · Markets Dashboard</title>
 <style>
-:root {
-  --purple-start: #8a5cff;
-  --purple-end: #2ea0ff;
-  --bg-glass: rgba(10,10,20,0.6);
-  --text-muted: rgba(255,255,255,0.6);
-  --white-glow: rgba(255,255,255,0.12);
-}
+  :root{
+    --purple-start:#8a5cff;
+    --purple-end:#5ac6ff;
+    --bg-1:#05050a;
+    --glass: rgba(10,10,20,0.45);
+    --muted: rgba(255,255,255,0.65);
+    --card-border: rgba(255,255,255,0.06);
+    --accent-glow: rgba(138,92,255,0.14);
+    --success: #2ecc71;
+    --danger: #ff6b6b;
+  }
 
-body {
-  margin: 0;
-  font-family: "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(145deg, #0b0b12, #05050a);
-  color: #fff;
-}
+  /* Page */
+  html,body{height:100%;margin:0;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(138,92,255,0.05), transparent),
+    linear-gradient(180deg,var(--bg-1),#060511);font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#fff;}
+  .wrap{max-width:1200px;margin:28px auto;padding:20px;display:grid;grid-template-columns: 360px 1fr;gap:22px;align-items:start;}
 
-.dashboard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-  gap: 40px;
-}
+  /* Left column */
+  .left {
+    display:flex;flex-direction:column;gap:18px;
+  }
 
-/* NOL AI Widget */
-.nola-ai {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 20px;
-  border-radius: 16px;
-  background: var(--bg-glass);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--white-glow);
-  box-shadow: 0 4px 20px rgba(138,92,255,0.2), 0 0 40px rgba(46,160,255,0.1);
-  width: 200px;
-}
+  .panel{
+    border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid var(--card-border);backdrop-filter: blur(8px);padding:14px;box-shadow: 0 6px 30px var(--accent-glow);
+  }
 
-.robot {
-  width: 120px;
-  height: 120px;
-  position: relative;
-  animation: robotFloat 5s ease-in-out infinite;
-}
+  h2{margin:0 0 6px 0;font-size:18px;color:var(--muted);font-weight:600}
+  .nola-title{display:flex;align-items:center;gap:12px}
+  .nola-title .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800;color:#fff;box-shadow:0 6px 22px rgba(90,198,255,0.08)}
+  .nola-sub{font-size:13px;color:var(--muted)}
 
-.robot svg {
-  width: 100%;
-  height: 100%;
-}
+  /* NOL AI widget */
+  .nola-ai{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02));border:1px solid rgba(255,255,255,0.02);width:100%}
+  .robot{width:140px;height:140px;display:block;margin:0 auto;filter:drop-shadow(0 8px 30px rgba(90,198,255,0.06));transform-origin:center}
+  .soon{font-weight:800;background:linear-gradient(90deg,var(--purple-start),var(--purple-end));-webkit-background-clip:text;color:transparent;font-size:20px;letter-spacing:0.6px}
 
-.head {
-  animation: headTilt 6s ease-in-out infinite;
-  transform-origin: 50% 50%;
-  filter: drop-shadow(0 0 4px var(--purple-start));
-}
+  /* Major cards */
+  .majors{display:flex;flex-direction:column;gap:12px}
+  .major-card{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--card-border)}
+  .major-left{display:flex;flex-direction:column;gap:6px}
+  .coin-name{font-weight:700;font-size:16px}
+  .coin-price{font-size:15px;color:var(--muted)}
+  .coin-stats{margin-left:auto;text-align:right}
+  .coin-price-big{font-weight:800;font-size:18px}
+  .chg{font-weight:700;padding:6px 8px;border-radius:10px;font-size:13px}
 
-.eye {
-  transform-origin: 50% 50%;
-  animation: eyeWander 5s cubic-bezier(.45,.05,.55,.95) infinite;
-}
+  /* Right column - market lists */
+  .right {display:flex;flex-direction:column;gap:18px}
+  .lists{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .list-title{font-size:13px;color:var(--muted);margin-bottom:8px}
+  .list {display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);min-height:140px}
+  .coin-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;transition:transform .12s}
+  .coin-row:hover{transform:translateY(-4px)}
+  .coin-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
+  .chain-badge{width:18px;height:18px;border-radius:4px;display:grid;place-items:center;font-size:10px;font-weight:700;margin-left:6px}
+  .meta{display:flex;flex-direction:column}
+  .meta .nm{font-weight:700}
+  .meta .sym{font-size:12px;color:var(--muted)}
+  .stats{margin-left:auto;text-align:right}
+  .stat-price{font-weight:700}
+  .stat-change{font-size:13px;margin-top:4px}
 
-.soon {
-  font-weight: 900;
-  font-size: 20px;
-  opacity: 0;
-  transform: translateY(10px);
-  background: linear-gradient(90deg, var(--purple-start), var(--purple-end));
-  -webkit-background-clip: text;
-  color: transparent;
-  animation: textAppear 5s ease-in-out infinite;
-}
+  /* full-width lists (below) */
+  .big-list{grid-column: 1 / -1;display:flex;gap:12px;flex-wrap:wrap}
+  .big-card{flex:1 1 calc(25% - 12px);min-width:220px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);}
 
-/* Market Cards */
-.market-container {
-  display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+  /* small helpers */
+  .muted{color:var(--muted);font-size:13px}
+  .green{color:var(--success)}
+  .red{color:var(--danger)}
+  .loader{width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--purple-start);animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
 
-.market-card {
-  background: var(--bg-glass);
-  border-radius: 16px;
-  padding: 16px;
-  min-width: 220px;
-  max-width: 220px;
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--white-glow);
-  box-shadow: 0 4px 20px rgba(138,92,255,0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.market-card h4 {
-  margin: 0;
-  font-size: 18px;
-  color: #fff;
-}
-
-.market-card p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 14px;
-}
-
-/* Animations */
-@keyframes robotFloat {0%,100%{transform:translateY(0px);}50%{transform:translateY(-6px);}}
-@keyframes headTilt {0%,100%{transform:rotate(-1deg);}30%{transform:rotate(2deg);}60%{transform:rotate(-2deg);}}
-@keyframes eyeWander {0%,100%{transform:translate(0,0);}20%{transform:translate(4px,-2px);}40%{transform:translate(-3px,3px);}60%{transform:translate(5px,2px);}80%{transform:translate(-2px,-3px);}}
-@keyframes textAppear {0%,100%{opacity:0;transform:translateY(8px);}25%,60%{opacity:1;transform:translateY(0);}}
+  /* responsive */
+  @media (max-width:980px){.wrap{grid-template-columns:1fr;}.big-card{flex:1 1 calc(50% - 12px);}}
+  @media (max-width:560px){.lists{grid-template-columns:1fr}.big-card{flex:1 1 100%;}}
 </style>
 </head>
 <body>
 
-<div class="dashboard">
-  <h3>NOL AI</h3>
-  <div class="nola-ai">
-    <div class="robot">
-      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="g1" x1="0" x2="1">
-            <stop offset="0" stop-color="var(--purple-start)"/>
-            <stop offset="1" stop-color="var(--purple-end)"/>
-          </linearGradient>
-        </defs>
-        <g class="head">
-          <rect x="12" y="18" rx="14" ry="14" width="96" height="72" fill="url(#g1)" opacity="0.18"/>
-          <rect x="22" y="28" rx="10" ry="10" width="76" height="52" fill="#0b0b12" stroke="rgba(255,255,255,0.08)"/>
-          <g class="eye">
-            <circle cx="44" cy="52" r="7" fill="#fff"/>
-            <circle cx="76" cy="52" r="7" fill="#fff"/>
-            <circle cx="44" cy="52" r="3.2" fill="#0b0720"/>
-            <circle cx="76" cy="52" r="3.2" fill="#0b0720"/>
-          </g>
-          <rect x="46" y="76" width="28" height="7" rx="4" fill="rgba(255,255,255,0.07)"/>
-        </g>
-      </svg>
+<div class="wrap">
+  <!-- LEFT: Branding + NOL AI + Majors -->
+  <div class="left">
+    <div class="panel nola-top">
+      <div class="nola-title">
+        <div class="logo">N</div>
+        <div>
+          <div style="font-weight:800">NOL AI Market</div>
+          <div class="nola-sub">Real-time markets · ETH · BSC · Polygon focus</div>
+        </div>
+        <div style="margin-left:auto" id="updateTime" class="muted">—</div>
+      </div>
     </div>
-    <div class="soon">NOL AI Soon</div>
+
+    <div class="panel nola-ai">
+      <div class="robot" aria-hidden="true">
+        <!-- smooth robot (enhanced) -->
+        <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rgrad" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient>
+          </defs>
+          <g class="head" transform="translate(10,8)">
+            <rect x="10" y="10" rx="16" ry="16" width="120" height="88" fill="url(#rgrad)" opacity="0.14"/>
+            <rect x="20" y="20" rx="10" ry="10" width="100" height="68" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
+            <g class="eye" transform="translate(0,0)">
+              <g transform="translate(22,28)">
+                <circle cx="12" cy="12" r="12" fill="#fff"/>
+                <circle cx="12" cy="12" r="5" fill="#080612"/>
+              </g>
+              <g transform="translate(82,28)">
+                <circle cx="12" cy="12" r="12" fill="#fff"/>
+                <circle cx="12" cy="12" r="5" fill="#080612"/>
+              </g>
+            </g>
+            <rect x="54" y="68" width="32" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+          </g>
+        </svg>
+      </div>
+      <div class="soon">NOL AI Soon</div>
+    </div>
+
+    <div class="panel majors">
+      <h2>Major Markets</h2>
+
+      <!-- Major: Ethereum -->
+      <div class="major-card" id="major-ethereum">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" id="eth-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800">
+            <svg width="24" height="24" viewBox="0 0 256 417" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M127.6 0L124 11v275.1l3.6 3.6 127.5-73.8z"/><path fill="#fff" d="M127.6 0L0 216.9l127.6 73.8V153.1z"/><path fill="#fff" d="M127.6 309.6l-1.1 1.4v103.8l1.1 1 127.8-179.6z"/><path fill="#fff" d="M127.6 415.8V309.6L0 236.2z"/></svg>
+          </div>
+          <div class="major-left">
+            <div class="coin-name">Ethereum <span class="muted" style="font-weight:600"> (ETH)</span></div>
+            <div class="coin-price muted">Smart-contract platform</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="eth-stats">
+          <div class="coin-price-big" id="eth-price">$—</div>
+          <div class="chg" id="eth-chg" style="margin-top:6px">—</div>
+        </div>
+      </div>
+
+      <!-- Major: BNB -->
+      <div class="major-card" id="major-bnb">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" id="bnb-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#f3ba2f,#f9e79f);display:grid;place-items:center;font-weight:800">
+            <svg width="24" height="24" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M16 12.4L9.6 8 16 4l6.4 4z"/><path fill="#fff" d="M16 27l-6.4-4L16 19l6.4 4z"/><path fill="#fff" d="M12.8 16l-2.4-1.6L8 16l2.4 1.6zM24 16l-2.4-1.6L19.2 16 21.6 17.6z"/></svg>
+          </div>
+          <div class="major-left">
+            <div class="coin-name">BNB <span class="muted" style="font-weight:600"> (BNB)</span></div>
+            <div class="coin-price muted">Binance chain native</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="bnb-stats">
+          <div class="coin-price-big" id="bnb-price">$—</div>
+          <div class="chg" id="bnb-chg">—</div>
+        </div>
+      </div>
+
+      <!-- Major: Polygon (MATIC) -->
+      <div class="major-card" id="major-polygon">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" id="matic-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#8247e5,#3ad1ff);display:grid;place-items:center;font-weight:800">
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M12 2L2 8v8l10 6 10-6V8z"/></svg>
+          </div>
+          <div class="major-left">
+            <div class="coin-name">Polygon <span class="muted" style="font-weight:600"> (MATIC)</span></div>
+            <div class="coin-price muted">Layer-2 & sidechain</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="matic-stats">
+          <div class="coin-price-big" id="matic-price">$—</div>
+          <div class="chg" id="matic-chg">—</div>
+        </div>
+      </div>
+    </div><!-- majors -->
   </div>
 
-  <div class="market-container" id="markets"></div>
+  <!-- RIGHT: Market lists -->
+  <div class="right">
+    <div class="panel lists">
+      <!-- Top Gainers -->
+      <div>
+        <div class="list-title">Top Gainers (24h)</div>
+        <div class="list" id="gainers"> <div class="loader"></div> </div>
+      </div>
+
+      <!-- Top Losers -->
+      <div>
+        <div class="list-title">Top Losers (24h)</div>
+        <div class="list" id="losers"> <div class="loader"></div> </div>
+      </div>
+
+      <!-- Top Movers (abs % change) -->
+      <div>
+        <div class="list-title">Top Movers (24h)</div>
+        <div class="list" id="movers"> <div class="loader"></div> </div>
+      </div>
+
+      <!-- 24h Volume Leaders -->
+      <div>
+        <div class="list-title">24h Volume (Top)</div>
+        <div class="list" id="volumes"> <div class="loader"></div> </div>
+      </div>
+    </div>
+
+    <!-- Expanded summary cards (by chain slices) -->
+    <div class="panel big-list" id="chain-splits">
+      <!-- small cards will be injected here -->
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">Ethereum tokens (sample)</div>
+        <div id="eth-sample"> <div class="muted">loading…</div> </div>
+      </div>
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">BNB (BSC) tokens (sample)</div>
+        <div id="bsc-sample"> <div class="muted">loading…</div> </div>
+      </div>
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">Polygon (sample)</div>
+        <div id="poly-sample"> <div class="muted">loading…</div> </div>
+      </div>
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">Other highlights</div>
+        <div id="other-sample"> <div class="muted">loading…</div> </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-const coins = ["bitcoin","ethereum","binancecoin","solana"];
-async function fetchMarkets() {
-  const marketContainer = document.getElementById("markets");
-  marketContainer.innerHTML = "";
-  for(let coin of coins){
-    try {
-      const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coin}`);
-      const data = await res.json();
-      const card = document.createElement("div");
-      card.className = "market-card";
-      card.innerHTML = `<h4>${data.name}</h4>
-                        <p>Symbol: ${data.symbol.toUpperCase()}</p>
-                        <p>Price: $${data.market_data.current_price.usd.toLocaleString()}</p>
-                        <p>24h: ${data.market_data.price_change_percentage_24h.toFixed(2)}%</p>`;
-      marketContainer.appendChild(card);
-    } catch(e){console.error(e);}
+/*
+  NOL AI · Markets Dashboard
+  - Major cards: ETH, BNB, MATIC (prominent)
+  - Sections: top gainers, top losers, top movers (abs %), top 24h volume
+  - Focus: coins primarily from Ethereum, Binance Smart Chain, Polygon
+  - Uses CoinGecko public API (client-side)
+  - Refreshes every 60s
+*/
+
+/* CONFIG */
+const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
+const COINGECKO_COIN = 'https://api.coingecko.com/api/v3/coins/'; // /{id}
+const VS_CURRENCY = 'usd';
+const PER_PAGE = 120; // how many to pull (higher means better lists but more data)
+const REFRESH_MS = 60000;
+const FOCUS_CHAINS = {
+  ethereum: { key: 'ethereum', label: 'ETH', color: '#8a5cff' },
+  'binance-smart-chain': { key: 'binance-smart-chain', label: 'BSC', color: '#f3ba2f' },
+  'polygon-pos': { key: 'polygon-pos', label: 'POLY', color: '#8247e5' },
+};
+
+// Major coin ids on CoinGecko
+const MAJORS = ['ethereum','binancecoin','polygon']; // keep order: ETH, BNB, POLYGON (polygon id is 'polygon')
+
+/* helper: minimal concurrency pool for detail fetches */
+async function pMap(items, mapper, { concurrency = 6 } = {}) {
+  const ret = [];
+  const executing = [];
+  for (const item of items) {
+    const p = Promise.resolve().then(() => mapper(item));
+    ret.push(p);
+    executing.push(p);
+    if (executing.length >= concurrency) {
+      await Promise.race(executing).catch(()=>{/* swallow */});
+      // remove settled
+      for (let i = executing.length - 1; i >= 0; --i) if (executing[i].settled) executing.splice(i,1);
+    }
+    // mark settle wrapper
+    p.then(()=>p.settled=true, ()=>p.settled=true);
+  }
+  return Promise.all(ret);
+}
+
+/* fetch markets list */
+async function fetchMarketsList() {
+  const url = `${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&order=market_cap_desc&per_page=${PER_PAGE}&page=1&sparkline=false&price_change_percentage=24h`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('market list failed');
+  return res.json();
+}
+
+/* fetch coin detail (to get platforms) */
+async function fetchCoinDetail(id) {
+  // limit fields; platforms still returned
+  const url = `${COINGECKO_COIN}${encodeURIComponent(id)}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+/* detect chain: prefer known native ids, else look at platforms keys */
+function detectChain(coinMarket, coinDetail) {
+  const id = coinMarket.id;
+  // native big ones
+  if (id === 'ethereum') return 'ethereum';
+  if (id === 'binancecoin') return 'binance-smart-chain';
+  if (id === 'polygon' || id === 'matic-network' || id === 'matic-token') return 'polygon-pos';
+  // check platforms map keys
+  if (coinDetail && coinDetail.platforms) {
+    const platforms = coinDetail.platforms;
+    for (const key of Object.keys(platforms)) {
+      if (!platforms[key]) continue;
+      if (key.toLowerCase().includes('binance') || key === 'binance-smart-chain') return 'binance-smart-chain';
+      if (key.toLowerCase().includes('ethereum') || key === 'ethereum') return 'ethereum';
+      if (key.toLowerCase().includes('polygon') || key === 'polygon-pos') return 'polygon-pos';
+    }
+  }
+  // fallback: symbol/or name hints
+  const sym = (coinMarket.symbol||'').toLowerCase();
+  if (sym.includes('matic')) return 'polygon-pos';
+  if (sym.includes('bnb')) return 'binance-smart-chain';
+  return 'other';
+}
+
+/* small helpers for DOM */
+function el(tag, cls='', html=''){ const e = document.createElement(tag); if(cls) e.className = cls; if(html!==undefined) e.innerHTML = html; return e; }
+function formatUsd(v){ if (v===null||v===undefined) return '—'; return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function formatPct(v){ if (v===null||v===undefined) return '—'; const n = Number(v); const sign = n>0?'+':''; return sign + n.toFixed(2) + '%'; }
+
+/* render functions */
+function renderMajor(id, market){
+  if(!market) return;
+  const priceEl = document.getElementById(`${id}-price`);
+  const chgEl = document.getElementById(`${id}-chg`);
+  const statsEl = document.getElementById(`${id}-stats`);
+  const price = formatUsd(market.current_price);
+  const chg = market.price_change_percentage_24h;
+  priceEl && (priceEl.textContent = price);
+  if (chgEl){
+    chgEl.textContent = formatPct(chg);
+    chgEl.style.background = chg>=0 ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
+    chgEl.style.color = '#fff';
   }
 }
-fetchMarkets();
-setInterval(fetchMarkets, 60000);
+
+/* small chain badge element */
+function chainBadge(chain){
+  const b = el('div','chain-badge','');
+  if(chain === 'ethereum'){ b.style.background = 'linear-gradient(90deg,#8a5cff,#2ea0ff)'; b.textContent = 'ETH'; }
+  else if(chain === 'binance-smart-chain'){ b.style.background = 'linear-gradient(90deg,#f3ba2f,#f9e79f)'; b.style.color='#111'; b.textContent = 'BSC'; }
+  else if(chain === 'polygon-pos'){ b.style.background = 'linear-gradient(90deg,#8247e5,#3ad1ff)'; b.textContent = 'POLY'; }
+  else { b.style.background = 'rgba(255,255,255,0.04)'; b.textContent = '—'; }
+  return b;
+}
+
+/* create a small row item for lists */
+function makeCoinRow(market, chain) {
+  const row = el('div','coin-row');
+  const iconWrap = el('div','coin-icon'); 
+  const img = el('img'); img.src = market.image; img.alt = market.symbol; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
+  iconWrap.appendChild(img);
+  row.appendChild(iconWrap);
+
+  const meta = el('div','meta');
+  meta.innerHTML = `<div class="nm">${market.name}</div><div class="sym">${market.symbol.toUpperCase()}</div>`;
+  row.appendChild(meta);
+
+  const chainEl = chainBadge(chain);
+  meta.appendChild(chainEl);
+
+  const stats = el('div','stats');
+  const price = el('div','stat-price',formatUsd(market.current_price));
+  stats.appendChild(price);
+  const chgVal = market.price_change_percentage_24h;
+  const chg = el('div','stat-change',formatPct(chgVal));
+  chg.className += ' ' + (chgVal>=0 ? 'green' : 'red');
+  stats.appendChild(chg);
+
+  const vol = el('div','muted', 'Vol: ' + (market.total_volume ? Number(market.total_volume).toLocaleString() : '—'));
+  vol.style.fontSize='12px';
+  stats.appendChild(vol);
+
+  row.appendChild(stats);
+  return row;
+}
+
+/* main render pipeline */
+async function updateDashboard(){
+  try{
+    const markets = await fetchMarketsList(); // top N markets
+    // build detail fetches for a reasonable subset (we'll fetch details for first 80 markets)
+    const subset = markets.slice(0, 80);
+    // Concurrently fetch details but limited
+    const details = await pMap(subset, async (m)=> {
+      try { return await fetchCoinDetail(m.id); } catch(e){ return null; }
+    }, {concurrency:6});
+
+    // attach chain info to markets array (for subset)
+    const idToChain = {};
+    for(let i=0;i<subset.length;i++){
+      const m = subset[i];
+      const d = details[i];
+      const chain = detectChain(m,d);
+      idToChain[m.id] = chain;
+    }
+    // also mark other markets (beyond subset) as 'other'
+    for(const m of markets){
+      if(!(m.id in idToChain)) idToChain[m.id] = 'other';
+    }
+
+    // update major cards by looking up by id
+    const mapById = Object.fromEntries(markets.map(c=>[c.id,c]));
+    // Ethereum
+    if(mapById['ethereum']) renderMajor('eth', mapById['ethereum']);
+    if(mapById['binancecoin']) renderMajor('bnb', mapById['binancecoin']);
+    if(mapById['polygon']) renderMajor('matic', mapById['polygon']);
+    // update update time
+    document.getElementById('updateTime').textContent = new Date().toLocaleString();
+
+    // prepare filtered arrays focusing on tokens from the three chains
+    const focused = markets.filter(m=>{
+      const chain = idToChain[m.id];
+      return chain === 'ethereum' || chain === 'binance-smart-chain' || chain === 'polygon-pos';
+    });
+
+    // if focused is small, expand by including next-tier markets up to 120
+    const pool = focused.length >= 40 ? focused : markets.slice(0, Math.min(markets.length, 120));
+
+    // compute lists
+    const withChange = pool.filter(p => p.price_change_percentage_24h !== null && p.price_change_percentage_24h !== undefined);
+
+    // top gainers
+    const gainers = withChange.slice().sort((a,b)=>b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0,6);
+    // top losers
+    const losers = withChange.slice().sort((a,b)=>a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0,6);
+    // top movers (absolute)
+    const movers = withChange.slice().sort((a,b)=> Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,6);
+    // top 24h volume
+    const volumes = pool.slice().sort((a,b)=> (b.total_volume||0) - (a.total_volume||0)).slice(0,6);
+
+    // render list into DOM
+    const elGainers = document.getElementById('gainers'); elGainers.innerHTML='';
+    const elLosers = document.getElementById('losers'); elLosers.innerHTML='';
+    const elMovers  = document.getElementById('movers'); elMovers.innerHTML='';
+    const elVolumes = document.getElementById('volumes'); elVolumes.innerHTML='';
+
+    for(const m of gainers){ elGainers.appendChild(makeCoinRow(m, idToChain[m.id])); }
+    for(const m of losers){ elLosers.appendChild(makeCoinRow(m, idToChain[m.id])); }
+    for(const m of movers){ elMovers.appendChild(makeCoinRow(m, idToChain[m.id])); }
+    for(const m of volumes){ elVolumes.appendChild(makeCoinRow(m, idToChain[m.id])); }
+
+    // update chain-sample blocks (show a few tokens from each chain)
+    function fillSample(containerId, chainKey){
+      const elc = document.getElementById(containerId); elc.innerHTML='';
+      const slice = pool.filter(p => idToChain[p.id] === chainKey).slice(0,6);
+      if(slice.length === 0){ elc.innerHTML = '<div class="muted">No tokens from this chain in sample.</div>'; return; }
+      for(const m of slice){
+        const r = makeCoinRow(m, chainKey);
+        r.style.padding = '6px';
+        r.style.borderRadius = '8px';
+        elc.appendChild(r);
+      }
+    }
+    fillSample('eth-sample','ethereum');
+    fillSample('bsc-sample','binance-smart-chain');
+    fillSample('poly-sample','polygon-pos');
+    // other sample: show coins from pool not in the three chains
+    const otherNodes = pool.filter(p => !['ethereum','binance-smart-chain','polygon-pos'].includes(idToChain[p.id])).slice(0,6);
+    const otherEl = document.getElementById('other-sample'); otherEl.innerHTML='';
+    if(otherNodes.length === 0) otherEl.innerHTML = '<div class="muted">No other highlights.</div>';
+    else otherNodes.forEach(n => otherEl.appendChild(makeCoinRow(n, idToChain[n.id])));
+
+  }catch(err){
+    console.error('updateDashboard error',err);
+    // show error states
+    ['gainers','losers','movers','volumes','eth-sample','bsc-sample','poly-sample','other-sample'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.innerHTML = '<div class="muted">Failed to load. Try again later.</div>';
+    });
+  }
+}
+
+/* boot */
+updateDashboard();
+/* refresh interval */
+setInterval(updateDashboard, REFRESH_MS);
 </script>
 
 </body>
