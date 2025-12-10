@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>NOL AI · Markets Dashboard</title>
+<title>NOL · Markets Dashboard</title>
 <style>
   :root{
     --purple-start:#8a5cff;
@@ -38,10 +38,9 @@
   .nola-title .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800;color:#fff;box-shadow:0 6px 22px rgba(90,198,255,0.08)}
   .nola-sub{font-size:13px;color:var(--muted)}
 
-  /* NOL AI widget */
-  .nola-ai{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02));border:1px solid rgba(255,255,255,0.02);width:100%}
-  .robot{width:140px;height:140px;display:block;margin:0 auto;filter:drop-shadow(0 8px 30px rgba(90,198,255,0.06));transform-origin:center}
-  .soon{font-weight:800;background:linear-gradient(90deg,var(--purple-start),var(--purple-end));-webkit-background-clip:text;color:transparent;font-size:20px;letter-spacing:0.6px}
+  /* Robot footer */
+  .robot-footer{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);width:160px;height:160px;display:grid;place-items:center;pointer-events:none}
+  .robot-footer svg{width:140px;height:140px;filter:drop-shadow(0 10px 30px rgba(90,198,255,0.06));}
 
   /* Major cards */
   .majors{display:flex;flex-direction:column;gap:12px}
@@ -69,9 +68,9 @@
   .stat-price{font-weight:700}
   .stat-change{font-size:13px;margin-top:4px}
 
-  /* full-width lists (below) */
-  .big-list{grid-column: 1 / -1;display:flex;gap:12px;flex-wrap:wrap}
-  .big-card{flex:1 1 calc(25% - 12px);min-width:220px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);}
+  /* copy button */
+  .copy-btn{margin-left:10px;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:linear-gradient(90deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));font-size:12px;cursor:pointer}
+  .copy-btn:active{transform:translateY(1px)}
 
   /* small helpers */
   .muted{color:var(--muted);font-size:13px}
@@ -81,51 +80,24 @@
   @keyframes spin{to{transform:rotate(360deg)}}
 
   /* responsive */
-  @media (max-width:980px){.wrap{grid-template-columns:1fr;}.big-card{flex:1 1 calc(50% - 12px);}}
-  @media (max-width:560px){.lists{grid-template-columns:1fr}.big-card{flex:1 1 100%;}}
+  @media (max-width:980px){.wrap{grid-template-columns:1fr;}.major-card{flex-direction:row;}.robot-footer{position:static;transform:none;margin-top:18px}} 
+  @media (max-width:560px){.lists{grid-template-columns:1fr}.major-card{flex-direction:row;}}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <!-- LEFT: Branding + NOL AI + Majors -->
+  <!-- LEFT: Branding + Majors -->
   <div class="left">
     <div class="panel nola-top">
       <div class="nola-title">
         <div class="logo">N</div>
         <div>
-          <div style="font-weight:800">NOL AI Market</div>
+          <div style="font-weight:800">NOL Market</div>
           <div class="nola-sub">Real-time markets · ETH · BSC · Polygon focus</div>
         </div>
         <div style="margin-left:auto" id="updateTime" class="muted">—</div>
       </div>
-    </div>
-
-    <div class="panel nola-ai">
-      <div class="robot" aria-hidden="true">
-        <!-- smooth robot (enhanced) -->
-        <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="rgrad" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient>
-          </defs>
-          <g class="head" transform="translate(10,8)">
-            <rect x="10" y="10" rx="16" ry="16" width="120" height="88" fill="url(#rgrad)" opacity="0.14"/>
-            <rect x="20" y="20" rx="10" ry="10" width="100" height="68" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
-            <g class="eye" transform="translate(0,0)">
-              <g transform="translate(22,28)">
-                <circle cx="12" cy="12" r="12" fill="#fff"/>
-                <circle cx="12" cy="12" r="5" fill="#080612"/>
-              </g>
-              <g transform="translate(82,28)">
-                <circle cx="12" cy="12" r="12" fill="#fff"/>
-                <circle cx="12" cy="12" r="5" fill="#080612"/>
-              </g>
-            </g>
-            <rect x="54" y="68" width="32" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
-          </g>
-        </svg>
-      </div>
-      <div class="soon">NOL AI Soon</div>
     </div>
 
     <div class="panel majors">
@@ -181,6 +153,37 @@
           <div class="chg" id="matic-chg">—</div>
         </div>
       </div>
+
+      <!-- Quick snapshots -->
+      <div class="major-card" id="major-quick">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#4b5563,#111827);display:grid;place-items:center;font-weight:800">QS</div>
+          <div class="major-left">
+            <div class="coin-name">Quick snapshots</div>
+            <div class="coin-price muted">Cached overview</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="quick-stats">
+          <div class="coin-price-big" id="quick-price">—</div>
+          <div class="chg" id="quick-chg">—</div>
+        </div>
+      </div>
+
+      <!-- Highlights -->
+      <div class="major-card" id="major-highlights">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#0ea5a2,#0369a1);display:grid;place-items:center;font-weight:800">HL</div>
+          <div class="major-left">
+            <div class="coin-name">Highlights</div>
+            <div class="coin-price muted">Cached highlights</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="highlights-stats">
+          <div class="coin-price-big" id="high-price">—</div>
+          <div class="chg" id="high-chg">—</div>
+        </div>
+      </div>
+
     </div><!-- majors -->
   </div>
 
@@ -212,53 +215,64 @@
       </div>
     </div>
 
-    <!-- Expanded summary cards (by chain slices) -->
-    <div class="panel big-list" id="chain-splits">
-      <!-- small cards will be injected here -->
-      <div class="big-card">
-        <div class="muted" style="margin-bottom:8px">Ethereum tokens (sample)</div>
-        <div id="eth-sample"> <div class="muted">loading…</div> </div>
-      </div>
-      <div class="big-card">
-        <div class="muted" style="margin-bottom:8px">BNB (BSC) tokens (sample)</div>
-        <div id="bsc-sample"> <div class="muted">loading…</div> </div>
-      </div>
-      <div class="big-card">
-        <div class="muted" style="margin-bottom:8px">Polygon (sample)</div>
-        <div id="poly-sample"> <div class="muted">loading…</div> </div>
-      </div>
-      <div class="big-card">
-        <div class="muted" style="margin-bottom:8px">Other highlights</div>
-        <div id="other-sample"> <div class="muted">loading…</div> </div>
-      </div>
-    </div>
+    <!-- Removed sample sections as requested -->
   </div>
+</div>
+
+<!-- Robot moved to bottom of page -->
+<div class="robot-footer" aria-hidden="true">
+  <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="rgrad" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient>
+    </defs>
+    <g class="head" transform="translate(10,8)">
+      <rect x="10" y="10" rx="16" ry="16" width="120" height="88" fill="url(#rgrad)" opacity="0.14"/>
+      <rect x="20" y="20" rx="10" ry="10" width="100" height="68" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
+      <g class="eye" transform="translate(0,0)">
+        <g transform="translate(22,28)">
+          <circle cx="12" cy="12" r="12" fill="#fff"/>
+          <circle cx="12" cy="12" r="5" fill="#080612"/>
+        </g>
+        <g transform="translate(82,28)">
+          <circle cx="12" cy="12" r="12" fill="#fff"/>
+          <circle cx="12" cy="12" r="5" fill="#080612"/>
+        </g>
+      </g>
+      <rect x="54" y="68" width="32" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+    </g>
+  </svg>
 </div>
 
 <script>
 /*
-  NOL AI · Markets Dashboard
-  - Major cards: ETH, BNB, MATIC (prominent)
-  - Sections: top gainers, top losers, top movers (abs %), top 24h volume
-  - Focus: coins primarily from Ethereum, Binance Smart Chain, Polygon
-  - Uses CoinGecko public API (client-side)
-  - Refreshes every 60s
+  Updated per request:
+  - Robot moved to bottom of the page
+  - Main cards: ETH, BNB, POLYGON, Quick snapshots, Highlights
+    These main cards use localStorage cache refreshed every 12 minutes (720000 ms)
+    If cache is fresh, no requests to CoinGecko for those main cards.
+  - Top lists (gainers/losers/movers/volumes) use localStorage cache refreshed every 6 minutes (360000 ms)
+  - Removed sample sections
+  - Added a small themed "copy" button on each coin-row (not main cards) which copies the token contract if available or the coingecko id
+  - Removed the word "AI" and "NOL AI" from visible UI
 */
 
 /* CONFIG */
 const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
 const COINGECKO_COIN = 'https://api.coingecko.com/api/v3/coins/'; // /{id}
 const VS_CURRENCY = 'usd';
-const PER_PAGE = 120; // how many to pull (higher means better lists but more data)
-const REFRESH_MS = 60000;
+const PER_PAGE = 120;
+const MAJORS_CACHE_KEY = 'nol_majors_cache';
+const LISTS_CACHE_KEY = 'nol_lists_cache';
+const MAJORS_TTL = 12 * 60 * 1000; // 12 minutes
+const LISTS_TTL = 6 * 60 * 1000; // 6 minutes
+
 const FOCUS_CHAINS = {
   ethereum: { key: 'ethereum', label: 'ETH', color: '#8a5cff' },
   'binance-smart-chain': { key: 'binance-smart-chain', label: 'BSC', color: '#f3ba2f' },
   'polygon-pos': { key: 'polygon-pos', label: 'POLY', color: '#8247e5' },
 };
 
-// Major coin ids on CoinGecko
-const MAJORS = ['ethereum','binancecoin','polygon']; // keep order: ETH, BNB, POLYGON (polygon id is 'polygon')
+const MAJOR_IDS_PREFERRED = ['ethereum','binancecoin','polygon'];
 
 /* helper: minimal concurrency pool for detail fetches */
 async function pMap(items, mapper, { concurrency = 6 } = {}) {
@@ -269,11 +283,9 @@ async function pMap(items, mapper, { concurrency = 6 } = {}) {
     ret.push(p);
     executing.push(p);
     if (executing.length >= concurrency) {
-      await Promise.race(executing).catch(()=>{/* swallow */});
-      // remove settled
+      try { await Promise.race(executing); } catch(e){}
       for (let i = executing.length - 1; i >= 0; --i) if (executing[i].settled) executing.splice(i,1);
     }
-    // mark settle wrapper
     p.then(()=>p.settled=true, ()=>p.settled=true);
   }
   return Promise.all(ret);
@@ -289,7 +301,6 @@ async function fetchMarketsList() {
 
 /* fetch coin detail (to get platforms) */
 async function fetchCoinDetail(id) {
-  // limit fields; platforms still returned
   const url = `${COINGECKO_COIN}${encodeURIComponent(id)}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`;
   const res = await fetch(url);
   if (!res.ok) return null;
@@ -299,11 +310,9 @@ async function fetchCoinDetail(id) {
 /* detect chain: prefer known native ids, else look at platforms keys */
 function detectChain(coinMarket, coinDetail) {
   const id = coinMarket.id;
-  // native big ones
   if (id === 'ethereum') return 'ethereum';
   if (id === 'binancecoin') return 'binance-smart-chain';
   if (id === 'polygon' || id === 'matic-network' || id === 'matic-token') return 'polygon-pos';
-  // check platforms map keys
   if (coinDetail && coinDetail.platforms) {
     const platforms = coinDetail.platforms;
     for (const key of Object.keys(platforms)) {
@@ -313,7 +322,6 @@ function detectChain(coinMarket, coinDetail) {
       if (key.toLowerCase().includes('polygon') || key === 'polygon-pos') return 'polygon-pos';
     }
   }
-  // fallback: symbol/or name hints
   const sym = (coinMarket.symbol||'').toLowerCase();
   if (sym.includes('matic')) return 'polygon-pos';
   if (sym.includes('bnb')) return 'binance-smart-chain';
@@ -325,23 +333,7 @@ function el(tag, cls='', html=''){ const e = document.createElement(tag); if(cls
 function formatUsd(v){ if (v===null||v===undefined) return '—'; return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function formatPct(v){ if (v===null||v===undefined) return '—'; const n = Number(v); const sign = n>0?'+':''; return sign + n.toFixed(2) + '%'; }
 
-/* render functions */
-function renderMajor(id, market){
-  if(!market) return;
-  const priceEl = document.getElementById(`${id}-price`);
-  const chgEl = document.getElementById(`${id}-chg`);
-  const statsEl = document.getElementById(`${id}-stats`);
-  const price = formatUsd(market.current_price);
-  const chg = market.price_change_percentage_24h;
-  priceEl && (priceEl.textContent = price);
-  if (chgEl){
-    chgEl.textContent = formatPct(chg);
-    chgEl.style.background = chg>=0 ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-    chgEl.style.color = '#fff';
-  }
-}
-
-/* small chain badge element */
+/* chain badge */
 function chainBadge(chain){
   const b = el('div','chain-badge','');
   if(chain === 'ethereum'){ b.style.background = 'linear-gradient(90deg,#8a5cff,#2ea0ff)'; b.textContent = 'ETH'; }
@@ -351,8 +343,8 @@ function chainBadge(chain){
   return b;
 }
 
-/* create a small row item for lists */
-function makeCoinRow(market, chain) {
+/* create a small row item for lists (includes copy button) */
+function makeCoinRow(market, chain, detailsMap){
   const row = el('div','coin-row');
   const iconWrap = el('div','coin-icon'); 
   const img = el('img'); img.src = market.image; img.alt = market.symbol; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
@@ -373,114 +365,168 @@ function makeCoinRow(market, chain) {
   const chg = el('div','stat-change',formatPct(chgVal));
   chg.className += ' ' + (chgVal>=0 ? 'green' : 'red');
   stats.appendChild(chg);
-
   const vol = el('div','muted', 'Vol: ' + (market.total_volume ? Number(market.total_volume).toLocaleString() : '—'));
   vol.style.fontSize='12px';
   stats.appendChild(vol);
-
   row.appendChild(stats);
+
+  // copy button (themed) - copies contract address if available else coingecko id
+  const copyBtn = el('button','copy-btn','Copy');
+  copyBtn.addEventListener('click', async (e)=>{
+    e.stopPropagation();
+    let payload = market.id;
+    // use detailsMap if provided
+    if(detailsMap && detailsMap[market.id] && detailsMap[market.id].platforms){
+      const pls = detailsMap[market.id].platforms;
+      // prefer ethereum, polygon-pos, binance-smart-chain
+      const preferred = ['ethereum','polygon-pos','binance-smart-chain'];
+      for(const p of preferred){ if(pls[p]){ payload = pls[p]; break; } }
+      // otherwise pick first non-empty platform
+      if(payload === market.id){
+        for(const k of Object.keys(pls)) if(pls[k]){ payload = pls[k]; break; }
+      }
+    }
+    try{ await navigator.clipboard.writeText(payload); copyBtn.textContent='Copied'; setTimeout(()=>copyBtn.textContent='Copy',1200); }catch(e){ console.warn('copy failed',e); }
+  });
+  row.appendChild(copyBtn);
+
   return row;
 }
 
-/* main render pipeline */
-async function updateDashboard(){
-  try{
-    const markets = await fetchMarketsList(); // top N markets
-    // build detail fetches for a reasonable subset (we'll fetch details for first 80 markets)
-    const subset = markets.slice(0, 80);
-    // Concurrently fetch details but limited
-    const details = await pMap(subset, async (m)=> {
-      try { return await fetchCoinDetail(m.id); } catch(e){ return null; }
-    }, {concurrency:6});
+/* find a market for a major (robust search for polygon/matic) */
+function findMarketForMajor(markets, preferredIds){
+  const map = Object.fromEntries(markets.map(m=>[m.id,m]));
+  for(const id of preferredIds) if(map[id]) return map[id];
+  // heuristics
+  for(const m of markets){ const id = m.id.toLowerCase(); const sym = (m.symbol||'').toLowerCase(); const name = (m.name||'').toLowerCase();
+    if(id.includes('matic') || sym==='matic' || name.includes('polygon')) return m;
+  }
+  return null;
+}
 
-    // attach chain info to markets array (for subset)
-    const idToChain = {};
-    for(let i=0;i<subset.length;i++){
-      const m = subset[i];
-      const d = details[i];
-      const chain = detectChain(m,d);
-      idToChain[m.id] = chain;
-    }
-    // also mark other markets (beyond subset) as 'other'
-    for(const m of markets){
-      if(!(m.id in idToChain)) idToChain[m.id] = 'other';
-    }
+/* render main majors using provided market objects */
+function renderMajor(idPrefix, market){
+  if(!market) return;
+  const priceEl = document.getElementById(`${idPrefix}-price`);
+  const chgEl = document.getElementById(`${idPrefix}-chg`);
+  const price = formatUsd(market.current_price);
+  const chg = market.price_change_percentage_24h;
+  priceEl && (priceEl.textContent = price);
+  if (chgEl){ chgEl.textContent = formatPct(chg); chgEl.style.background = chg>=0 ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)'; chgEl.style.color='#fff'; }
+}
 
-    // update major cards by looking up by id
+/* cache helpers */
+function readCache(key){ try{ const raw = localStorage.getItem(key); if(!raw) return null; const parsed = JSON.parse(raw); return parsed; }catch(e){ return null; } }
+function writeCache(key, obj){ try{ localStorage.setItem(key, JSON.stringify(obj)); }catch(e){}}
+
+/* update majors: only read/write localStorage every 12 minutes */
+async function updateMajors(){
+  const now = Date.now();
+  const cached = readCache(MAJORS_CACHE_KEY);
+  if(cached && (now - cached.ts) < MAJORS_TTL && cached.markets){
+    // use cached
+    const markets = cached.markets;
     const mapById = Object.fromEntries(markets.map(c=>[c.id,c]));
-    // Ethereum
-    if(mapById['ethereum']) renderMajor('eth', mapById['ethereum']);
-    if(mapById['binancecoin']) renderMajor('bnb', mapById['binancecoin']);
-    if(mapById['polygon']) renderMajor('matic', mapById['polygon']);
-    // update update time
+    // eth
+    const ethM = findMarketForMajor(markets,['ethereum']);
+    const bnbM = findMarketForMajor(markets,['binancecoin']);
+    const polyM = findMarketForMajor(markets,['polygon','matic-network']);
+    renderMajor('eth', ethM);
+    renderMajor('bnb', bnbM);
+    renderMajor('matic', polyM);
+    // quick snapshots & highlights - show simple cached summaries
+    const topVol = markets.slice().sort((a,b)=>(b.total_volume||0)-(a.total_volume||0))[0];
+    document.getElementById('quick-price').textContent = topVol ? `${topVol.name}` : '—';
+    document.getElementById('quick-chg').textContent = topVol ? formatPct(topVol.price_change_percentage_24h) : '—';
+    document.getElementById('high-price').textContent = markets.length ? `${markets[0].name}` : '—';
+    document.getElementById('high-chg').textContent = markets.length ? formatPct(markets[0].price_change_percentage_24h) : '—';
+    document.getElementById('updateTime').textContent = new Date(cached.ts).toLocaleString();
+    return;
+  }
+
+  // otherwise fetch fresh and cache
+  try{
+    const markets = await fetchMarketsList();
+    // store full markets array as majors cache (this meets "whole data they need")
+    writeCache(MAJORS_CACHE_KEY,{ ts: Date.now(), markets });
+    // render similar to above
+    const ethM = findMarketForMajor(markets,['ethereum']);
+    const bnbM = findMarketForMajor(markets,['binancecoin']);
+    const polyM = findMarketForMajor(markets,['polygon','matic-network']);
+    renderMajor('eth', ethM);
+    renderMajor('bnb', bnbM);
+    renderMajor('matic', polyM);
+    const topVol = markets.slice().sort((a,b)=>(b.total_volume||0)-(a.total_volume||0))[0];
+    document.getElementById('quick-price').textContent = topVol ? `${topVol.name}` : '—';
+    document.getElementById('quick-chg').textContent = topVol ? formatPct(topVol.price_change_percentage_24h) : '—';
+    document.getElementById('high-price').textContent = markets.length ? `${markets[0].name}` : '—';
+    document.getElementById('high-chg').textContent = markets.length ? formatPct(markets[0].price_change_percentage_24h) : '—';
     document.getElementById('updateTime').textContent = new Date().toLocaleString();
-
-    // prepare filtered arrays focusing on tokens from the three chains
-    const focused = markets.filter(m=>{
-      const chain = idToChain[m.id];
-      return chain === 'ethereum' || chain === 'binance-smart-chain' || chain === 'polygon-pos';
-    });
-
-    // if focused is small, expand by including next-tier markets up to 120
-    const pool = focused.length >= 40 ? focused : markets.slice(0, Math.min(markets.length, 120));
-
-    // compute lists
-    const withChange = pool.filter(p => p.price_change_percentage_24h !== null && p.price_change_percentage_24h !== undefined);
-
-    // top gainers
-    const gainers = withChange.slice().sort((a,b)=>b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0,6);
-    // top losers
-    const losers = withChange.slice().sort((a,b)=>a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0,6);
-    // top movers (absolute)
-    const movers = withChange.slice().sort((a,b)=> Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,6);
-    // top 24h volume
-    const volumes = pool.slice().sort((a,b)=> (b.total_volume||0) - (a.total_volume||0)).slice(0,6);
-
-    // render list into DOM
-    const elGainers = document.getElementById('gainers'); elGainers.innerHTML='';
-    const elLosers = document.getElementById('losers'); elLosers.innerHTML='';
-    const elMovers  = document.getElementById('movers'); elMovers.innerHTML='';
-    const elVolumes = document.getElementById('volumes'); elVolumes.innerHTML='';
-
-    for(const m of gainers){ elGainers.appendChild(makeCoinRow(m, idToChain[m.id])); }
-    for(const m of losers){ elLosers.appendChild(makeCoinRow(m, idToChain[m.id])); }
-    for(const m of movers){ elMovers.appendChild(makeCoinRow(m, idToChain[m.id])); }
-    for(const m of volumes){ elVolumes.appendChild(makeCoinRow(m, idToChain[m.id])); }
-
-    // update chain-sample blocks (show a few tokens from each chain)
-    function fillSample(containerId, chainKey){
-      const elc = document.getElementById(containerId); elc.innerHTML='';
-      const slice = pool.filter(p => idToChain[p.id] === chainKey).slice(0,6);
-      if(slice.length === 0){ elc.innerHTML = '<div class="muted">No tokens from this chain in sample.</div>'; return; }
-      for(const m of slice){
-        const r = makeCoinRow(m, chainKey);
-        r.style.padding = '6px';
-        r.style.borderRadius = '8px';
-        elc.appendChild(r);
-      }
-    }
-    fillSample('eth-sample','ethereum');
-    fillSample('bsc-sample','binance-smart-chain');
-    fillSample('poly-sample','polygon-pos');
-    // other sample: show coins from pool not in the three chains
-    const otherNodes = pool.filter(p => !['ethereum','binance-smart-chain','polygon-pos'].includes(idToChain[p.id])).slice(0,6);
-    const otherEl = document.getElementById('other-sample'); otherEl.innerHTML='';
-    if(otherNodes.length === 0) otherEl.innerHTML = '<div class="muted">No other highlights.</div>';
-    else otherNodes.forEach(n => otherEl.appendChild(makeCoinRow(n, idToChain[n.id])));
-
   }catch(err){
-    console.error('updateDashboard error',err);
-    // show error states
-    ['gainers','losers','movers','volumes','eth-sample','bsc-sample','poly-sample','other-sample'].forEach(id=>{
-      const el = document.getElementById(id); if(el) el.innerHTML = '<div class="muted">Failed to load. Try again later.</div>';
-    });
+    console.error('majors fetch failed',err);
+    // leave UI as-is or show dashes
   }
 }
 
-/* boot */
-updateDashboard();
-/* refresh interval */
-setInterval(updateDashboard, REFRESH_MS);
+/* update lists: gainers/losers/movers/volumes - cache every 6 minutes and include details for copy buttons */
+async function updateLists(){
+  const now = Date.now();
+  const cached = readCache(LISTS_CACHE_KEY);
+  if(cached && (now - cached.ts) < LISTS_TTL && cached.markets && cached.details){
+    renderListsFromCache(cached.markets, cached.details);
+    return;
+  }
+
+  try{
+    const markets = await fetchMarketsList();
+    // take a subset to fetch details (first 80)
+    const subset = markets.slice(0, 80);
+    const detailsArr = await pMap(subset, async (m)=> { try { return await fetchCoinDetail(m.id); } catch(e){ return null; } }, {concurrency:6});
+    const detailsMap = {};
+    for(let i=0;i<subset.length;i++){ detailsMap[subset[i].id] = detailsArr[i]; }
+    // cache both markets and details
+    writeCache(LISTS_CACHE_KEY, { ts: Date.now(), markets, details: detailsMap });
+    renderListsFromCache(markets, detailsMap);
+  }catch(err){
+    console.error('lists update failed',err);
+    // show error state
+    ['gainers','losers','movers','volumes'].forEach(id=>{ const el = document.getElementById(id); if(el) el.innerHTML = '<div class="muted">Failed to load. Try again later.</div>'; });
+  }
+}
+
+function renderListsFromCache(markets, detailsMap){
+  // build idToChain mapping for subset
+  const detailsForDetect = detailsMap || {};
+  const idToChain = {};
+  markets.forEach(m => { const d = detailsForDetect[m.id] || null; idToChain[m.id] = detectChain(m,d); });
+
+  const pool = markets.slice(0, Math.min(markets.length, PER_PAGE));
+  const withChange = pool.filter(p => p.price_change_percentage_24h !== null && p.price_change_percentage_24h !== undefined);
+  const gainers = withChange.slice().sort((a,b)=>b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0,6);
+  const losers = withChange.slice().sort((a,b)=>a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0,6);
+  const movers = withChange.slice().sort((a,b)=> Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,6);
+  const volumes = pool.slice().sort((a,b)=> (b.total_volume||0) - (a.total_volume||0)).slice(0,6);
+
+  const elGainers = document.getElementById('gainers'); elGainers.innerHTML='';
+  const elLosers = document.getElementById('losers'); elLosers.innerHTML='';
+  const elMovers  = document.getElementById('movers'); elMovers.innerHTML='';
+  const elVolumes = document.getElementById('volumes'); elVolumes.innerHTML='';
+
+  for(const m of gainers){ elGainers.appendChild(makeCoinRow(m, idToChain[m.id], detailsMap)); }
+  for(const m of losers){ elLosers.appendChild(makeCoinRow(m, idToChain[m.id], detailsMap)); }
+  for(const m of movers){ elMovers.appendChild(makeCoinRow(m, idToChain[m.id], detailsMap)); }
+  for(const m of volumes){ elVolumes.appendChild(makeCoinRow(m, idToChain[m.id], detailsMap)); }
+}
+
+/* boot sequence: use cached majors and lists if available, else fetch. Set intervals accordingly */
+(async function boot(){
+  try{ await updateMajors(); }catch(e){console.warn(e)}
+  try{ await updateLists(); }catch(e){console.warn(e)}
+  // intervals: majors every 12 minutes, lists every 6 minutes
+  setInterval(updateMajors, MAJORS_TTL);
+  setInterval(updateLists, LISTS_TTL);
+})();
+
 </script>
 
 </body>
