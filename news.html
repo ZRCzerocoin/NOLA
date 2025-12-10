@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>NOL space — Crypto & X Trends</title>
+<title>NOL space — Smart Crypto & X Trends</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="config.js"></script>
 <style>
@@ -57,179 +57,139 @@
 </footer>
 
 <script>
-const CACHE_KEY = "NOL_CACHE_TWEETS";
-const CACHE_3DAY = 3*24*60*60*1000; // 3 days
-const CACHE_24H = 24*60*60*1000;    // 24h incremental
+// ================= CONFIG =================
+const MAX_TWEETS_PER_SECTION = 10;
 const X_ACCOUNT = "@PEN2VA";
-const MAX_INITIAL_FETCH = 50;
-const DAILY_FETCH = 3;
-
-// Chains & keywords
+const SECTION_KEYS = ["xtrends","ethereum","polygon","solana","bnb"];
 const CHAINS = {
-  ethereum:["ETH","ETHEREUM","ETHEREUM 2.0","ETH/USD"],
-  polygon:["POL","MATIC","POLYGON","MATIC/USD"],
-  solana:["SOL","SOLANA","SOL/USD"],
-  bnb:["BNB","BINANCE COIN","BNB/USD"]
+  ethereum:["ETH","ETHEREUM"],
+  polygon:["POL","MATIC","POLYGON"],
+  solana:["SOL","SOLANA"],
+  bnb:["BNB","BINANCE COIN"]
 };
-
 const SMART_KEYWORDS = [
   "crypto","bitcoin","btc","ethereum","eth","polygon","matic","solana","sol","bnb","binance","web3",
   "trading","stocks","investment","investments","finance","market","defi","DeFi","NFT","nft","NFTs",
   "elon","musk","trump","fed","federal reserve","sec","government","bank","central bank","stock market",
-  "bullish","bearish","pump","moon","dump","crash","rally","gain","loss","up","down","rocket","BTC","ETH",
-  "SOL","MATIC","POL","BNB","staking","yield","liquidity","dex","exchange","token","tokens","smart contract",
-  "staking","staking rewards","airdrops","airdrops","ICO","IDO","NFT collection","NFT project","DeFi project",
-  "staking pool","staking protocol","L2","Layer 2","layer2","Layer2","layer2 scaling","Ethereum 2","EVM",
-  "DAO","governance","crypto project","crypto influencer","trading signals","margin","options","futures",
-  "Elon Musk","Trump","Federal Reserve","SEC","central bank","finance minister","investment bank","NASDAQ",
-  "S&P","Dow Jones","blockchain","blockchain news","smart contract audit","crypto regulation","crypto law",
-  "crypto policy","deflation","inflation","monetary policy","yield farming","liquidity pool","market cap",
-  "market analysis","crypto adoption","crypto tax","crypto news","tradingview","bitcoin halving","ethereum merge",
-  "tokenomics","NFT drop","whale","crypto whale","decentralized exchange","DEX","centralized exchange","CEX",
-  "crypto scam","pump and dump","crypto fraud","crypto hack","blockchain security","crypto security"
+  "bullish","bearish","pump","moon","dump","crash","rally","gain","loss","up","down","rocket"
 ];
 
-// ========== SENTIMENT ==========
-function estimateSentiment(txt) {
+// ================= SENTIMENT =================
+function estimateSentiment(txt){
   txt = txt.toLowerCase();
   if(/pump|moon|up|gain|rocket/.test(txt)) return {label:"Bullish", class:"positive", icon:"🚀"};
   if(/dump|down|crash|bear|loss/.test(txt)) return {label:"Bearish", class:"negative", icon:"📉"};
   return {label:"Neutral", class:"neutral", icon:"•"};
 }
 
-// ========== CACHE ==========
-function getCache() {
-  const raw = localStorage.getItem(CACHE_KEY);
-  if(!raw) return null;
-  const data = JSON.parse(raw);
-  const age = Date.now() - data.lastFetch;
-  return data;
+// ================= CACHE =================
+function getSectionCache(section){
+  const cache = JSON.parse(localStorage.getItem(`CACHE_${section}`)||"{}");
+  return cache.tweets || [];
 }
 
-function setCache(tweets, lastFetch=Date.now()) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify({tweets, lastFetch}));
+function saveSectionCache(section, tweets){
+  localStorage.setItem(`CACHE_${section}`, JSON.stringify({tweets}));
 }
 
-// ========== FETCH X ==========
-async function fetchXTweets(initial=false) {
-  let cache = getCache();
-  const now = Date.now();
-
-  if(cache && initial && now - cache.lastFetch < CACHE_3DAY) return cache.tweets;
-  if(cache && !initial && now - cache.lastFetch < CACHE_3DAY && now - (cache.lastIncrement||0) < CACHE_24H) return cache.tweets;
-
+// ================= FETCH X =================
+async function fetchTweetsFromX(max_results=10){
   const bearer = window.BARRIER_KEY;
-  if(!bearer) { console.error("BARRIER_KEY missing"); return []; }
-
-  try {
-    let url = `https://api.x.com/2/users/by/username/${X_ACCOUNT.replace('@','')}?user.fields=id`;
-    const userRes = await fetch(url, { headers: {"Authorization":`Bearer ${bearer}`} });
-    const userData = await userRes.json();
+  if(!bearer){ console.error("BARRIER_KEY missing"); return []; }
+  try{
+    // Fetch user ID first
+    let res = await fetch(`https://api.x.com/2/users/by/username/${X_ACCOUNT.replace('@','')}?user.fields=id`, {
+      headers: {"Authorization":`Bearer ${bearer}`}
+    });
+    const userData = await res.json();
     const userId = userData.data?.id;
     if(!userId) return [];
 
-    let max_results = initial ? MAX_INITIAL_FETCH : DAILY_FETCH;
-    url = `https://api.x.com/2/users/${userId}/tweets?max_results=${max_results}&tweet.fields=created_at,text`;
-    const tweetsRes = await fetch(url, { headers: {"Authorization":`Bearer ${bearer}`} });
-    const json = await tweetsRes.json();
-    const newTweets = json.data || [];
-
-    // Merge with existing cache if incremental
-    let merged = initial ? newTweets : [...(cache?.tweets||[]), ...newTweets];
-    setCache(merged, cache?.lastFetch||now);
-    if(!initial) {
-      const updated = getCache();
-      updated.lastIncrement = now;
-      localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
-    }
-
-    return merged;
-  } catch(e) { console.error("Fetch X error:",e); return cache?.tweets||[]; }
+    // Fetch tweets
+    res = await fetch(`https://api.x.com/2/users/${userId}/tweets?max_results=${max_results}&tweet.fields=created_at,text`, {
+      headers: {"Authorization":`Bearer ${bearer}`}
+    });
+    const json = await res.json();
+    return json.data || [];
+  } catch(e){ console.error("X fetch error", e); return []; }
 }
 
-// ========== RENDER ==========
-function renderSection(title, tweets) {
-  if(!tweets.length) return `<div class="section"><h2>${title}</h2><p>No tweets found</p></div>`;
-  return `
-    <div class="section"><h2>${title}</h2>
-      <div class="grid">
-        ${tweets.map(t => {
-          const s = estimateSentiment(t.text);
-          return `<div class="card">
-            <h3>${s.icon} ${t.text}</h3>
-            <div class="meta ${s.class}">Sentiment: ${s.label}</div>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-}
-
-// Categorize tweets
-function categorizeTweets(tweets) {
-  const sections = {xtrends:[], ethereum:[], polygon:[], solana:[], bnb:[]};
-  tweets.forEach(t=>{
-    const text = t.text.toUpperCase();
-    let matched = false;
-    for(const chain in CHAINS) {
-      if(CHAINS[chain].some(k=>text.includes(k.toUpperCase()))) { sections[chain].push(t); matched=true; break; }
-    }
-    if(!matched) sections.xtrends.push(t);
-  });
-  return sections;
-}
-
-// ========== COINGECKO PRICES ==========
-async function fetchPrices() {
-  const apiKey = window.COING_API;
-  const coins = ["bitcoin","ethereum","polygon","solana","binancecoin"];
-  const url = `https://api.coingecko.com/api/v3/simple/price?ids=${coins.join(',')}&vs_currencies=usd&include_24hr_change=true`;
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-    return data;
-  } catch(e){ console.error("Coingecko error:",e); return {}; }
-}
-
-// Render prices
-async function renderPrices() {
-  const prices = await fetchPrices();
-  const main = document.getElementById("main");
-  let html = '';
-  for(const coin in prices) {
-    const p = prices[coin];
-    html += `<div class="card">
-      <h3>${coin.toUpperCase()}</h3>
-      <div class="meta">Price: $${p.usd.toLocaleString()}</div>
-      <div class="meta">24h Change: <span class="${p.usd_24h_change>=0?'positive':'negative'}">${p.usd_24h_change.toFixed(2)}%</span></div>
-    </div>`;
+// ================= CATEGORIZE =================
+function categorizeTweet(tweet){
+  const txt = tweet.text.toUpperCase();
+  for(const chain in CHAINS){
+    if(CHAINS[chain].some(k=>txt.includes(k))) return chain;
   }
-  main.innerHTML = html;
+  // Check keywords for X Trends
+  for(const kw of SMART_KEYWORDS){
+    if(txt.includes(kw.toUpperCase())) return "xtrends";
+  }
+  return "xtrends";
 }
 
-// ========== LOAD ==========
-async function loadSection(section) {
+// ================= MERGE =================
+function mergeTweet(section, tweet){
+  const tweets = getSectionCache(section);
+  // Avoid duplicates
+  if(tweets.some(t=>t.id===tweet.id)) return;
+  if(tweets.length >= MAX_TWEETS_PER_SECTION){
+    tweets.shift(); // remove oldest
+  }
+  tweets.push(tweet);
+  saveSectionCache(section, tweets);
+}
+
+// ================= RENDER =================
+function renderSection(section){
+  const tweets = getSectionCache(section);
+  if(!tweets.length) return `<div class="section"><h2>${section.toUpperCase()}</h2><p>No tweets yet</p></div>`;
+  return `<div class="section"><h2>${section.toUpperCase()}</h2>
+    <div class="grid">
+      ${tweets.map(t=>{
+        const s = estimateSentiment(t.text);
+        return `<div class="card">
+          <h3>${s.icon} ${t.text}</h3>
+          <div class="meta ${s.class}">Sentiment: ${s.label}</div>
+        </div>`;
+      }).join("")}
+    </div>
+  </div>`;
+}
+
+// ================= LOAD SECTION =================
+async function loadSection(section){
   const main = document.getElementById("main");
-  main.innerHTML = "<p>Loading...</p>";
+  main.innerHTML="<p>Loading...</p>";
 
-  const initial = true;
-  const tweets = await fetchXTweets(initial);
-  const sections = categorizeTweets(tweets);
+  const tweets = await fetchTweetsFromX(5); // fetch latest 5 tweets per refresh
+  tweets.forEach(tweet=>{
+    const cat = categorizeTweet(tweet);
+    mergeTweet(cat, tweet);
+  });
 
-  if(section==='news') main.innerHTML = '<div class="section"><h2>📰 News</h2><p>Soon</p></div>';
-  else if(section==='xtrends') main.innerHTML = renderSection("🔥 X Trends", sections.xtrends);
-  else if(['ethereum','polygon','solana','bnb'].includes(section)) main.innerHTML = renderSection(section.toUpperCase(), sections[section]);
+  main.innerHTML = renderSection(section);
 }
 
-// Sidebar click
+// ================= SIDEBAR =================
 document.querySelectorAll("#sidebar li").forEach(li=>{
-  li.addEventListener("click",()=>loadSection(li.getAttribute("data-sec")));
+  li.addEventListener("click", ()=>loadSection(li.getAttribute("data-sec")));
 });
 
-// Default load
+// ================= INITIAL =================
+SECTION_KEYS.forEach(sec=>{
+  if(!localStorage.getItem(`CACHE_${sec}`)) saveSectionCache(sec, []);
+});
+
 loadSection("xtrends");
 
-// Prices refresh every 15s
-setInterval(renderPrices, 15000);
+// ================= PERIODIC FETCH =================
+setInterval(async ()=>{
+  const tweets = await fetchTweetsFromX(3); // 3 new tweets per 24h
+  tweets.forEach(tweet=>{
+    const cat = categorizeTweet(tweet);
+    mergeTweet(cat, tweet);
+  });
+}, 24*60*60*1000);
 
 </script>
 </body>
