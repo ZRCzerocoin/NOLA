@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>NOL AI · Markets Dashboard</title>
+<title>NOL AI · Core Dashboard (Stable)</title>
 <style>
   :root{
     --purple-start:#8a5cff;
@@ -18,7 +18,7 @@
     --copy-btn-bg: linear-gradient(90deg,var(--purple-start),var(--purple-end));
   }
 
-  /* make page iframe-friendly and scrollable */
+  /* Page + iframe friendliness */
   html,body{
     height:auto;
     min-height:100%;
@@ -31,16 +31,14 @@
     color:#fff;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
-    overflow-y:auto; /* allow full page scrolling in small iframes */
+    overflow-y:auto; /* allow full page scrolling inside iframe */
   }
   *{box-sizing:border-box}
 
-  /* outer layout: centered, responsive, avoids fixed 100vh traps */
-  .outer{width:100%;max-width:1360px;margin:18px auto;padding:18px;display:flex;flex-direction:column;gap:18px}
+  .outer{width:100%;max-width:1320px;margin:18px auto;padding:18px;display:flex;flex-direction:column;gap:18px}
   .wrap{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}
   @media (max-width:1100px){ .wrap{grid-template-columns:1fr;padding:0 12px;} }
 
-  /* panels */
   .panel{
     border-radius:14px;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
@@ -51,7 +49,6 @@
   }
   h2{margin:0 0 6px 0;font-size:16px;color:var(--muted);font-weight:700}
 
-  /* LEFT column */
   .left{display:flex;flex-direction:column;gap:16px}
   .nola-title{display:flex;align-items:center;gap:12px}
   .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800;color:#fff;box-shadow:0 6px 22px rgba(90,198,255,0.08)}
@@ -77,7 +74,10 @@
     margin-left:6px;
   }
 
-  /* RIGHT column lists */
+  /* Quick snapshot card styling */
+  .snapshot-values{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .snapshot-values > div{min-width:160px}
+
   .right{display:flex;flex-direction:column;gap:16px}
   .lists{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
   @media (max-width:980px){.lists{grid-template-columns:1fr}}
@@ -107,34 +107,26 @@
   .copy-btn .icon{width:14px;height:14px;display:inline-block;opacity:0.95}
   .copy-btn.copied{background:var(--copy-btn-bg);box-shadow:0 6px 18px rgba(138,92,255,0.12)}
 
-  /* footer with robot sitting */
   footer{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-top:1px solid rgba(255,255,255,0.02);margin-top:18px;flex-shrink:0}
   .footer-left{display:flex;align-items:center;gap:12px}
   .footer-links{display:flex;gap:12px;align-items:center}
   .link{color:var(--muted);text-decoration:none;font-size:13px}
   .robot-footer{width:86px;height:86px;border-radius:12px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;box-shadow:0 8px 30px rgba(46,160,255,0.07);}
 
-  /* robot container spacing so page doesn't hide footer */
   .robot-row{display:flex;align-items:center;justify-content:center;padding-top:12px;padding-bottom:8px}
-
-  /* ensure responsive scroll inside small iframes */
-  @media (max-height:480px){
-    .list, .big-card { max-height:180px; }
-    .wrap{gap:12px}
-  }
 </style>
 </head>
 <body>
   <div class="outer" id="outer">
     <div class="wrap" id="wrap">
-      <!-- LEFT column -->
+      <!-- LEFT -->
       <div class="left">
         <div class="panel">
           <div class="nola-title">
             <div class="logo">N</div>
             <div style="min-width:0">
               <div style="font-weight:800">NOL AI Market</div>
-              <div class="nola-sub">Real-time markets · ETH · BSC · Polygon focus</div>
+              <div class="nola-sub">Core dashboard — ETH · BSC · Polygon</div>
             </div>
             <div style="margin-left:auto" id="updateTime" class="muted">—</div>
           </div>
@@ -162,7 +154,7 @@
                   <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <span style="font-size:12px">Copy</span>
                 </button>
-                <div class="small-muted" id="eth-contract-display">—</div>
+                <div class="small-muted" id="eth-contract-display">native</div>
               </div>
             </div>
           </div>
@@ -186,7 +178,7 @@
                   <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                   <span style="font-size:12px">Copy</span>
                 </button>
-                <div class="small-muted" id="bnb-contract-display">—</div>
+                <div class="small-muted" id="bnb-contract-display">native</div>
               </div>
             </div>
           </div>
@@ -222,76 +214,47 @@
             <div style="font-weight:700">Quick Snapshot</div>
             <div class="muted" id="snapshotTime">—</div>
           </div>
-          <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;align-items:center">
-            <div style="min-width:160px">
+          <div class="snapshot-values" style="margin-top:12px">
+            <div>
               <div class="muted">Market Cap</div>
               <div id="quickMarketCap" style="font-weight:800;font-size:16px;margin-top:6px">—</div>
             </div>
-            <div style="min-width:160px">
+            <div>
               <div class="muted">24h Volume</div>
               <div id="quickVol" style="font-weight:800;font-size:16px;margin-top:6px">—</div>
             </div>
             <div style="margin-left:auto">
-              <div class="muted">Refresh</div>
+              <div class="muted">Snapshot</div>
               <div style="margin-top:6px">
                 <button class="copy-btn" id="snapshotCopyBtn" title="Copy snapshot" onclick="copySnapshot()">Copy</button>
               </div>
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- RIGHT column -->
+      <!-- RIGHT (kept empty but scrollable, safe for iframe) -->
       <div class="right">
-        <div class="panel lists">
-          <div>
-            <div class="list-title">Top Gainers (24h)</div>
-            <div class="list" id="gainers" aria-live="polite"><div class="loader"></div></div>
-          </div>
-
-          <div>
-            <div class="list-title">Top Losers (24h)</div>
-            <div class="list" id="losers" aria-live="polite"><div class="loader"></div></div>
-          </div>
-
-          <div>
-            <div class="list-title">Top Movers (24h)</div>
-            <div class="list" id="movers" aria-live="polite"><div class="loader"></div></div>
-          </div>
-
-          <div>
-            <div class="list-title">24h Volume (Top)</div>
-            <div class="list" id="volumes" aria-live="polite"><div class="loader"></div></div>
-          </div>
+        <div class="panel">
+          <h2>Info</h2>
+          <div class="muted">This minimal core loads ETH, BNB and Polygon using a robust fallback strategy (polygon-pos → matic-network → heuristics). Details (prices, % change, contract display and quick snapshot) are refreshed & cached every 15 minutes.</div>
         </div>
 
-        <div class="panel big-list" id="chain-splits">
-          <div class="big-card">
-            <div class="muted" style="margin-bottom:8px">Ethereum tokens (sample)</div>
-            <div id="eth-sample"><div class="muted">loading…</div></div>
-          </div>
-          <div class="big-card">
-            <div class="muted" style="margin-bottom:8px">BNB (BSC) tokens (sample)</div>
-            <div id="bsc-sample"><div class="muted">loading…</div></div>
-          </div>
-          <div class="big-card">
-            <div class="muted" style="margin-bottom:8px">Polygon (sample)</div>
-            <div id="poly-sample"><div class="muted">loading…</div></div>
-          </div>
-          <div class="big-card">
-            <div class="muted" style="margin-bottom:8px">Other highlights</div>
-            <div id="other-sample"><div class="muted">loading…</div></div>
+        <div class="panel">
+          <h2>Quick Links</h2>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+            <a class="copy-btn" href="https://nol.pages.dev" target="_blank" rel="noopener">Website</a>
+            <a class="copy-btn" href="mailto:Support@nola.work.gd">Support</a>
+            <a class="copy-btn" href="https://x.com/NOLA_CHAIN" target="_blank" rel="noopener">X</a>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- robot sits in footer area -->
-    <div class="robot-row">
-      <!-- keep robot compact and decorative -->
-      <div style="width:300px;max-width:90%;display:flex;justify-content:center">
-        <div style="width:160px;border-radius:12px;padding:12px;background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02));border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;gap:8px">
+    <!-- robot row -->
+    <div class="robot-row" aria-hidden="true">
+      <div style="width:320px;max-width:90%;display:flex;justify-content:center">
+        <div style="width:180px;border-radius:12px;padding:12px;background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02));border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;gap:8px">
           <svg viewBox="0 0 140 140" width="92" height="92" xmlns="http://www.w3.org/2000/svg">
             <defs><linearGradient id="rgrad2" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient></defs>
             <g transform="translate(10,8)">
@@ -322,7 +285,7 @@
         </div>
         <div style="display:flex;flex-direction:column">
           <div style="font-weight:700">NOL AI</div>
-          <div class="muted" style="font-size:13px">Market overview · ETH • BSC • Polygon</div>
+          <div class="muted" style="font-size:13px">Market core · ETH • BSC • Polygon</div>
         </div>
       </div>
 
@@ -335,350 +298,201 @@
   </div>
 
 <script>
-/* -------------------------
-   NOL AI Dashboard (final)
-   - Majors (ETH, BNB, POLYGON) refresh every 40 minutes and cached locally.
-   - Lists (gainers / losers / movers / volumes / chain samples) cached 10 minutes.
-   - Quick Snapshot cached 15 minutes.
-   - Polygon detection enhanced (id, symbol, name, platforms, contract).
-   - Copy buttons copy contract (if found) or coin id.
-   - Layout fixed: page is scrollable (iframe friendly).
-   ------------------------- */
+/*
+  Stable core dashboard:
+  - Strategy C for Polygon: try ['polygon-pos','matic-network','polygon','matic-network-old-like'], then market heuristics by symbol/name.
+  - All majors details + quick snapshot refreshed & cached every 15 minutes.
+  - Robust error handling so page never breaks.
+  - Copy buttons copy contract (if present) or coin id.
+*/
 
-const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
 const COINGECKO_COIN = 'https://api.coingecko.com/api/v3/coins/';
-const VS_CURRENCY = 'usd';
+const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
+const VS = 'usd';
 
-const MAJORS_IDS = ['ethereum','binancecoin','polygon'];
-const MAJORS_CACHE_KEY = 'nolda_majors_cache_v1';
-const MAJORS_REFRESH_MS = 40 * 60 * 1000; // 40 minutes
+const MAJORS = {
+  eth: { ids: ['ethereum'], displayId: 'ethereum' },
+  bnb: { ids: ['binancecoin'], displayId: 'binancecoin' },
+  poly: { ids: ['polygon-pos','matic-network','polygon','matic-network'] , displayId: 'polygon' }
+};
 
-const LISTS_CACHE_KEY = 'nolda_lists_cache_v1';
-const LISTS_CACHE_MS = 10 * 60 * 1000; // 10 minutes
-const LISTS_PER_PAGE = 180;
+const REFRESH_MS = 15 * 60 * 1000; // 15 minutes per user request
+const MAJORS_CACHE_KEY = 'nolda_core_majors_v1';
+const SNAPSHOT_CACHE_KEY = 'nolda_core_snapshot_v1';
 
-const SNAPSHOT_CACHE_KEY = 'nolda_snapshot_cache_v1';
-const SNAPSHOT_CACHE_MS = 15 * 60 * 1000; // 15 minutes
-
-/* helpers */
+/* small helpers */
 const $ = id => document.getElementById(id);
 function el(tag, cls='', html=''){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
 function formatUsd(v){ if (v===null||v===undefined) return '—'; return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function formatPct(v){ if (v===null||v===undefined) return '—'; const n=Number(v); const sign=n>0?'+':''; return sign + n.toFixed(2) + '%'; }
-function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
+function now(){ return Date.now(); }
 
-/* small batching for coin detail fetches */
-async function batchFetchDetails(ids = [], batchSize = 6) {
-  const map = {};
-  for (let i = 0; i < ids.length; i += batchSize) {
-    const slice = ids.slice(i, i + batchSize);
-    const ps = slice.map(id => fetch(`${COINGECKO_COIN}${encodeURIComponent(id)}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`)
-      .then(r => r.ok ? r.json() : null).catch(()=>null));
-    const res = await Promise.all(ps);
-    for (let j = 0; j < slice.length; j++) map[slice[j]] = res[j];
-    await sleep(120); // polite throttle
-  }
-  return map;
+/* cache helpers */
+function readCache(key){
+  try{ const s = localStorage.getItem(key); if(!s) return null; return JSON.parse(s); }catch(e){return null;}
+}
+function writeCache(key, payload){
+  try{ localStorage.setItem(key, JSON.stringify({ ts: now(), payload })); }catch(e){}
+}
+function cacheExpired(key, ms){
+  const obj = readCache(key); if(!obj) return true; return (now() - (obj.ts || 0)) > ms;
 }
 
-/* markets list */
-async function fetchMarkets(perPage = LISTS_PER_PAGE) {
-  const url = `${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&order=market_cap_desc&per_page=${perPage}&page=1&sparkline=false&price_change_percentage=24h`;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('markets failed');
-  return res.json();
+/* fetch coin detail by id (CoinGecko coin endpoint). returns null on failure */
+async function fetchCoinDetail(id){
+  try{
+    const url = `${COINGECKO_COIN}${encodeURIComponent(id)}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    return await res.json();
+  } catch(e){ return null; }
 }
 
-/* detect chain robustly (improved polygon detection) */
-function detectChain(market, detail) {
-  const id = (market.id || '').toLowerCase();
-  const name = (market.name || '').toLowerCase();
-  const sym = (market.symbol || '').toLowerCase();
+/* fallback: search markets list heuristics to find matching coin by symbol or name */
+async function findMarketByHeuristics(keywords = ['matic','polygon']){
+  try{
+    const url = `${COINGECKO_MARKETS}?vs_currency=${VS}&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+    const res = await fetch(url);
+    if(!res.ok) return null;
+    const arr = await res.json();
+    const keyLower = keywords.map(k=>k.toLowerCase());
+    // try progressive heuristics
+    let found = arr.find(c => keyLower.some(k => (c.id||'').toLowerCase() === k));
+    if(found) return found;
+    found = arr.find(c => keyLower.some(k => (c.symbol||'').toLowerCase().includes(k)));
+    if(found) return found;
+    found = arr.find(c => keyLower.some(k => (c.name||'').toLowerCase().includes(k)));
+    if(found) return found;
+    return null;
+  }catch(e){ return null; }
+}
 
-  if (id === 'ethereum' || sym === 'eth') return 'ethereum';
-  if (id === 'binancecoin' || sym === 'bnb') return 'binance-smart-chain';
-  if (id === 'polygon') return 'polygon-pos';
-  // detail.platforms check
-  if (detail && detail.platforms) {
-    for (const k of Object.keys(detail.platforms)) {
-      if (!detail.platforms[k]) continue;
-      const key = k.toLowerCase();
-      if (key.includes('binance') || key.includes('bep20')) return 'binance-smart-chain';
-      if (key.includes('ethereum') || key.includes('erc20')) return 'ethereum';
-      if (key.includes('polygon') || key.includes('matic')) return 'polygon-pos';
+/* robust fetch for a major using candidate ids and heuristics */
+async function getMajorDataForCandidates(candidates = [], heuristics = []){
+  // try coin detail endpoint for each candidate id
+  for(const id of candidates){
+    const d = await fetchCoinDetail(id);
+    if(d && d.market_data && d.market_data.current_price && typeof d.market_data.current_price[VS] !== 'undefined'){
+      // return normalized object
+      return {
+        id: d.id,
+        name: d.name,
+        symbol: d.symbol,
+        price: d.market_data.current_price[VS],
+        change24h: d.market_data.price_change_percentage_24h,
+        total_volume: (d.market_data.total_volume && d.market_data.total_volume[VS]) ? d.market_data.total_volume[VS] : null,
+        contract: (d.platforms && Object.keys(d.platforms).length) ? (Object.values(d.platforms).find(Boolean) || null) : null,
+        raw: d
+      };
     }
   }
-  // name/symbol heuristics
-  if (sym.includes('matic') || name.includes('polygon')) return 'polygon-pos';
-  if (sym.includes('bnb')) return 'binance-smart-chain';
-  if (sym.includes('eth')) return 'ethereum';
-  return 'other';
-}
 
-/* prefer contract address for desired chain */
-function getContractAddress(detail, desiredChain) {
-  if (!detail || !detail.platforms) return null;
-  const p = detail.platforms;
-  if (desiredChain === 'ethereum' && p.ethereum) return p.ethereum;
-  if (desiredChain === 'binance-smart-chain' && p['binance-smart-chain']) return p['binance-smart-chain'];
-  if (desiredChain === 'polygon-pos' && p['polygon-pos']) return p['polygon-pos'];
-  // fallback: any platform address
-  for (const k of Object.keys(p)) if (p[k]) return p[k];
+  // fallback: try markets heuristics (search by symbol/name)
+  if (heuristics && heuristics.length){
+    const found = await findMarketByHeuristics(heuristics);
+    if(found){
+      return {
+        id: found.id,
+        name: found.name,
+        symbol: found.symbol,
+        price: found.current_price,
+        change24h: found.price_change_percentage_24h,
+        total_volume: found.total_volume,
+        contract: null,
+        raw: found
+      };
+    }
+  }
   return null;
 }
 
-/* chain badge element */
-function chainBadgeEl(chain) {
-  const d = el('div','chain-tag','');
-  if (chain === 'ethereum') d.textContent = 'ETH';
-  else if (chain === 'binance-smart-chain') d.textContent = 'BNB';
-  else if (chain === 'polygon-pos') d.textContent = 'POLY';
-  else d.textContent = '—';
-  return d;
-}
-
-/* create coin row for lists */
-function makeCoinRow(market, chain, detailsMap) {
-  const row = el('div','coin-row');
-  const iconWrap = el('div','coin-icon'); iconWrap.style.width='36px'; iconWrap.style.height='36px'; iconWrap.style.borderRadius='8px';
-  const img = el('img'); img.src = market.image; img.alt = market.symbol; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
-  iconWrap.appendChild(img);
-  row.appendChild(iconWrap);
-
-  const meta = el('div','meta'); meta.style.minWidth='0';
-  const nm = el('div','nm',market.name);
-  const sym = el('div','sym',market.symbol.toUpperCase());
-  nm.style.display='flex'; nm.style.alignItems='center'; nm.style.gap='8px';
-  nm.appendChild(el('span','', ''));
-  meta.appendChild(nm); meta.appendChild(sym);
-  row.appendChild(meta);
-
-  const badge = chainBadgeEl(chain);
-  nm.appendChild(badge);
-
-  const stats = el('div','stats');
-  const price = el('div','stat-price', formatUsd(market.current_price));
-  stats.appendChild(price);
-  const chgVal = market.price_change_percentage_24h;
-  const chg = el('div','stat-change', formatPct(chgVal));
-  chg.className += ' ' + (chgVal>=0 ? 'green' : 'red');
-  stats.appendChild(chg);
-  const vol = el('div','muted', 'Vol: ' + (market.total_volume ? Number(market.total_volume).toLocaleString() : '—'));
-  vol.style.fontSize='12px';
-  stats.appendChild(vol);
-
-  const detail = detailsMap && detailsMap[market.id] ? detailsMap[market.id] : null;
-  const contract = getContractAddress(detail, chain);
-  const copyWrap = el('div','', ''); copyWrap.style.display='flex'; copyWrap.style.flexDirection='column'; copyWrap.style.alignItems='flex-end';
-  const copyBtn = el('button','copy-btn','');
-  copyBtn.type='button'; copyBtn.dataset.coin = market.id; copyBtn.dataset.contract = contract || '';
-  copyBtn.title = 'Copy contract or id';
-  copyBtn.innerHTML = `<svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="font-size:12px">Copy</span>`;
-  copyBtn.onclick = () => {
-    const val = copyBtn.dataset.contract || market.id || market.symbol;
-    navigator.clipboard && navigator.clipboard.writeText(val).then(()=>{
-      const prev = copyBtn.innerHTML;
-      copyBtn.classList.add('copied'); copyBtn.innerHTML = 'Copied';
-      setTimeout(()=>{ copyBtn.classList.remove('copied'); copyBtn.innerHTML = prev; },1400);
-    }).catch(()=>{});
-  };
-  const contractDisplay = el('div','small-muted', contract ? (contract.length>18? contract.slice(0,8)+'…'+contract.slice(-6) : contract) : market.id);
-  contractDisplay.style.fontSize='12px'; contractDisplay.style.textAlign='right';
-
-  copyWrap.appendChild(copyBtn); copyWrap.appendChild(contractDisplay);
-
-  row.appendChild(stats); row.appendChild(copyWrap);
-  return row;
-}
-
-/* -------------------------
-   MAJORS: refresh every 40 minutes and cache
-   Strategy:
-   - Try fetching markets endpoint with ids param (fast).
-   - If polygon missing, fetch larger markets list and search by heuristics (id/name/symbol/platforms).
-   - Save majors data + details to localStorage with ts.
-   ------------------------- */
-
-async function readCache(key) {
-  try { const raw = localStorage.getItem(key); if (!raw) return null; return JSON.parse(raw); } catch(e){ return null; }
-}
-function writeCache(key, payload) {
-  try { const obj = { ts: Date.now(), payload }; localStorage.setItem(key, JSON.stringify(obj)); } catch(e){}
-}
-function cacheExpired(obj, ms) {
-  if (!obj || !obj.ts) return true;
-  return (Date.now() - obj.ts) > ms;
-}
-
-async function refreshMajorsAndCache() {
-  try {
-    // attempt markets by ids
-    const ids = MAJORS_IDS.join(',');
-    const res = await fetch(`${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&ids=${encodeURIComponent(ids)}&sparkline=false&price_change_percentage=24h`);
-    let arr = res.ok ? await res.json() : [];
-    // if polygon missing or data incomplete, fetch broader markets and find best matches
-    const idsFound = (arr || []).map(x => x.id);
-    if (!idsFound.includes('polygon')) {
-      // fetch larger list and merge heuristics
-      const all = await fetchMarkets(300);
-      // find candidate for polygon by id/symbol/name/platforms
-      const candidate = all.find(m => {
-        const id = (m.id||'').toLowerCase(), name = (m.name||'').toLowerCase(), sym=(m.symbol||'').toLowerCase();
-        if (id.includes('polygon') || name.includes('polygon') || sym.includes('matic')) return true;
-        return false;
-      });
-      if (candidate && !idsFound.includes(candidate.id)) arr.push(candidate);
-    }
-
-    // build detail map for majors
-    const detailIds = arr.map(x=>x.id).filter(Boolean);
-    const detailsMap = await batchFetchDetails(detailIds, 6);
-
-    // annotate chain detection robustly using details too
-    const annotated = arr.map(m => {
-      const d = detailsMap[m.id] || null;
-      return Object.assign({}, m, { chain: detectChain(m,d), contract: getContractAddress(d, detectChain(m,d)) || null });
-    });
-
-    // write cache
-    writeCache(MAJORS_CACHE_KEY, { majors: annotated, detailsMap });
-
-    // render majors now
-    renderMajorsFromCache();
-
-  } catch (e) {
-    console.error('refreshMajorsAndCache error', e);
-  }
-}
-
-function renderMajorsFromCache() {
-  try {
-    const cached = readCache(MAJORS_CACHE_KEY);
-    if (!cached || !cached.payload) return;
-    const data = cached.payload.majors || [];
-    const byId = Object.fromEntries(data.map(d=>[d.id,d]));
+/* render majors into UI safely */
+function renderMajors(majorsObj = {}){
+  try{
     // ETH
-    if (byId['ethereum']) {
-      $('eth-price').textContent = formatUsd(byId['ethereum'].current_price);
-      $('eth-chg').textContent = formatPct(byId['ethereum'].price_change_percentage_24h);
-      $('eth-chg').style.background = (byId['ethereum'].price_change_percentage_24h>=0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-      $('eth-contract-display').textContent = byId['ethereum'].contract ? (byId['ethereum'].contract.slice(0,8)+'…'+byId['ethereum'].contract.slice(-6)) : 'native';
+    if(majorsObj.ethereum){
+      $('eth-price').textContent = formatUsd(majorsObj.ethereum.price);
+      $('eth-chg').textContent = formatPct(majorsObj.ethereum.change24h);
+      $('eth-chg').style.background = (majorsObj.ethereum.change24h >= 0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
+      $('eth-contract-display').textContent = majorsObj.ethereum.contract ? (majorsObj.ethereum.contract.slice(0,8)+'…'+majorsObj.ethereum.contract.slice(-6)) : 'native';
     }
-    if (byId['binancecoin']) {
-      $('bnb-price').textContent = formatUsd(byId['binancecoin'].current_price);
-      $('bnb-chg').textContent = formatPct(byId['binancecoin'].price_change_percentage_24h);
-      $('bnb-chg').style.background = (byId['binancecoin'].price_change_percentage_24h>=0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-      $('bnb-contract-display').textContent = byId['binancecoin'].contract ? (byId['binancecoin'].contract.slice(0,8)+'…'+byId['binancecoin'].contract.slice(-6)) : 'native';
+    // BNB
+    if(majorsObj.binancecoin){
+      $('bnb-price').textContent = formatUsd(majorsObj.binancecoin.price);
+      $('bnb-chg').textContent = formatPct(majorsObj.binancecoin.change24h);
+      $('bnb-chg').style.background = (majorsObj.binancecoin.change24h >= 0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
+      $('bnb-contract-display').textContent = majorsObj.binancecoin.contract ? (majorsObj.binancecoin.contract.slice(0,8)+'…'+majorsObj.binancecoin.contract.slice(-6)) : 'native';
     }
-    // Polygon: support multiple id names (polygon, matic, etc)
-    const poly = byId['polygon'] || data.find(d => (d.id||'').toLowerCase().includes('matic') || (d.symbol||'').toLowerCase().includes('matic') || (d.name||'').toLowerCase().includes('polygon'));
-    if (poly) {
-      $('matic-price').textContent = formatUsd(poly.current_price);
-      $('matic-chg').textContent = formatPct(poly.price_change_percentage_24h);
-      $('matic-chg').style.background = (poly.price_change_percentage_24h>=0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-      $('matic-contract-display').textContent = poly.contract ? (poly.contract.slice(0,8)+'…'+poly.contract.slice(-6)) : 'native';
+    // POLY
+    if(majorsObj.polygon){
+      $('matic-price').textContent = formatUsd(majorsObj.polygon.price);
+      $('matic-chg').textContent = formatPct(majorsObj.polygon.change24h);
+      $('matic-chg').style.background = (majorsObj.polygon.change24h >= 0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
+      $('matic-contract-display').textContent = majorsObj.polygon.contract ? (majorsObj.polygon.contract.slice(0,8)+'…'+majorsObj.polygon.contract.slice(-6)) : 'native';
     }
-    $('updateTime').textContent = new Date(cached.ts).toLocaleString();
-  } catch(e) {
-    console.error('renderMajorsFromCache error', e);
+
+    $('updateTime').textContent = new Date().toLocaleString();
+  }catch(e){ console.error('renderMajors error', e); }
+}
+
+/* attempt to fetch and cache all majors; safe to run repeatedly */
+async function refreshMajorsAll(){
+  try{
+    // read cache if fresh
+    const cached = readCache(MAJORS_CACHE_KEY);
+    if(cached && (now() - cached.ts) < REFRESH_MS){
+      renderMajors(cached.payload);
+      return cached.payload;
+    }
+
+    const result = {};
+
+    // ETH
+    const eth = await getMajorDataForCandidates(MAJORS.eth.ids, ['eth','ethereum']);
+    if(eth) result.ethereum = eth;
+
+    // BNB
+    const bnb = await getMajorDataForCandidates(MAJORS.bnb.ids, ['bnb','binancecoin']);
+    if(bnb) result.binancecoin = bnb;
+
+    // POLYGON - Strategy C: try candidates then heuristics
+    const polyCandidates = MAJORS.poly.ids;
+    const polyHeuristics = ['matic','polygon','matic-network','polygon-pos'];
+    const poly = await getMajorDataForCandidates(polyCandidates, polyHeuristics);
+    if(poly) result.polygon = poly;
+
+    // write cache and render
+    writeCache(MAJORS_CACHE_KEY, result);
+    renderMajors(result);
+    return result;
+  }catch(e){
+    console.error('refreshMajorsAll error', e);
+    // attempt to render stale cache if exists
+    const stale = readCache(MAJORS_CACHE_KEY);
+    if(stale && stale.payload) renderMajors(stale.payload);
+    return null;
   }
 }
 
-/* -------------------------
-   LISTS & CHAIN SAMPLES: cached 10 minutes
-   ------------------------- */
-async function buildAndRenderListsUsingCache() {
-  try {
-    let cache = readCache(LISTS_CACHE_KEY);
-    if (!cache || cacheExpired(cache, LISTS_CACHE_MS)) {
-      // fetch markets (larger amount)
-      const markets = await fetchMarkets(LISTS_PER_PAGE);
-      const subsetIds = markets.slice(0, 120).map(m => m.id);
-      const detailsMap = await batchFetchDetails(subsetIds, 6);
-      // annotate markets with chain
-      const marketsWithChain = markets.map(m => {
-        const d = detailsMap[m.id] || null;
-        return Object.assign({}, m, { chain: detectChain(m,d) });
-      });
-      writeCache(LISTS_CACHE_KEY, { markets: marketsWithChain, detailsMap });
-      cache = readCache(LISTS_CACHE_KEY);
+/* Quick snapshot: compute totals and cache for REFRESH_MS */
+async function refreshQuickSnapshot(){
+  try{
+    const cached = readCache(SNAPSHOT_CACHE_KEY);
+    if(cached && (now() - cached.ts) < REFRESH_MS){
+      const p = cached.payload;
+      $('quickMarketCap').textContent = p.marketCapDisplay || '—';
+      $('quickVol').textContent = p.volDisplay || '—';
+      $('snapshotTime').textContent = new Date(cached.ts).toLocaleTimeString();
+      return p;
     }
 
-    const markets = cache.payload.markets;
-    const detailsMap = cache.payload.detailsMap || {};
-
-    // snapshot quick data compute (but quick snapshot has its own cache)
-    const totalMarketCap = markets.reduce((s,m) => s + (m.market_cap||0), 0);
-    const totalVol = markets.reduce((s,m) => s + (m.total_volume||0), 0);
-    // fill quick snapshot (but main quick snapshot stored separately)
-    $('quickMarketCap').textContent = totalMarketCap ? '$' + totalMarketCap.toLocaleString() : '—';
-    $('quickVol').textContent = totalVol ? '$' + totalVol.toLocaleString() : '—';
-
-    // create pool focusing on ETH/BSC/POLY tokens
-    let pool = markets.filter(m => ['ethereum','binance-smart-chain','polygon-pos'].includes(m.chain));
-    if (pool.length < 30) pool = markets;
-
-    const withChange = pool.filter(p => p.price_change_percentage_24h !== null && p.price_change_percentage_24h !== undefined);
-
-    const gainers = withChange.slice().sort((a,b)=> b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0,10);
-    const losers  = withChange.slice().sort((a,b)=> a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0,10);
-    const movers  = withChange.slice().sort((a,b)=> Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,10);
-    const volumes = pool.slice().sort((a,b)=> (b.total_volume||0) - (a.total_volume||0)).slice(0,10);
-
-    // render lists
-    const elGainers = $('gainers'); elGainers.innerHTML='';
-    const elLosers  = $('losers');  elLosers.innerHTML='';
-    const elMovers  = $('movers');  elMovers.innerHTML='';
-    const elVolumes = $('volumes'); elVolumes.innerHTML='';
-
-    gainers.forEach(m => elGainers.appendChild(makeCoinRow(m, m.chain, detailsMap)));
-    losers.forEach(m => elLosers.appendChild(makeCoinRow(m, m.chain, detailsMap)));
-    movers.forEach(m => elMovers.appendChild(makeCoinRow(m, m.chain, detailsMap)));
-    volumes.forEach(m => elVolumes.appendChild(makeCoinRow(m, m.chain, detailsMap)));
-
-    // chain samples
-    function fillSample(id, chainKey) {
-      const cEl = $(id); cEl.innerHTML='';
-      const slice = pool.filter(p=>p.chain===chainKey).slice(0,8);
-      if (!slice.length) { cEl.innerHTML = '<div class="muted">No tokens from this chain in sample.</div>'; return; }
-      slice.forEach(m => { const r = makeCoinRow(m, chainKey, detailsMap); r.style.padding='8px'; cEl.appendChild(r); });
-    }
-    fillSample('eth-sample','ethereum');
-    fillSample('bsc-sample','binance-smart-chain');
-    fillSample('poly-sample','polygon-pos');
-
-    const otherNodes = pool.filter(p => !['ethereum','binance-smart-chain','polygon-pos'].includes(p.chain)).slice(0,6);
-    const otherEl = $('other-sample'); otherEl.innerHTML='';
-    if (!otherNodes.length) otherEl.innerHTML = '<div class="muted">No other highlights.</div>';
-    else otherNodes.forEach(n => otherEl.appendChild(makeCoinRow(n,n.chain,detailsMap)));
-
-  } catch (e) {
-    console.error('buildAndRenderListsUsingCache error', e);
-    ['gainers','losers','movers','volumes','eth-sample','bsc-sample','poly-sample','other-sample'].forEach(id=>{
-      const elNode = $(id); if (elNode) elNode.innerHTML = '<div class="muted">Failed to load. Try again later.</div>';
-    });
-  }
-}
-
-/* -------------------------
-   QUICK SNAPSHOT: cached 15 minutes
-   - stores quick totals (market cap, volume) and snapshotTime
-   ------------------------- */
-async function refreshQuickSnapshot() {
-  try {
-    const cache = readCache(SNAPSHOT_CACHE_KEY);
-    if (cache && !cacheExpired(cache, SNAPSHOT_CACHE_MS)) {
-      // use cached snapshot
-      const payload = cache.payload;
-      $('quickMarketCap').textContent = payload.marketCapDisplay || '—';
-      $('quickVol').textContent = payload.volDisplay || '—';
-      $('snapshotTime').textContent = new Date(cache.ts).toLocaleTimeString();
-      return;
-    }
-    // else compute using markets endpoint (small request)
-    const markets = await fetchMarkets(250);
-    const totalMarketCap = markets.reduce((s,m)=> s + (m.market_cap||0), 0);
-    const totalVol = markets.reduce((s,m)=> s + (m.total_volume||0), 0);
+    // fetch available markets (limited to 250)
+    const url = `${COINGECKO_MARKETS}?vs_currency=${VS}&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('markets fetch failed');
+    const arr = await res.json();
+    const totalMarketCap = arr.reduce((s,m)=> s + (m.market_cap || 0), 0);
+    const totalVol = arr.reduce((s,m)=> s + (m.total_volume || 0), 0);
     const payload = {
       marketCap: totalMarketCap,
       vol: totalVol,
@@ -689,80 +503,75 @@ async function refreshQuickSnapshot() {
     $('quickMarketCap').textContent = payload.marketCapDisplay;
     $('quickVol').textContent = payload.volDisplay;
     $('snapshotTime').textContent = new Date().toLocaleTimeString();
-  } catch (e) {
+    return payload;
+  }catch(e){
     console.error('refreshQuickSnapshot error', e);
-  }
-}
-
-function copySnapshot() {
-  const cache = readCache(SNAPSHOT_CACHE_KEY);
-  const payload = cache && cache.payload ? cache.payload : null;
-  const text = payload ? `MarketCap: ${payload.marketCapDisplay} · 24hVol: ${payload.volDisplay}` : 'NOL AI snapshot';
-  navigator.clipboard && navigator.clipboard.writeText(text).then(()=>{
-    const btn = $('snapshotCopyBtn');
-    const prev = btn.innerHTML;
-    btn.classList.add('copied'); btn.innerHTML = 'Copied';
-    setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML = prev; },1400);
-  }).catch(()=>{});
-}
-
-/* -------------------------
-   Majors copy handler (copy contract if available)
-   ------------------------- */
-async function loadMajorsDetailsAndRender() {
-  try {
-    // read cached majors and render majors contracts if present
-    const cacheMaj = readCache(MAJORS_CACHE_KEY);
-    if (cacheMaj && cacheMaj.payload && cacheMaj.payload.majors) {
-      renderMajorsFromCache();
-    } else {
-      // ensure majors have been refreshed at least once
-      await refreshMajorsAndCache();
+    const stale = readCache(SNAPSHOT_CACHE_KEY);
+    if(stale && stale.payload){
+      const p = stale.payload;
+      $('quickMarketCap').textContent = p.marketCapDisplay || '—';
+      $('quickVol').textContent = p.volDisplay || '—';
+      $('snapshotTime').textContent = new Date(stale.ts).toLocaleTimeString();
     }
-  } catch(e){ console.error(e); }
+    return null;
+  }
 }
 
-function onMajorCopy(ev) {
-  const btn = ev.currentTarget;
-  const coin = btn.dataset.coin;
-  const cacheMaj = readCache(MAJORS_CACHE_KEY);
-  let addr = coin;
-  if (cacheMaj && cacheMaj.payload && cacheMaj.payload.majors) {
-    const majors = cacheMaj.payload.majors;
-    const found = majors.find(m => (m.id||'').toLowerCase() === coin.toLowerCase() || (m.symbol||'').toLowerCase() === coin.toLowerCase());
-    if (found && found.contract) addr = found.contract;
-  }
-  navigator.clipboard && navigator.clipboard.writeText(addr).then(()=>{
-    const prev = btn.innerHTML;
+/* copy snapshot text */
+function copySnapshot(){
+  const c = readCache(SNAPSHOT_CACHE_KEY);
+  const p = c && c.payload ? c.payload : null;
+  const text = p ? `MarketCap: ${p.marketCapDisplay} · 24hVol: ${p.volDisplay}` : 'NOL AI snapshot';
+  navigator.clipboard && navigator.clipboard.writeText(text).then(()=> {
+    const btn = $('snapshotCopyBtn'); const prev = btn.innerHTML;
     btn.classList.add('copied'); btn.innerHTML = 'Copied';
     setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML = prev; },1200);
   }).catch(()=>{});
 }
 
-/* -------------------------
-   BOOT: start intervals and initial loads
-   ------------------------- */
+/* major copy: copy contract if available or id */
+function onMajorCopy(ev){
+  const btn = ev.currentTarget;
+  const coin = btn.dataset.coin; // 'ethereum', 'binancecoin', 'polygon'
+  const cache = readCache(MAJORS_CACHE_KEY);
+  let addr = coin;
+  if(cache && cache.payload){
+    const payload = cache.payload;
+    // try to find matching object by id or symbol
+    const candidate = Object.values(payload).find(x => x.id === coin || (x.symbol && x.symbol.toLowerCase() === coin.toLowerCase()));
+    if(candidate && candidate.contract) addr = candidate.contract;
+  }
+  navigator.clipboard && navigator.clipboard.writeText(addr).then(()=> {
+    const prev = btn.innerHTML; btn.classList.add('copied'); btn.innerHTML = 'Copied';
+    setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML = prev; },1200);
+  }).catch(()=>{});
+}
+
+/* BOOT: initial load + intervals */
 (async function boot(){
-  try {
-    // initial builds
-    await refreshMajorsAndCache();       // majors cached & rendered
-    await buildAndRenderListsUsingCache(); // lists cached & rendered
-    await refreshQuickSnapshot();       // snapshot cached & rendered
+  try{
+    // initial loads
+    await refreshMajorsAll();
+    await refreshQuickSnapshot();
 
-    // start intervals
-    setInterval(refreshMajorsAndCache, MAJORS_REFRESH_MS);      // majors every 40m
-    setInterval(buildAndRenderListsUsingCache, LISTS_CACHE_MS); // lists every 10m
-    setInterval(refreshQuickSnapshot, SNAPSHOT_CACHE_MS);       // snapshot every 15m
+    // intervals
+    setInterval(refreshMajorsAll, REFRESH_MS);      // majors + details every 15 minutes
+    setInterval(refreshQuickSnapshot, REFRESH_MS);  // quick snapshot every 15 minutes
 
-    // defensive: ensure majors details contract displays updated occasionally
-    setInterval(loadMajorsDetailsAndRender, 10 * 60 * 1000);
+    // defensive: if initial render failed, try again after short delay
+    setTimeout(async ()=> {
+      const cached = readCache(MAJORS_CACHE_KEY);
+      if(!cached || !cached.payload) {
+        await refreshMajorsAll();
+      }
+    }, 5000);
 
-  } catch(e) {
+  }catch(e){
     console.error('boot error', e);
   }
 })();
 
-/* expose onMajorCopy for inline onclick */
+/* expose minor functions to inline handlers */
 window.onMajorCopy = onMajorCopy;
 window.copySnapshot = copySnapshot;
 </script>
