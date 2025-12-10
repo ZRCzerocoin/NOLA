@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOL AI Smooth Robot</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #05050a;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #fff;
+  }
+
+  /* Container */
+  .nola-ai {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    padding: 18px 22px;
+    border-radius: 16px;
+    width: fit-content;
+    margin: 40px auto;
+    background: linear-gradient(180deg, rgba(138,92,255,0.06), rgba(46,160,255,0.03));
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 0 20px rgba(138,92,255,0.1), 0 0 40px rgba(46,160,255,0.05);
+    backdrop-filter: blur(6px);
+  }
+
+  .robot {
+    width: 130px;
+    height: 130px;
+    position: relative;
+    animation: robotFloat 5s ease-in-out infinite;
+  }
+
+  .robot svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Smooth glowing head */
+  .glow-head {
+    animation: headGlow 4s ease-in-out infinite;
+  }
+
+  /* Eyes wander smoothly */
+  .eye {
+    animation: eyeWander 5s cubic-bezier(.45,.05,.55,.95) infinite;
+    transform-origin: 50% 50%;
+  }
+
+  /* Head soft tilt */
+  .head {
+    animation: headTilt 6s ease-in-out infinite;
+    transform-origin: 50% 50%;
+  }
+
+  /* NOL AI SOON text */
+  .soon {
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 0.5px;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: textAppear 5s ease-in-out infinite;
+    background: linear-gradient(90deg, #8a5cff, #2ea0ff);
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* -------------------- ANIMATIONS -------------------- */
+
+  @keyframes headGlow {
+    0%   { filter: drop-shadow(0 0 2px #8a5cff80); }
+    50%  { filter: drop-shadow(0 0 8px #2ea0ffcc); }
+    100% { filter: drop-shadow(0 0 2px #8a5cff80); }
+  }
+
+  @keyframes eyeWander {
+    0%   { transform: translate(0,0); }
+    20%  { transform: translate(4px,-2px); }
+    40%  { transform: translate(-3px,3px); }
+    60%  { transform: translate(5px,2px); }
+    80%  { transform: translate(-2px,-3px); }
+    100% { transform: translate(0,0); }
+  }
+
+  @keyframes headTilt {
+    0%   { transform: rotate(-1deg); }
+    30%  { transform: rotate(2deg); }
+    60%  { transform: rotate(-2deg); }
+    100% { transform: rotate(-1deg); }
+  }
+
+  @keyframes robotFloat {
+    0%   { transform: translateY(0px); }
+    50%  { transform: translateY(-6px); }
+    100% { transform: translateY(0px); }
+  }
+
+  @keyframes textAppear {
+    0%   { opacity: 0; transform: translateY(8px); }
+    20%  { opacity: 1; transform: translateY(0); }
+    60%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-8px); }
+  }
+</style>
+</head>
+
+<body>
+
+<h3 style="text-align:center; color:#bbb; margin-top:20px;">NOL AI</h3>
+
+<div class="nola-ai">
+
+  <div class="robot">
+    <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+
+      <defs>
+        <linearGradient id="g1" x1="0" x2="1">
+          <stop offset="0" stop-color="#8a5cff"/>
+          <stop offset="1" stop-color="#2ea0ff"/>
+        </linearGradient>
+      </defs>
+
+      <g class="head glow-head">
+        <rect x="12" y="18" rx="14" ry="14" width="96" height="72"
+          fill="url(#g1)" opacity="0.18" />
+        <rect x="22" y="28" rx="10" ry="10" width="76" height="52"
+          fill="#0b0b12" stroke="rgba(255,255,255,0.08)" />
+
+        <!-- Eyes -->
+        <g class="eye">
+          <circle cx="44" cy="52" r="7" fill="#fff"/>
+          <circle cx="76" cy="52" r="7" fill="#fff"/>
+          <circle cx="44" cy="52" r="3.2" fill="#0b0720"/>
+          <circle cx="76" cy="52" r="3.2" fill="#0b0720"/>
+        </g>
+
+        <!-- Mouth -->
+        <rect x="46" y="76" width="28" height="7" rx="4"
+          fill="rgba(255,255,255,0.07)"/>
+      </g>
+
+    </svg>
+  </div>
+
+  <div class="soon">NOL AI Soon</div>
+
+</div>
+
+</body>
+</html>
