@@ -2,578 +2,486 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>NOL AI · Core Dashboard (Stable)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>NOL AI · Markets Dashboard</title>
 <style>
   :root{
     --purple-start:#8a5cff;
-    --purple-end:#2ea0ff;
+    --purple-end:#5ac6ff;
     --bg-1:#05050a;
-    --glass: rgba(10,10,20,0.55);
-    --muted: rgba(255,255,255,0.66);
+    --glass: rgba(10,10,20,0.45);
+    --muted: rgba(255,255,255,0.65);
     --card-border: rgba(255,255,255,0.06);
-    --accent-glow: rgba(138,92,255,0.12);
+    --accent-glow: rgba(138,92,255,0.14);
     --success: #2ecc71;
     --danger: #ff6b6b;
-    --copy-btn-bg: linear-gradient(90deg,var(--purple-start),var(--purple-end));
   }
 
-  /* Page + iframe friendliness */
-  html,body{
-    height:auto;
-    min-height:100%;
-    margin:0;
-    padding:0;
-    background:
-      radial-gradient(1000px 400px at 8% 10%, rgba(138,92,255,0.04), transparent),
-      linear-gradient(180deg,var(--bg-1),#060511);
-    font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    color:#fff;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-    overflow-y:auto; /* allow full page scrolling inside iframe */
-  }
-  *{box-sizing:border-box}
+  /* Page */
+  html,body{height:100%;margin:0;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(138,92,255,0.05), transparent),
+    linear-gradient(180deg,var(--bg-1),#060511);font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#fff;}
+  .wrap{max-width:1200px;margin:28px auto;padding:20px;display:grid;grid-template-columns: 360px 1fr;gap:22px;align-items:start;}
 
-  .outer{width:100%;max-width:1320px;margin:18px auto;padding:18px;display:flex;flex-direction:column;gap:18px}
-  .wrap{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}
-  @media (max-width:1100px){ .wrap{grid-template-columns:1fr;padding:0 12px;} }
+  /* Left column */
+  .left {
+    display:flex;flex-direction:column;gap:18px;
+  }
 
   .panel{
-    border-radius:14px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border:1px solid var(--card-border);
-    backdrop-filter: blur(8px);
-    padding:14px;
-    box-shadow: 0 6px 30px var(--accent-glow);
+    border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid var(--card-border);backdrop-filter: blur(8px);padding:14px;box-shadow: 0 6px 30px var(--accent-glow);
   }
-  h2{margin:0 0 6px 0;font-size:16px;color:var(--muted);font-weight:700}
 
-  .left{display:flex;flex-direction:column;gap:16px}
+  h2{margin:0 0 6px 0;font-size:18px;color:var(--muted);font-weight:600}
   .nola-title{display:flex;align-items:center;gap:12px}
-  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800;color:#fff;box-shadow:0 6px 22px rgba(90,198,255,0.08)}
+  .nola-title .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800;color:#fff;box-shadow:0 6px 22px rgba(90,198,255,0.08)}
   .nola-sub{font-size:13px;color:var(--muted)}
 
+  /* NOL AI widget */
+  .nola-ai{display:flex;flex-direction:column;align-items:center;gap:12px;padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02));border:1px solid rgba(255,255,255,0.02);width:100%}
+  .robot{width:140px;height:140px;display:block;margin:0 auto;filter:drop-shadow(0 8px 30px rgba(90,198,255,0.06));transform-origin:center}
+  .soon{font-weight:800;background:linear-gradient(90deg,var(--purple-start),var(--purple-end));-webkit-background-clip:text;color:transparent;font-size:20px;letter-spacing:0.6px}
+
+  /* Major cards */
   .majors{display:flex;flex-direction:column;gap:12px}
-  .major-card{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);width:100%}
-  .coin-icon{width:56px;height:56px;border-radius:12px;display:grid;place-items:center;font-weight:800;flex-shrink:0;overflow:hidden}
-  .major-left{display:flex;flex-direction:column;gap:6px;min-width:0}
-  .coin-name{font-weight:800;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .coin-price{font-size:13px;color:var(--muted)}
-  .coin-stats{margin-left:auto;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+  .major-card{display:flex;gap:12px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--card-border)}
+  .major-left{display:flex;flex-direction:column;gap:6px}
+  .coin-name{font-weight:700;font-size:16px}
+  .coin-price{font-size:15px;color:var(--muted)}
+  .coin-stats{margin-left:auto;text-align:right}
   .coin-price-big{font-weight:800;font-size:18px}
-  .chg{font-weight:700;padding:6px 8px;border-radius:10px;font-size:13px;color:#fff}
+  .chg{font-weight:700;padding:6px 8px;border-radius:10px;font-size:13px}
 
-  .chain-tag{
-    background: rgba(255,255,255,0.06);
-    padding: 4px 8px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 800;
-    display:inline-block;
-    margin-left:6px;
-  }
-
-  /* Quick snapshot card styling */
-  .snapshot-values{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
-  .snapshot-values > div{min-width:160px}
-
-  .right{display:flex;flex-direction:column;gap:16px}
+  /* Right column - market lists */
+  .right {display:flex;flex-direction:column;gap:18px}
   .lists{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-  @media (max-width:980px){.lists{grid-template-columns:1fr}}
   .list-title{font-size:13px;color:var(--muted);margin-bottom:8px}
-  .list{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);min-height:140px;max-height:420px;overflow:auto}
-  .coin-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;transition:transform .12s;background:transparent}
+  .list {display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);min-height:140px}
+  .coin-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;transition:transform .12s}
   .coin-row:hover{transform:translateY(-4px)}
-  .meta{display:flex;flex-direction:column;min-width:0}
-  .meta .nm{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .coin-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
+  .chain-badge{width:18px;height:18px;border-radius:4px;display:grid;place-items:center;font-size:10px;font-weight:700;margin-left:6px}
+  .meta{display:flex;flex-direction:column}
+  .meta .nm{font-weight:700}
   .meta .sym{font-size:12px;color:var(--muted)}
-  .stats{margin-left:auto;text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+  .stats{margin-left:auto;text-align:right}
   .stat-price{font-weight:700}
   .stat-change{font-size:13px;margin-top:4px}
 
-  .big-list{grid-column:1/-1;display:flex;gap:12px;flex-wrap:wrap}
-  .big-card{flex:1 1 calc(25% - 12px);min-width:200px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);max-height:320px;overflow:auto;}
-  @media (max-width:980px){.big-card{flex:1 1 calc(50% - 12px)}}
-  @media (max-width:560px){.big-card{flex:1 1 100%}}
+  /* full-width lists (below) */
+  .big-list{grid-column: 1 / -1;display:flex;gap:12px;flex-wrap:wrap}
+  .big-card{flex:1 1 calc(25% - 12px);min-width:220px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);}
 
+  /* small helpers */
   .muted{color:var(--muted);font-size:13px}
-  .green{color:var(--success);font-weight:700}
-  .red{color:var(--danger);font-weight:700}
-  .loader{width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--purple-start);animation:spin 1s linear infinite;margin:auto}
+  .green{color:var(--success)}
+  .red{color:var(--danger)}
+  .loader{width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--purple-start);animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
 
-  .copy-btn{display:inline-grid;grid-auto-flow:column;gap:8px;align-items:center;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.035);cursor:pointer;font-size:12px;color:#fff}
-  .copy-btn .icon{width:14px;height:14px;display:inline-block;opacity:0.95}
-  .copy-btn.copied{background:var(--copy-btn-bg);box-shadow:0 6px 18px rgba(138,92,255,0.12)}
-
-  footer{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-top:1px solid rgba(255,255,255,0.02);margin-top:18px;flex-shrink:0}
-  .footer-left{display:flex;align-items:center;gap:12px}
-  .footer-links{display:flex;gap:12px;align-items:center}
-  .link{color:var(--muted);text-decoration:none;font-size:13px}
-  .robot-footer{width:86px;height:86px;border-radius:12px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;box-shadow:0 8px 30px rgba(46,160,255,0.07);}
-
-  .robot-row{display:flex;align-items:center;justify-content:center;padding-top:12px;padding-bottom:8px}
+  /* responsive */
+  @media (max-width:980px){.wrap{grid-template-columns:1fr;}.big-card{flex:1 1 calc(50% - 12px);}}
+  @media (max-width:560px){.lists{grid-template-columns:1fr}.big-card{flex:1 1 100%;}}
 </style>
 </head>
 <body>
-  <div class="outer" id="outer">
-    <div class="wrap" id="wrap">
-      <!-- LEFT -->
-      <div class="left">
-        <div class="panel">
-          <div class="nola-title">
-            <div class="logo">N</div>
-            <div style="min-width:0">
-              <div style="font-weight:800">NOL AI Market</div>
-              <div class="nola-sub">Core dashboard — ETH · BSC · Polygon</div>
-            </div>
-            <div style="margin-left:auto" id="updateTime" class="muted">—</div>
-          </div>
+
+<div class="wrap">
+  <!-- LEFT: Branding + NOL AI + Majors -->
+  <div class="left">
+    <div class="panel nola-top">
+      <div class="nola-title">
+        <div class="logo">N</div>
+        <div>
+          <div style="font-weight:800">NOL AI Market</div>
+          <div class="nola-sub">Real-time markets · ETH · BSC · Polygon focus</div>
         </div>
-
-        <div class="panel majors" aria-live="polite">
-          <h2>Major Markets</h2>
-
-          <!-- ETH -->
-          <div class="major-card" id="major-ethereum">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div class="coin-icon" id="eth-icon" style="background:linear-gradient(135deg,var(--purple-start),var(--purple-end));">
-                <svg width="28" height="28" viewBox="0 0 256 417" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M127.6 0L124 11v275.1l3.6 3.6 127.5-73.8z"/><path fill="#fff" d="M127.6 0L0 216.9l127.6 73.8V153.1z"/><path fill="#fff" d="M127.6 309.6l-1.1 1.4v103.8l1.1 1 127.8-179.6z"/><path fill="#fff" d="M127.6 415.8V309.6L0 236.2z"/></svg>
-              </div>
-              <div class="major-left">
-                <div class="coin-name">Ethereum <span class="small-muted"> (ETH)</span></div>
-                <div class="coin-price muted">Smart-contract platform</div>
-              </div>
-            </div>
-            <div class="coin-stats" id="eth-stats">
-              <div class="coin-price-big" id="eth-price">$—</div>
-              <div class="chg" id="eth-chg">—</div>
-              <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
-                <button class="copy-btn" data-coin="ethereum" title="Copy" onclick="onMajorCopy(event)">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span style="font-size:12px">Copy</span>
-                </button>
-                <div class="small-muted" id="eth-contract-display">native</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- BNB -->
-          <div class="major-card" id="major-bnb">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div class="coin-icon" id="bnb-icon" style="background:linear-gradient(135deg,#f3ba2f,#f9e79f);color:#111">
-                <svg width="28" height="28" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M16 12.4L9.6 8 16 4l6.4 4z"/><path fill="#fff" d="M16 27l-6.4-4L16 19l6.4 4z"/><path fill="#fff" d="M12.8 16l-2.4-1.6L8 16l2.4 1.6zM24 16l-2.4-1.6L19.2 16 21.6 17.6z"/></svg>
-              </div>
-              <div class="major-left">
-                <div class="coin-name">BNB <span class="small-muted"> (BNB)</span></div>
-                <div class="coin-price muted">Binance chain native</div>
-              </div>
-            </div>
-            <div class="coin-stats" id="bnb-stats">
-              <div class="coin-price-big" id="bnb-price">$—</div>
-              <div class="chg" id="bnb-chg">—</div>
-              <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
-                <button class="copy-btn" data-coin="binancecoin" title="Copy" onclick="onMajorCopy(event)">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span style="font-size:12px">Copy</span>
-                </button>
-                <div class="small-muted" id="bnb-contract-display">native</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- POLYGON -->
-          <div class="major-card" id="major-polygon">
-            <div style="display:flex;align-items:center;gap:12px">
-              <div class="coin-icon" id="matic-icon" style="background:linear-gradient(135deg,#8247e5,#3ad1ff);">
-                <svg width="28" height="28" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M12 2L2 8v8l10 6 10-6V8z"/></svg>
-              </div>
-              <div class="major-left">
-                <div class="coin-name">Polygon <span class="small-muted"> (MATIC)</span></div>
-                <div class="coin-price muted">Layer-2 & sidechain</div>
-              </div>
-            </div>
-            <div class="coin-stats" id="matic-stats">
-              <div class="coin-price-big" id="matic-price">$—</div>
-              <div class="chg" id="matic-chg">—</div>
-              <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
-                <button class="copy-btn" data-coin="polygon" title="Copy" onclick="onMajorCopy(event)">
-                  <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden><path d="M8 7h8M8 11h8M8 15h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <span style="font-size:12px">Copy</span>
-                </button>
-                <div class="small-muted" id="matic-contract-display">—</div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
-        <div class="panel">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:700">Quick Snapshot</div>
-            <div class="muted" id="snapshotTime">—</div>
-          </div>
-          <div class="snapshot-values" style="margin-top:12px">
-            <div>
-              <div class="muted">Market Cap</div>
-              <div id="quickMarketCap" style="font-weight:800;font-size:16px;margin-top:6px">—</div>
-            </div>
-            <div>
-              <div class="muted">24h Volume</div>
-              <div id="quickVol" style="font-weight:800;font-size:16px;margin-top:6px">—</div>
-            </div>
-            <div style="margin-left:auto">
-              <div class="muted">Snapshot</div>
-              <div style="margin-top:6px">
-                <button class="copy-btn" id="snapshotCopyBtn" title="Copy snapshot" onclick="copySnapshot()">Copy</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT (kept empty but scrollable, safe for iframe) -->
-      <div class="right">
-        <div class="panel">
-          <h2>Info</h2>
-          <div class="muted">This minimal core loads ETH, BNB and Polygon using a robust fallback strategy (polygon-pos → matic-network → heuristics). Details (prices, % change, contract display and quick snapshot) are refreshed & cached every 15 minutes.</div>
-        </div>
-
-        <div class="panel">
-          <h2>Quick Links</h2>
-          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
-            <a class="copy-btn" href="https://nol.pages.dev" target="_blank" rel="noopener">Website</a>
-            <a class="copy-btn" href="mailto:Support@nola.work.gd">Support</a>
-            <a class="copy-btn" href="https://x.com/NOLA_CHAIN" target="_blank" rel="noopener">X</a>
-          </div>
-        </div>
+        <div style="margin-left:auto" id="updateTime" class="muted">—</div>
       </div>
     </div>
 
-    <!-- robot row -->
-    <div class="robot-row" aria-hidden="true">
-      <div style="width:320px;max-width:90%;display:flex;justify-content:center">
-        <div style="width:180px;border-radius:12px;padding:12px;background:linear-gradient(180deg, rgba(138,92,255,0.04), rgba(46,160,255,0.02));border:1px solid rgba(255,255,255,0.02);display:flex;flex-direction:column;align-items:center;gap:8px">
-          <svg viewBox="0 0 140 140" width="92" height="92" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="rgrad2" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient></defs>
-            <g transform="translate(10,8)">
-              <rect x="10" y="10" rx="16" ry="16" width="120" height="88" fill="url(#rgrad2)" opacity="0.14"/>
-              <rect x="20" y="20" rx="10" ry="10" width="100" height="68" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
-              <g transform="translate(22,28)"><circle cx="12" cy="12" r="12" fill="#fff"/><circle cx="12" cy="12" r="5" fill="#080612"/></g>
-              <g transform="translate(82,28)"><circle cx="12" cy="12" r="12" fill="#fff"/><circle cx="12" cy="12" r="5" fill="#080612"/></g>
-              <rect x="54" y="68" width="32" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+    <div class="panel nola-ai">
+      <div class="robot" aria-hidden="true">
+        <!-- smooth robot (enhanced) -->
+        <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="rgrad" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient>
+          </defs>
+          <g class="head" transform="translate(10,8)">
+            <rect x="10" y="10" rx="16" ry="16" width="120" height="88" fill="url(#rgrad)" opacity="0.14"/>
+            <rect x="20" y="20" rx="10" ry="10" width="100" height="68" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
+            <g class="eye" transform="translate(0,0)">
+              <g transform="translate(22,28)">
+                <circle cx="12" cy="12" r="12" fill="#fff"/>
+                <circle cx="12" cy="12" r="5" fill="#080612"/>
+              </g>
+              <g transform="translate(82,28)">
+                <circle cx="12" cy="12" r="12" fill="#fff"/>
+                <circle cx="12" cy="12" r="5" fill="#080612"/>
+              </g>
             </g>
-          </svg>
-          <div style="font-weight:800">NOL AI</div>
-        </div>
+            <rect x="54" y="68" width="32" height="8" rx="4" fill="rgba(255,255,255,0.06)"/>
+          </g>
+        </svg>
       </div>
+      <div class="soon">NOL AI Soon</div>
     </div>
 
-    <footer>
-      <div class="footer-left">
-        <div class="robot-footer" aria-hidden="true">
-          <svg viewBox="0 0 120 120" width="60" height="60" xmlns="http://www.w3.org/2000/svg">
-            <defs><linearGradient id="fg" x1="0" x2="1"><stop offset="0" stop-color="#8a5cff"/><stop offset="1" stop-color="#2ea0ff"/></linearGradient></defs>
-            <g transform="translate(6,6)">
-              <rect x="6" y="6" rx="12" ry="12" width="108" height="72" fill="url(#fg)" opacity="0.16"/>
-              <rect x="16" y="16" rx="8" ry="8" width="88" height="52" fill="#0b0b12" stroke="rgba(255,255,255,0.06)"/>
-              <g transform="translate(20,22)"><circle cx="12" cy="12" r="10" fill="#fff"/><circle cx="12" cy="12" r="4" fill="#080612"/></g>
-              <g transform="translate(72,22)"><circle cx="12" cy="12" r="10" fill="#fff"/><circle cx="12" cy="12" r="4" fill="#080612"/></g>
-            </g>
-          </svg>
+    <div class="panel majors">
+      <h2>Major Markets</h2>
+
+      <!-- Major: Ethereum -->
+      <div class="major-card" id="major-ethereum">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" id="eth-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--purple-start),var(--purple-end));display:grid;place-items:center;font-weight:800">
+            <svg width="24" height="24" viewBox="0 0 256 417" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M127.6 0L124 11v275.1l3.6 3.6 127.5-73.8z"/><path fill="#fff" d="M127.6 0L0 216.9l127.6 73.8V153.1z"/><path fill="#fff" d="M127.6 309.6l-1.1 1.4v103.8l1.1 1 127.8-179.6z"/><path fill="#fff" d="M127.6 415.8V309.6L0 236.2z"/></svg>
+          </div>
+          <div class="major-left">
+            <div class="coin-name">Ethereum <span class="muted" style="font-weight:600"> (ETH)</span></div>
+            <div class="coin-price muted">Smart-contract platform</div>
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column">
-          <div style="font-weight:700">NOL AI</div>
-          <div class="muted" style="font-size:13px">Market core · ETH • BSC • Polygon</div>
+        <div class="coin-stats" id="eth-stats">
+          <div class="coin-price-big" id="eth-price">$—</div>
+          <div class="chg" id="eth-chg" style="margin-top:6px">—</div>
         </div>
       </div>
 
-      <div class="footer-links" style="align-items:center">
-        <a class="link" href="https://nol.pages.dev" target="_blank" rel="noopener">nol.pages.dev</a>
-        <a class="link" href="mailto:Support@nola.work.gd">Support@nola.work.gd</a>
-        <a class="link" href="https://x.com/NOLA_CHAIN" target="_blank" rel="noopener">x.com/NOLA_CHAIN</a>
+      <!-- Major: BNB -->
+      <div class="major-card" id="major-bnb">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" id="bnb-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#f3ba2f,#f9e79f);display:grid;place-items:center;font-weight:800">
+            <svg width="24" height="24" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M16 12.4L9.6 8 16 4l6.4 4z"/><path fill="#fff" d="M16 27l-6.4-4L16 19l6.4 4z"/><path fill="#fff" d="M12.8 16l-2.4-1.6L8 16l2.4 1.6zM24 16l-2.4-1.6L19.2 16 21.6 17.6z"/></svg>
+          </div>
+          <div class="major-left">
+            <div class="coin-name">BNB <span class="muted" style="font-weight:600"> (BNB)</span></div>
+            <div class="coin-price muted">Binance chain native</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="bnb-stats">
+          <div class="coin-price-big" id="bnb-price">$—</div>
+          <div class="chg" id="bnb-chg">—</div>
+        </div>
       </div>
-    </footer>
+
+      <!-- Major: Polygon (MATIC) -->
+      <div class="major-card" id="major-polygon">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="coin-icon" id="matic-icon" style="width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#8247e5,#3ad1ff);display:grid;place-items:center;font-weight:800">
+            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M12 2L2 8v8l10 6 10-6V8z"/></svg>
+          </div>
+          <div class="major-left">
+            <div class="coin-name">Polygon <span class="muted" style="font-weight:600"> (MATIC)</span></div>
+            <div class="coin-price muted">Layer-2 & sidechain</div>
+          </div>
+        </div>
+        <div class="coin-stats" id="matic-stats">
+          <div class="coin-price-big" id="matic-price">$—</div>
+          <div class="chg" id="matic-chg">—</div>
+        </div>
+      </div>
+    </div><!-- majors -->
   </div>
+
+  <!-- RIGHT: Market lists -->
+  <div class="right">
+    <div class="panel lists">
+      <!-- Top Gainers -->
+      <div>
+        <div class="list-title">Top Gainers (24h)</div>
+        <div class="list" id="gainers"> <div class="loader"></div> </div>
+      </div>
+
+      <!-- Top Losers -->
+      <div>
+        <div class="list-title">Top Losers (24h)</div>
+        <div class="list" id="losers"> <div class="loader"></div> </div>
+      </div>
+
+      <!-- Top Movers (abs % change) -->
+      <div>
+        <div class="list-title">Top Movers (24h)</div>
+        <div class="list" id="movers"> <div class="loader"></div> </div>
+      </div>
+
+      <!-- 24h Volume Leaders -->
+      <div>
+        <div class="list-title">24h Volume (Top)</div>
+        <div class="list" id="volumes"> <div class="loader"></div> </div>
+      </div>
+    </div>
+
+    <!-- Expanded summary cards (by chain slices) -->
+    <div class="panel big-list" id="chain-splits">
+      <!-- small cards will be injected here -->
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">Ethereum tokens (sample)</div>
+        <div id="eth-sample"> <div class="muted">loading…</div> </div>
+      </div>
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">BNB (BSC) tokens (sample)</div>
+        <div id="bsc-sample"> <div class="muted">loading…</div> </div>
+      </div>
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">Polygon (sample)</div>
+        <div id="poly-sample"> <div class="muted">loading…</div> </div>
+      </div>
+      <div class="big-card">
+        <div class="muted" style="margin-bottom:8px">Other highlights</div>
+        <div id="other-sample"> <div class="muted">loading…</div> </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 /*
-  Stable core dashboard:
-  - Strategy C for Polygon: try ['polygon-pos','matic-network','polygon','matic-network-old-like'], then market heuristics by symbol/name.
-  - All majors details + quick snapshot refreshed & cached every 15 minutes.
-  - Robust error handling so page never breaks.
-  - Copy buttons copy contract (if present) or coin id.
+  NOL AI · Markets Dashboard
+  - Major cards: ETH, BNB, MATIC (prominent)
+  - Sections: top gainers, top losers, top movers (abs %), top 24h volume
+  - Focus: coins primarily from Ethereum, Binance Smart Chain, Polygon
+  - Uses CoinGecko public API (client-side)
+  - Refreshes every 60s
 */
 
-const COINGECKO_COIN = 'https://api.coingecko.com/api/v3/coins/';
+/* CONFIG */
 const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
-const VS = 'usd';
-
-const MAJORS = {
-  eth: { ids: ['ethereum'], displayId: 'ethereum' },
-  bnb: { ids: ['binancecoin'], displayId: 'binancecoin' },
-  poly: { ids: ['polygon-pos','matic-network','polygon','matic-network'] , displayId: 'polygon' }
+const COINGECKO_COIN = 'https://api.coingecko.com/api/v3/coins/'; // /{id}
+const VS_CURRENCY = 'usd';
+const PER_PAGE = 120; // how many to pull (higher means better lists but more data)
+const REFRESH_MS = 60000;
+const FOCUS_CHAINS = {
+  ethereum: { key: 'ethereum', label: 'ETH', color: '#8a5cff' },
+  'binance-smart-chain': { key: 'binance-smart-chain', label: 'BSC', color: '#f3ba2f' },
+  'polygon-pos': { key: 'polygon-pos', label: 'POLY', color: '#8247e5' },
 };
 
-const REFRESH_MS = 15 * 60 * 1000; // 15 minutes per user request
-const MAJORS_CACHE_KEY = 'nolda_core_majors_v1';
-const SNAPSHOT_CACHE_KEY = 'nolda_core_snapshot_v1';
+// Major coin ids on CoinGecko
+const MAJORS = ['ethereum','binancecoin','polygon']; // keep order: ETH, BNB, POLYGON (polygon id is 'polygon')
 
-/* small helpers */
-const $ = id => document.getElementById(id);
-function el(tag, cls='', html=''){ const e=document.createElement(tag); if(cls) e.className=cls; if(html!==undefined) e.innerHTML=html; return e; }
+/* helper: minimal concurrency pool for detail fetches */
+async function pMap(items, mapper, { concurrency = 6 } = {}) {
+  const ret = [];
+  const executing = [];
+  for (const item of items) {
+    const p = Promise.resolve().then(() => mapper(item));
+    ret.push(p);
+    executing.push(p);
+    if (executing.length >= concurrency) {
+      await Promise.race(executing).catch(()=>{/* swallow */});
+      // remove settled
+      for (let i = executing.length - 1; i >= 0; --i) if (executing[i].settled) executing.splice(i,1);
+    }
+    // mark settle wrapper
+    p.then(()=>p.settled=true, ()=>p.settled=true);
+  }
+  return Promise.all(ret);
+}
+
+/* fetch markets list */
+async function fetchMarketsList() {
+  const url = `${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&order=market_cap_desc&per_page=${PER_PAGE}&page=1&sparkline=false&price_change_percentage=24h`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('market list failed');
+  return res.json();
+}
+
+/* fetch coin detail (to get platforms) */
+async function fetchCoinDetail(id) {
+  // limit fields; platforms still returned
+  const url = `${COINGECKO_COIN}${encodeURIComponent(id)}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`;
+  const res = await fetch(url);
+  if (!res.ok) return null;
+  return res.json();
+}
+
+/* detect chain: prefer known native ids, else look at platforms keys */
+function detectChain(coinMarket, coinDetail) {
+  const id = coinMarket.id;
+  // native big ones
+  if (id === 'ethereum') return 'ethereum';
+  if (id === 'binancecoin') return 'binance-smart-chain';
+  if (id === 'polygon' || id === 'matic-network' || id === 'matic-token') return 'polygon-pos';
+  // check platforms map keys
+  if (coinDetail && coinDetail.platforms) {
+    const platforms = coinDetail.platforms;
+    for (const key of Object.keys(platforms)) {
+      if (!platforms[key]) continue;
+      if (key.toLowerCase().includes('binance') || key === 'binance-smart-chain') return 'binance-smart-chain';
+      if (key.toLowerCase().includes('ethereum') || key === 'ethereum') return 'ethereum';
+      if (key.toLowerCase().includes('polygon') || key === 'polygon-pos') return 'polygon-pos';
+    }
+  }
+  // fallback: symbol/or name hints
+  const sym = (coinMarket.symbol||'').toLowerCase();
+  if (sym.includes('matic')) return 'polygon-pos';
+  if (sym.includes('bnb')) return 'binance-smart-chain';
+  return 'other';
+}
+
+/* small helpers for DOM */
+function el(tag, cls='', html=''){ const e = document.createElement(tag); if(cls) e.className = cls; if(html!==undefined) e.innerHTML = html; return e; }
 function formatUsd(v){ if (v===null||v===undefined) return '—'; return '$' + Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function formatPct(v){ if (v===null||v===undefined) return '—'; const n=Number(v); const sign=n>0?'+':''; return sign + n.toFixed(2) + '%'; }
-function now(){ return Date.now(); }
+function formatPct(v){ if (v===null||v===undefined) return '—'; const n = Number(v); const sign = n>0?'+':''; return sign + n.toFixed(2) + '%'; }
 
-/* cache helpers */
-function readCache(key){
-  try{ const s = localStorage.getItem(key); if(!s) return null; return JSON.parse(s); }catch(e){return null;}
-}
-function writeCache(key, payload){
-  try{ localStorage.setItem(key, JSON.stringify({ ts: now(), payload })); }catch(e){}
-}
-function cacheExpired(key, ms){
-  const obj = readCache(key); if(!obj) return true; return (now() - (obj.ts || 0)) > ms;
-}
-
-/* fetch coin detail by id (CoinGecko coin endpoint). returns null on failure */
-async function fetchCoinDetail(id){
-  try{
-    const url = `${COINGECKO_COIN}${encodeURIComponent(id)}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`;
-    const res = await fetch(url);
-    if(!res.ok) return null;
-    return await res.json();
-  } catch(e){ return null; }
-}
-
-/* fallback: search markets list heuristics to find matching coin by symbol or name */
-async function findMarketByHeuristics(keywords = ['matic','polygon']){
-  try{
-    const url = `${COINGECKO_MARKETS}?vs_currency=${VS}&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-    const res = await fetch(url);
-    if(!res.ok) return null;
-    const arr = await res.json();
-    const keyLower = keywords.map(k=>k.toLowerCase());
-    // try progressive heuristics
-    let found = arr.find(c => keyLower.some(k => (c.id||'').toLowerCase() === k));
-    if(found) return found;
-    found = arr.find(c => keyLower.some(k => (c.symbol||'').toLowerCase().includes(k)));
-    if(found) return found;
-    found = arr.find(c => keyLower.some(k => (c.name||'').toLowerCase().includes(k)));
-    if(found) return found;
-    return null;
-  }catch(e){ return null; }
-}
-
-/* robust fetch for a major using candidate ids and heuristics */
-async function getMajorDataForCandidates(candidates = [], heuristics = []){
-  // try coin detail endpoint for each candidate id
-  for(const id of candidates){
-    const d = await fetchCoinDetail(id);
-    if(d && d.market_data && d.market_data.current_price && typeof d.market_data.current_price[VS] !== 'undefined'){
-      // return normalized object
-      return {
-        id: d.id,
-        name: d.name,
-        symbol: d.symbol,
-        price: d.market_data.current_price[VS],
-        change24h: d.market_data.price_change_percentage_24h,
-        total_volume: (d.market_data.total_volume && d.market_data.total_volume[VS]) ? d.market_data.total_volume[VS] : null,
-        contract: (d.platforms && Object.keys(d.platforms).length) ? (Object.values(d.platforms).find(Boolean) || null) : null,
-        raw: d
-      };
-    }
-  }
-
-  // fallback: try markets heuristics (search by symbol/name)
-  if (heuristics && heuristics.length){
-    const found = await findMarketByHeuristics(heuristics);
-    if(found){
-      return {
-        id: found.id,
-        name: found.name,
-        symbol: found.symbol,
-        price: found.current_price,
-        change24h: found.price_change_percentage_24h,
-        total_volume: found.total_volume,
-        contract: null,
-        raw: found
-      };
-    }
-  }
-  return null;
-}
-
-/* render majors into UI safely */
-function renderMajors(majorsObj = {}){
-  try{
-    // ETH
-    if(majorsObj.ethereum){
-      $('eth-price').textContent = formatUsd(majorsObj.ethereum.price);
-      $('eth-chg').textContent = formatPct(majorsObj.ethereum.change24h);
-      $('eth-chg').style.background = (majorsObj.ethereum.change24h >= 0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-      $('eth-contract-display').textContent = majorsObj.ethereum.contract ? (majorsObj.ethereum.contract.slice(0,8)+'…'+majorsObj.ethereum.contract.slice(-6)) : 'native';
-    }
-    // BNB
-    if(majorsObj.binancecoin){
-      $('bnb-price').textContent = formatUsd(majorsObj.binancecoin.price);
-      $('bnb-chg').textContent = formatPct(majorsObj.binancecoin.change24h);
-      $('bnb-chg').style.background = (majorsObj.binancecoin.change24h >= 0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-      $('bnb-contract-display').textContent = majorsObj.binancecoin.contract ? (majorsObj.binancecoin.contract.slice(0,8)+'…'+majorsObj.binancecoin.contract.slice(-6)) : 'native';
-    }
-    // POLY
-    if(majorsObj.polygon){
-      $('matic-price').textContent = formatUsd(majorsObj.polygon.price);
-      $('matic-chg').textContent = formatPct(majorsObj.polygon.change24h);
-      $('matic-chg').style.background = (majorsObj.polygon.change24h >= 0) ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
-      $('matic-contract-display').textContent = majorsObj.polygon.contract ? (majorsObj.polygon.contract.slice(0,8)+'…'+majorsObj.polygon.contract.slice(-6)) : 'native';
-    }
-
-    $('updateTime').textContent = new Date().toLocaleString();
-  }catch(e){ console.error('renderMajors error', e); }
-}
-
-/* attempt to fetch and cache all majors; safe to run repeatedly */
-async function refreshMajorsAll(){
-  try{
-    // read cache if fresh
-    const cached = readCache(MAJORS_CACHE_KEY);
-    if(cached && (now() - cached.ts) < REFRESH_MS){
-      renderMajors(cached.payload);
-      return cached.payload;
-    }
-
-    const result = {};
-
-    // ETH
-    const eth = await getMajorDataForCandidates(MAJORS.eth.ids, ['eth','ethereum']);
-    if(eth) result.ethereum = eth;
-
-    // BNB
-    const bnb = await getMajorDataForCandidates(MAJORS.bnb.ids, ['bnb','binancecoin']);
-    if(bnb) result.binancecoin = bnb;
-
-    // POLYGON - Strategy C: try candidates then heuristics
-    const polyCandidates = MAJORS.poly.ids;
-    const polyHeuristics = ['matic','polygon','matic-network','polygon-pos'];
-    const poly = await getMajorDataForCandidates(polyCandidates, polyHeuristics);
-    if(poly) result.polygon = poly;
-
-    // write cache and render
-    writeCache(MAJORS_CACHE_KEY, result);
-    renderMajors(result);
-    return result;
-  }catch(e){
-    console.error('refreshMajorsAll error', e);
-    // attempt to render stale cache if exists
-    const stale = readCache(MAJORS_CACHE_KEY);
-    if(stale && stale.payload) renderMajors(stale.payload);
-    return null;
+/* render functions */
+function renderMajor(id, market){
+  if(!market) return;
+  const priceEl = document.getElementById(`${id}-price`);
+  const chgEl = document.getElementById(`${id}-chg`);
+  const statsEl = document.getElementById(`${id}-stats`);
+  const price = formatUsd(market.current_price);
+  const chg = market.price_change_percentage_24h;
+  priceEl && (priceEl.textContent = price);
+  if (chgEl){
+    chgEl.textContent = formatPct(chg);
+    chgEl.style.background = chg>=0 ? 'linear-gradient(90deg,#063f2c,#038f53)' : 'linear-gradient(90deg,#3b0a0a,#ff6b6b)';
+    chgEl.style.color = '#fff';
   }
 }
 
-/* Quick snapshot: compute totals and cache for REFRESH_MS */
-async function refreshQuickSnapshot(){
+/* small chain badge element */
+function chainBadge(chain){
+  const b = el('div','chain-badge','');
+  if(chain === 'ethereum'){ b.style.background = 'linear-gradient(90deg,#8a5cff,#2ea0ff)'; b.textContent = 'ETH'; }
+  else if(chain === 'binance-smart-chain'){ b.style.background = 'linear-gradient(90deg,#f3ba2f,#f9e79f)'; b.style.color='#111'; b.textContent = 'BSC'; }
+  else if(chain === 'polygon-pos'){ b.style.background = 'linear-gradient(90deg,#8247e5,#3ad1ff)'; b.textContent = 'POLY'; }
+  else { b.style.background = 'rgba(255,255,255,0.04)'; b.textContent = '—'; }
+  return b;
+}
+
+/* create a small row item for lists */
+function makeCoinRow(market, chain) {
+  const row = el('div','coin-row');
+  const iconWrap = el('div','coin-icon'); 
+  const img = el('img'); img.src = market.image; img.alt = market.symbol; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
+  iconWrap.appendChild(img);
+  row.appendChild(iconWrap);
+
+  const meta = el('div','meta');
+  meta.innerHTML = `<div class="nm">${market.name}</div><div class="sym">${market.symbol.toUpperCase()}</div>`;
+  row.appendChild(meta);
+
+  const chainEl = chainBadge(chain);
+  meta.appendChild(chainEl);
+
+  const stats = el('div','stats');
+  const price = el('div','stat-price',formatUsd(market.current_price));
+  stats.appendChild(price);
+  const chgVal = market.price_change_percentage_24h;
+  const chg = el('div','stat-change',formatPct(chgVal));
+  chg.className += ' ' + (chgVal>=0 ? 'green' : 'red');
+  stats.appendChild(chg);
+
+  const vol = el('div','muted', 'Vol: ' + (market.total_volume ? Number(market.total_volume).toLocaleString() : '—'));
+  vol.style.fontSize='12px';
+  stats.appendChild(vol);
+
+  row.appendChild(stats);
+  return row;
+}
+
+/* main render pipeline */
+async function updateDashboard(){
   try{
-    const cached = readCache(SNAPSHOT_CACHE_KEY);
-    if(cached && (now() - cached.ts) < REFRESH_MS){
-      const p = cached.payload;
-      $('quickMarketCap').textContent = p.marketCapDisplay || '—';
-      $('quickVol').textContent = p.volDisplay || '—';
-      $('snapshotTime').textContent = new Date(cached.ts).toLocaleTimeString();
-      return p;
+    const markets = await fetchMarketsList(); // top N markets
+    // build detail fetches for a reasonable subset (we'll fetch details for first 80 markets)
+    const subset = markets.slice(0, 80);
+    // Concurrently fetch details but limited
+    const details = await pMap(subset, async (m)=> {
+      try { return await fetchCoinDetail(m.id); } catch(e){ return null; }
+    }, {concurrency:6});
+
+    // attach chain info to markets array (for subset)
+    const idToChain = {};
+    for(let i=0;i<subset.length;i++){
+      const m = subset[i];
+      const d = details[i];
+      const chain = detectChain(m,d);
+      idToChain[m.id] = chain;
+    }
+    // also mark other markets (beyond subset) as 'other'
+    for(const m of markets){
+      if(!(m.id in idToChain)) idToChain[m.id] = 'other';
     }
 
-    // fetch available markets (limited to 250)
-    const url = `${COINGECKO_MARKETS}?vs_currency=${VS}&order=market_cap_desc&per_page=250&page=1&sparkline=false&price_change_percentage=24h`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('markets fetch failed');
-    const arr = await res.json();
-    const totalMarketCap = arr.reduce((s,m)=> s + (m.market_cap || 0), 0);
-    const totalVol = arr.reduce((s,m)=> s + (m.total_volume || 0), 0);
-    const payload = {
-      marketCap: totalMarketCap,
-      vol: totalVol,
-      marketCapDisplay: totalMarketCap ? ('$' + totalMarketCap.toLocaleString()) : '—',
-      volDisplay: totalVol ? ('$' + totalVol.toLocaleString()) : '—'
-    };
-    writeCache(SNAPSHOT_CACHE_KEY, payload);
-    $('quickMarketCap').textContent = payload.marketCapDisplay;
-    $('quickVol').textContent = payload.volDisplay;
-    $('snapshotTime').textContent = new Date().toLocaleTimeString();
-    return payload;
-  }catch(e){
-    console.error('refreshQuickSnapshot error', e);
-    const stale = readCache(SNAPSHOT_CACHE_KEY);
-    if(stale && stale.payload){
-      const p = stale.payload;
-      $('quickMarketCap').textContent = p.marketCapDisplay || '—';
-      $('quickVol').textContent = p.volDisplay || '—';
-      $('snapshotTime').textContent = new Date(stale.ts).toLocaleTimeString();
-    }
-    return null;
-  }
-}
+    // update major cards by looking up by id
+    const mapById = Object.fromEntries(markets.map(c=>[c.id,c]));
+    // Ethereum
+    if(mapById['ethereum']) renderMajor('eth', mapById['ethereum']);
+    if(mapById['binancecoin']) renderMajor('bnb', mapById['binancecoin']);
+    if(mapById['polygon']) renderMajor('matic', mapById['polygon']);
+    // update update time
+    document.getElementById('updateTime').textContent = new Date().toLocaleString();
 
-/* copy snapshot text */
-function copySnapshot(){
-  const c = readCache(SNAPSHOT_CACHE_KEY);
-  const p = c && c.payload ? c.payload : null;
-  const text = p ? `MarketCap: ${p.marketCapDisplay} · 24hVol: ${p.volDisplay}` : 'NOL AI snapshot';
-  navigator.clipboard && navigator.clipboard.writeText(text).then(()=> {
-    const btn = $('snapshotCopyBtn'); const prev = btn.innerHTML;
-    btn.classList.add('copied'); btn.innerHTML = 'Copied';
-    setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML = prev; },1200);
-  }).catch(()=>{});
-}
+    // prepare filtered arrays focusing on tokens from the three chains
+    const focused = markets.filter(m=>{
+      const chain = idToChain[m.id];
+      return chain === 'ethereum' || chain === 'binance-smart-chain' || chain === 'polygon-pos';
+    });
 
-/* major copy: copy contract if available or id */
-function onMajorCopy(ev){
-  const btn = ev.currentTarget;
-  const coin = btn.dataset.coin; // 'ethereum', 'binancecoin', 'polygon'
-  const cache = readCache(MAJORS_CACHE_KEY);
-  let addr = coin;
-  if(cache && cache.payload){
-    const payload = cache.payload;
-    // try to find matching object by id or symbol
-    const candidate = Object.values(payload).find(x => x.id === coin || (x.symbol && x.symbol.toLowerCase() === coin.toLowerCase()));
-    if(candidate && candidate.contract) addr = candidate.contract;
-  }
-  navigator.clipboard && navigator.clipboard.writeText(addr).then(()=> {
-    const prev = btn.innerHTML; btn.classList.add('copied'); btn.innerHTML = 'Copied';
-    setTimeout(()=>{ btn.classList.remove('copied'); btn.innerHTML = prev; },1200);
-  }).catch(()=>{});
-}
+    // if focused is small, expand by including next-tier markets up to 120
+    const pool = focused.length >= 40 ? focused : markets.slice(0, Math.min(markets.length, 120));
 
-/* BOOT: initial load + intervals */
-(async function boot(){
-  try{
-    // initial loads
-    await refreshMajorsAll();
-    await refreshQuickSnapshot();
+    // compute lists
+    const withChange = pool.filter(p => p.price_change_percentage_24h !== null && p.price_change_percentage_24h !== undefined);
 
-    // intervals
-    setInterval(refreshMajorsAll, REFRESH_MS);      // majors + details every 15 minutes
-    setInterval(refreshQuickSnapshot, REFRESH_MS);  // quick snapshot every 15 minutes
+    // top gainers
+    const gainers = withChange.slice().sort((a,b)=>b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0,6);
+    // top losers
+    const losers = withChange.slice().sort((a,b)=>a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0,6);
+    // top movers (absolute)
+    const movers = withChange.slice().sort((a,b)=> Math.abs(b.price_change_percentage_24h) - Math.abs(a.price_change_percentage_24h)).slice(0,6);
+    // top 24h volume
+    const volumes = pool.slice().sort((a,b)=> (b.total_volume||0) - (a.total_volume||0)).slice(0,6);
 
-    // defensive: if initial render failed, try again after short delay
-    setTimeout(async ()=> {
-      const cached = readCache(MAJORS_CACHE_KEY);
-      if(!cached || !cached.payload) {
-        await refreshMajorsAll();
+    // render list into DOM
+    const elGainers = document.getElementById('gainers'); elGainers.innerHTML='';
+    const elLosers = document.getElementById('losers'); elLosers.innerHTML='';
+    const elMovers  = document.getElementById('movers'); elMovers.innerHTML='';
+    const elVolumes = document.getElementById('volumes'); elVolumes.innerHTML='';
+
+    for(const m of gainers){ elGainers.appendChild(makeCoinRow(m, idToChain[m.id])); }
+    for(const m of losers){ elLosers.appendChild(makeCoinRow(m, idToChain[m.id])); }
+    for(const m of movers){ elMovers.appendChild(makeCoinRow(m, idToChain[m.id])); }
+    for(const m of volumes){ elVolumes.appendChild(makeCoinRow(m, idToChain[m.id])); }
+
+    // update chain-sample blocks (show a few tokens from each chain)
+    function fillSample(containerId, chainKey){
+      const elc = document.getElementById(containerId); elc.innerHTML='';
+      const slice = pool.filter(p => idToChain[p.id] === chainKey).slice(0,6);
+      if(slice.length === 0){ elc.innerHTML = '<div class="muted">No tokens from this chain in sample.</div>'; return; }
+      for(const m of slice){
+        const r = makeCoinRow(m, chainKey);
+        r.style.padding = '6px';
+        r.style.borderRadius = '8px';
+        elc.appendChild(r);
       }
-    }, 5000);
+    }
+    fillSample('eth-sample','ethereum');
+    fillSample('bsc-sample','binance-smart-chain');
+    fillSample('poly-sample','polygon-pos');
+    // other sample: show coins from pool not in the three chains
+    const otherNodes = pool.filter(p => !['ethereum','binance-smart-chain','polygon-pos'].includes(idToChain[p.id])).slice(0,6);
+    const otherEl = document.getElementById('other-sample'); otherEl.innerHTML='';
+    if(otherNodes.length === 0) otherEl.innerHTML = '<div class="muted">No other highlights.</div>';
+    else otherNodes.forEach(n => otherEl.appendChild(makeCoinRow(n, idToChain[n.id])));
 
-  }catch(e){
-    console.error('boot error', e);
+  }catch(err){
+    console.error('updateDashboard error',err);
+    // show error states
+    ['gainers','losers','movers','volumes','eth-sample','bsc-sample','poly-sample','other-sample'].forEach(id=>{
+      const el = document.getElementById(id); if(el) el.innerHTML = '<div class="muted">Failed to load. Try again later.</div>';
+    });
   }
-})();
+}
 
-/* expose minor functions to inline handlers */
-window.onMajorCopy = onMajorCopy;
-window.copySnapshot = copySnapshot;
+/* boot */
+updateDashboard();
+/* refresh interval */
+setInterval(updateDashboard, REFRESH_MS);
 </script>
+
 </body>
 </html>
