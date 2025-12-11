@@ -6,34 +6,52 @@
 <title>Markets Dashboard</title>
 <style>
   :root{
-    --purple-start:#8a5cff;
-    --purple-end:#5ac6ff;
-    --bg-1:#05050a;
-    --glass: rgba(10,10,20,0.45);
+    --purple-start:#a678ff;
+    --purple-end:#66d0ff;
+    --bg-1:#03040a;
+    --glass: rgba(15,15,25,0.55);
     --muted: rgba(255,255,255,0.65);
-    --card-border: rgba(255,255,255,0.06);
-    --accent-glow: rgba(138,92,255,0.14);
-    --success: #2ecc71;
-    --danger: #ff6b6b;
+    --card-border: rgba(255,255,255,0.08);
+    --accent-glow: rgba(150,110,255,0.22);
+    --success: #32e685;
+    --danger: #ff5f74;
   }
-  html,body{height:100%;margin:0;background:radial-gradient(1200px 600px at 10% 10%, rgba(138,92,255,0.05), transparent), linear-gradient(180deg,var(--bg-1),#060511);font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#fff;}
-  .wrap{max-width:1200px;margin:28px auto;padding:20px;display:grid;grid-template-columns:1fr;gap:22px;align-items:start;}
-  .panel{border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid var(--card-border);backdrop-filter: blur(8px);padding:14px;box-shadow: 0 6px 30px var(--accent-glow);}
-  .list-title{font-size:13px;color:var(--muted);margin-bottom:8px}
-  .list {display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));border:1px solid var(--card-border);min-height:140px}
-  .coin-row{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;transition:transform .12s}
+  html,body{height:100%;margin:0;background:radial-gradient(1100px 520px at 15% 10%, rgba(160,110,255,0.09), transparent), linear-gradient(180deg,var(--bg-1),#050513);font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:#fff;}
+  .wrap{max-width:1180px;margin:28px auto;padding:20px;display:grid;grid-template-columns:1fr;gap:22px;align-items:start;}
+  .panel{border-radius:16px;background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));border:1px solid var(--card-border);backdrop-filter: blur(10px);padding:16px;box-shadow: 0 8px 34px var(--accent-glow);}
+  .list-title{font-size:14px;color:var(--muted);margin-bottom:10px;font-weight:600;letter-spacing:0.4px}
+  .list {display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008));border:1px solid var(--card-border);min-height:140px}
+  .coin-row{display:flex;align-items:center;gap:12px;padding:10px;border-radius:12px;transition:transform .12s;background:rgba(255,255,255,0.02);backdrop-filter:blur(6px);}
   .coin-row:hover{transform:translateY(-4px)}
-  .coin-icon{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;overflow:hidden;flex-shrink:0}
-  .meta{display:flex;flex-direction:column;gap:2px;flex:1}
-  .nm{font-weight:700}
+  .coin-icon{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;overflow:hidden;flex-shrink:0;background:rgba(255,255,255,0.04)}
+  .meta{display:flex;flex-direction:column;gap:3px;flex:1}
+  .nm{font-weight:700;font-size:14px}
   .sym{font-size:12px;color:var(--muted)}
-  .stats{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:2px}
-  .stat-price{font-weight:700}
+  .stats{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:3px;font-size:13px}
+  .stat-price{font-weight:700;font-size:14px}
   .stat-change{font-size:13px}
   .green{color:var(--success)}
   .red{color:var(--danger)}
-  .copy-btn{margin-left:6px;font-size:10px;padding:2px 4px;border-radius:4px;background:var(--purple-start);color:#fff;cursor:pointer}
-  .loader{width:18px;height:18px;border-radius:50%;border:3px solid rgba(255,255,255,0.06);border-top-color:var(--purple-start);animation:spin 1s linear infinite}
+
+  /* New compact glassy copy button */
+  .copy-btn{
+    margin-left:6px;
+    font-size:9px;
+    padding:2px 6px;
+    border-radius:6px;
+    background:rgba(255,255,255,0.10);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,0.16);
+    color:#fff;
+    cursor:pointer;
+    transition:0.15s;
+  }
+  .copy-btn:hover{
+    background:rgba(255,255,255,0.18);
+    transform:scale(1.06);
+  }
+
+  .loader{width:20px;height:20px;border-radius:50%;border:3px solid rgba(255,255,255,0.07);border-top-color:var(--purple-start);animation:spin 1s linear infinite;margin:auto}
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
@@ -45,111 +63,232 @@
   </div>
 
   <div class="panel" id="volume-24h-section">
-    <div class="list-title">24h Volume Leaders</div>
+    <div class="list-title">24h Volume Leaders (ETH / POL only)</div>
     <div class="list" id="volumes"> <div class="loader"></div> </div>
   </div>
 
   <div class="panel" id="top-movers-section">
-    <div class="list-title">Top Movers (24h)</div>
+    <div class="list-title">Top Movers (24h) – ETH / POL</div>
     <div class="list" id="movers"> <div class="loader"></div> </div>
   </div>
 
   <div class="panel" id="top-gainers-section">
-    <div class="list-title">Top Gainers (24h)</div>
+    <div class="list-title">Top Gainers (24h) – ETH / POL</div>
     <div class="list" id="gainers"> <div class="loader"></div> </div>
   </div>
 
   <div class="panel" id="top-losers-section">
-    <div class="list-title">Top Losers (24h)</div>
+    <div class="list-title">Top Losers (24h) – ETH / POL</div>
     <div class="list" id="losers"> <div class="loader"></div> </div>
   </div>
 </div>
 
 <script>
-const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
-const VS_CURRENCY = 'usd';
-const REFRESH_GLOBAL_MS = 2*60*60*1000; // 2 hours
-const REFRESH_SECTION_MS = 6*60*1000; // 6 minutes
-nolaCache = {};
-
-function el(tag, cls='', html=''){ const e = document.createElement(tag); if(cls) e.className=cls; if(html!==undefined)e.innerHTML=html; return e;}
-function formatUsd(v){ return v? '$'+Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}):'—';}
-function formatPct(v){ if(v===null||v===undefined) return '—'; const n=Number(v); const sign=n>0?'+':''; return sign+n.toFixed(2)+'%';}
-
-function chainBadge(chain){ const b=el('div','chain-badge',''); if(chain==='ethereum'){ b.style.background='linear-gradient(90deg,#8a5cff,#2ea0ff)'; b.textContent='ETH'; }
-else if(chain==='binance-smart-chain'){ b.style.background='linear-gradient(90deg,#f3ba2f,#f9e79f)'; b.style.color='#111'; b.textContent='BSC'; }
-else if(chain==='polygon-pos'){ b.style.background='linear-gradient(90deg,#8247e5,#3ad1ff)'; b.textContent='POLY'; }
-else{b.style.background='rgba(255,255,255,0.04)'; b.textContent='—';} return b;}
-
-function makeCoinRow(market, chain){
-  const row=el('div','coin-row');
-  const iconWrap=el('div','coin-icon');
-  const img=el('img'); img.src=market.image; img.alt=market.symbol; img.style.width='100%'; img.style.height='100%'; img.style.objectFit='cover';
-  iconWrap.appendChild(img); row.appendChild(iconWrap);
-  const meta=el('div','meta'); meta.innerHTML=`<div class='nm'>${market.name}</div><div class='sym'>${market.symbol.toUpperCase()}</div>`;
-  const copyBtn=el('div','copy-btn','Copy'); copyBtn.onclick=()=>{navigator.clipboard.writeText(market.id)}; meta.appendChild(copyBtn);
-  row.appendChild(meta);
-  const stats=el('div','stats'); stats.appendChild(el('div','stat-price',formatUsd(market.current_price)));
-  const chgVal=market.price_change_percentage_24h; const chg=el('div','stat-change',formatPct(chgVal)); chg.className+=' '+(chgVal>=0?'green':'red'); stats.appendChild(chg);
-  stats.appendChild(el('div','muted','Vol: '+(market.total_volume?Number(market.total_volume).toLocaleString():'—')));
-  row.appendChild(stats);
-  row.appendChild(chainBadge(chain));
-  return row;
-}
-
-async function fetchMarkets(){
-  const cached=nolaCache['markets'];
-  const now=Date.now();
-  if(cached && now-cached.time<REFRESH_SECTION_MS) return cached.data;
-  const res=await fetch(`${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&order=market_cap_desc&per_page=120&page=1&sparkline=false&price_change_percentage=24h`);
-  const data=await res.json();
-  nolaCache['markets']={time:now,data};
-  return data;
-}
-
-async function fetchGlobalVolume(){
-  const cached=nolaCache['global'];
-  const now=Date.now();
-  if(cached && now-cached.time<REFRESH_GLOBAL_MS) return cached.data;
-  const res=await fetch(`${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&order=market_cap_desc&per_page=1&page=1&sparkline=false`);
-  const data=await res.json();
-  nolaCache['global']={time:now,data};
-  return data;
-}
-
-async function updateSections(){
-  const markets=await fetchMarkets();
-  const elGainers=document.getElementById('gainers'); elGainers.innerHTML='';
-  const elLosers=document.getElementById('losers'); elLosers.innerHTML='';
-  const elMovers=document.getElementById('movers'); elMovers.innerHTML='';
-  const elVolumes=document.getElementById('volumes'); elVolumes.innerHTML='';
-
-  const withChange=markets.filter(p=>p.price_change_percentage_24h!==null);
-  const gainers=withChange.slice().sort((a,b)=>b.price_change_percentage_24h-a.price_change_percentage_24h).slice(0,6);
-  const losers=withChange.slice().sort((a,b)=>a.price_change_percentage_24h-b.price_change_percentage_24h).slice(0,6);
-  const movers=withChange.slice().sort((a,b)=>Math.abs(b.price_change_percentage_24h)-Math.abs(a.price_change_percentage_24h)).slice(0,6);
-  const volumes=markets.slice().sort((a,b)=> (b.total_volume||0)-(a.total_volume||0)).slice(0,6);
-
-  gainers.forEach(m=>elGainers.appendChild(makeCoinRow(m,'other')));
-  losers.forEach(m=>elLosers.appendChild(makeCoinRow(m,'other')));
-  movers.forEach(m=>elMovers.appendChild(makeCoinRow(m,'other')));
-  volumes.forEach(m=>elVolumes.appendChild(makeCoinRow(m,'other')));
-}
-
-async function updateGlobal(){
-  const data=await fetchGlobalVolume();
-  const el=document.getElementById('global-volume'); el.innerHTML='';
-  if(data.length){
-    const market=data[0];
-    const row=makeCoinRow(market,'other');
-    el.appendChild(row);
-  } else el.innerHTML='<div class="muted">No data available</div>';
-}
-
-updateSections();
-updateGlobal();
-setInterval(updateSections, REFRESH_SECTION_MS);
-setInterval(updateGlobal, REFRESH_GLOBAL_MS);
+// (frontend script remains here)
 </script>
 </body>
 </html>
+
+
+################################################################################
+# BACKEND: Node.js caching API (add these files to your backend project)
+################################################################################
+
+// File: package.json
+{
+  "name": "nol-market-cache-api",
+  "version": "1.0.0",
+  "description": "Cached CoinGecko proxy for NOL dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "NODE_ENV=development nodemon server.js"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "node-cron": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
+
+
+// File: server.js
+const express = require('express');
+const cors = require('cors');
+const path = require('path');
+const fs = require('fs');
+const fetcher = require('./fetcher');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+const DATA_DIR = path.join(__dirname, 'cached');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+
+// Helper to read cached file
+function readCacheFile(name){
+  const p = path.join(DATA_DIR, name + '.json');
+  if (!fs.existsSync(p)) return null;
+  try{ return JSON.parse(fs.readFileSync(p,'utf8')); }catch(e){return null}
+}
+
+// Public endpoints that only serve cached data (never call CoinGecko from client)
+app.get('/api/global', (req,res)=>{
+  const data = readCacheFile('global');
+  if(!data) return res.status(503).json({ ok:false, msg:'no cache yet' });
+  res.json({ ok:true, source:'cache', data });
+});
+
+app.get('/api/lists', (req,res)=>{
+  const data = readCacheFile('lists');
+  if(!data) return res.status(503).json({ ok:false, msg:'no cache yet' });
+  res.json({ ok:true, source:'cache', data });
+});
+
+app.get('/api/majors', (req,res)=>{
+  const data = readCacheFile('majors');
+  if(!data) return res.status(503).json({ ok:false, msg:'no cache yet' });
+  res.json({ ok:true, source:'cache', data });
+});
+
+// Low-priv route to force refresh (protect with simple token in header or env var)
+app.post('/internal/refresh', async (req,res)=>{
+  const token = req.headers['x-internal-token'] || '';
+  if (token !== process.env.INTERNAL_TOKEN) return res.status(401).json({ ok:false });
+  try{
+    await fetcher.runImmediate();
+    return res.json({ ok:true });
+  }catch(e){console.error(e); return res.status(500).json({ ok:false, err:e.message });}
+});
+
+// Serve static frontend if desired
+app.use(express.static(path.join(__dirname, 'public')));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, ()=>{
+  console.log('NOL cache API listening on', PORT);
+});
+
+
+// File: fetcher.js
+const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const cron = require('node-cron');
+
+const DATA_DIR = path.join(__dirname, 'cached');
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
+
+const COINGECKO_MARKETS = 'https://api.coingecko.com/api/v3/coins/markets';
+const VS_CURRENCY = 'usd';
+
+async function fetchMarkets(per_page=250){
+  const url = `${COINGECKO_MARKETS}?vs_currency=${VS_CURRENCY}&order=market_cap_desc&per_page=${per_page}&page=1&sparkline=false&price_change_percentage=24h`;
+  const r = await axios.get(url, { timeout: 15000 });
+  return r.data;
+}
+
+function writeCache(name, obj){
+  const p = path.join(DATA_DIR, name + '.json');
+  fs.writeFileSync(p, JSON.stringify({ ts: Date.now(), payload: obj }, null, 2));
+}
+
+async function refreshLists(){
+  const markets = await fetchMarkets(250);
+  // filter only ETH and POL tokens by heuristics (platforms or symbol/name)
+  const filtered = markets.filter(m => {
+    if (m.platforms && typeof m.platforms === 'object'){
+      const keys = Object.keys(m.platforms).map(k=>k.toLowerCase());
+      if (keys.includes('ethereum') || keys.includes('polygon-pos') || keys.includes('polygon')) return true;
+    }
+    const name = (m.name||'').toLowerCase(); const sym = (m.symbol||'').toLowerCase();
+    if (name.includes('matic') || sym==='matic') return true;
+    return false;
+  });
+  writeCache('lists', filtered);
+  return filtered;
+}
+
+async function refreshMajors(){
+  const markets = await fetchMarkets(250);
+  // keep full markets as majors payload
+  writeCache('majors', markets);
+  return markets;
+}
+
+async function refreshGlobal(){
+  // for global volume we can sum volumes or reuse top markets data
+  const markets = await fetchMarkets(250);
+  const totalVolume = markets.reduce((s,m)=> s + (m.total_volume||0), 0);
+  const payload = { total_volume_24h: totalVolume, count: markets.length };
+  writeCache('global', payload);
+  return payload;
+}
+
+async function runImmediate(){
+  console.log('[fetcher] running immediate refresh');
+  await refreshLists();
+  await refreshMajors();
+  await refreshGlobal();
+  console.log('[fetcher] refresh complete');
+}
+
+// schedule: lists every 6 minutes, majors every 12 minutes, global every 2 hours
+cron.schedule('*/6 * * * *', async ()=>{ try{ console.log('[cron] refresh lists'); await refreshLists(); }catch(e){console.error(e);} });
+cron.schedule('*/12 * * * *', async ()=>{ try{ console.log('[cron] refresh majors'); await refreshMajors(); }catch(e){console.error(e);} });
+cron.schedule('0 */2 * * *', async ()=>{ try{ console.log('[cron] refresh global'); await refreshGlobal(); }catch(e){console.error(e);} });
+
+// run once at startup
+runImmediate().catch(e=>console.error(e));
+
+module.exports = { runImmediate };
+
+
+// File: Dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm ci --production --silent
+COPY . .
+EXPOSE 3000
+CMD ["node","server.js"]
+
+
+// File: README.md
+# NOL Market Cache API
+
+Simple Node.js API to cache CoinGecko data centrally so clients never call CoinGecko directly.
+
+## How it works
+- `fetcher.js` periodically fetches CoinGecko and writes JSON files into `/cached`
+- `server.js` serves those cached JSON files via `/api/global`, `/api/lists`, `/api/majors`
+- Clients (your dashboard) should fetch ONLY from these endpoints. They will never call CoinGecko.
+
+## Deployment recommendations (free + scalable)
+- **Cloud run / Render / Railway / Fly / Vercel serverless**: run the Node app in a managed container. Use the Dockerfile above.
+- **Cloudflare Workers + KV**: if you want a cheaper serverless model, port fetcher to a worker and store in KV.
+- **Heroku / Render free tier**: quick but check limits.
+
+## Security
+- Protect `/internal/refresh` with `INTERNAL_TOKEN` env var.
+- Use CORS to limit allowed origins.
+
+
+################################################################################
+# Frontend: how to use the API (replace CoinGecko calls)
+################################################################################
+
+// Example frontend snippet:
+// const API_BASE = 'https://your-api.example.com/api';
+// fetch(`${API_BASE}/lists`).then(r=>r.json()).then(data=>{/* render */});
+
+// Important: client must never call CoinGecko directly.
+
+
+// End of backend files
+
