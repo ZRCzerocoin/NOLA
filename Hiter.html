@@ -1,244 +1,122 @@
-<!doctype html>
-
-<html lang="en">
+<!-- Clean 100-token dashboard (no gainers/losers/movers, no refresh button, no CoinGecko text) --><!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>NOL — Market Dashboard (ETH & POL top movers)</title>
-  <link rel="icon" href="logo.gif" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOL Dashboard</title>
   <style>
-    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#7c3aed;--green:#12b76a;--red:#ff6b6b}
-    *{box-sizing:border-box}html,body{height:100%;margin:0;background:linear-gradient(180deg,#071025 0%, #071726 60%);color:#e6eef6;font-family:Inter,system-ui,Arial}
-    .wrap{max-width:1400px;margin:24px auto;padding:20px;display:grid;grid-template-columns:1fr 360px;gap:18px}
-    header{grid-column:1/-1;display:flex;align-items:center;gap:14px}
-    .brand img{width:36px;height:36px;border-radius:6px}
-    h1{font-size:20px;margin:0}
-    .subtitle{color:var(--muted);font-size:13px}
-    .main{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:14px;padding:14px}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .card{background:var(--card);padding:12px;border-radius:12px;min-height:84px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
-    .ticker{display:flex;align-items:center;gap:10px}
-    .price{font-weight:700;font-size:18px}
-    .muted{color:var(--muted);font-size:13px}
-    .change.up{color:var(--green)}
-    .change.down{color:var(--red)}
-    .small-card{background:rgba(255,255,255,0.02);padding:12px;border-radius:12px}
-    .chain-badge{display:inline-flex;flex-direction:column;align-items:center;font-size:11px;padding:6px;border-radius:8px}
-    .chain-badge .icon{width:18px;height:18px;border-radius:4px;display:inline-grid;place-items:center;margin-bottom:4px}
-    .eth{background:linear-gradient(180deg,#3c3c3f,#1e1e1f)}
-    .pol{background:linear-gradient(180deg,#8247e5,#6b3ddf)}
-    .table{width:100%;border-collapse:collapse;margin-top:10px}
-    .table th{color:var(--muted);font-size:12px;text-align:left;padding:8px}
-    .table td{padding:8px;border-top:1px dashed rgba(255,255,255,0.02);font-size:14px}
-    .token-row{display:flex;align-items:center;gap:10px}
-    .copy-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;color:var(--muted);cursor:pointer}
-    .copy-btn[disabled]{opacity:0.35;cursor:not-allowed}
-    @media (max-width:1200px){.wrap{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:700px){.grid{grid-template-columns:1fr}}
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d0d0d;
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 32px;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    header img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #333;
+    }
+    th {
+      background: #111;
+    }
+    .chain-badge {
+      font-size: 10px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      background: #222;
+      margin-top: 4px;
+    }
+    .copy-btn {
+      padding: 4px 6px;
+      font-size: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #444;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="brand" style="display:flex;align-items:center;gap:12px">
-        <img src="logo.gif" alt="NOL logo"/>
-        <div>
-          <h1>NOL <small style="font-weight:600;color:var(--muted);margin-left:6px">— Market Dashboard</small></h1>
-          <div class="subtitle">Top movers, gainers and losers across Ethereum & Polygon (scans top market-cap coins)</div>
-        </div>
-      </div>
-      <div style="margin-left:auto;color:var(--muted);font-size:13px">Updated: <span id="updated">—</span></div>
-    </header><main class="main">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <div style="display:flex;gap:12px;align-items:center">
-      <div class="muted">Scanning: top market-cap coins (pages: <span id="pages">4</span> × 250)</div>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button id="refresh" class="copy-btn">Refresh</button>
-    </div>
-  </div>
+  <header>
+    <span>NOL</span>
+    <img src="logo.gif" alt="Logo" />
+  </header>  <table id="token-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Token</th>
+        <th>Price</th>
+        <th>24h %</th>
+        <th>Volume</th>
+        <th>Chain</th>
+        <th>Address</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>  <script>
+    async function fetchTokens() {
+      try {
+        const market = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h").then(r => r.json());
+        const list = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=true").then(r => r.json());
 
-  <div class="grid">
-    <div class="card" style="grid-column:span 3;padding:14px" id="market-card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:700">Market Snapshot (filtered to ETH & POL tokens)</div>
-        <div class="muted">Data: CoinGecko • scanning top market-cap coins to find chain tokens</div>
-      </div>
-      <table class="table" id="market-table">
-        <thead>
-          <tr><th>Token</th><th>Price</th><th>24h %</th><th>24h Volume</th><th>Chain</th><th>Address</th></tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+        const tbody = document.querySelector('#token-table tbody');
+        tbody.innerHTML = '';
 
-    <div class="card">
-      <div style="font-weight:700;margin-bottom:8px">Top 5 Gainers</div>
-      <div id="gainers" style="display:flex;flex-direction:column;gap:10px"></div>
-    </div>
+        market.forEach((coin, index) => {
+          const full = list.find(x => x.id === coin.id);
+          const ethAddr = full?.platforms?.ethereum || null;
+          const polAddr = full?.platforms?.polygon_pos || full?.platforms?."polygon" || null;
 
-    <div class="card">
-      <div style="font-weight:700;margin-bottom:8px">Top 5 Losers</div>
-      <div id="losers" style="display:flex;flex-direction:column;gap:10px"></div>
-    </div>
+          let chain = "-";
+          let addr = "-";
+          if (ethAddr) { chain = "ETH"; addr = ethAddr; }
+          if (polAddr) { chain = "POL"; addr = polAddr; }
 
-    <div class="card">
-      <div style="font-weight:700;margin-bottom:8px">Top 5 Movers (abs %)</div>
-      <div id="movers" style="display:flex;flex-direction:column;gap:10px"></div>
-    </div>
-
-    <div class="card" style="grid-column:span 3">
-      <div style="font-weight:700">Notes & Controls</div>
-      <div class="muted" style="margin-top:8px">This UI scans the top market-cap pages from CoinGecko then filters tokens that have a contract address on Ethereum or Polygon. This is efficient and avoids scanning every single token on the platform (full-scan would require many more requests / backend). Use the refresh button to re-scan.</div>
-    </div>
-
-  </div>
-</main>
-
-<aside class="small-card" style="display:flex;flex-direction:column;gap:12px">
-  <div style="font-weight:700">Quick Stats</div>
-  <div class="muted">Scan pages: <span id="stat-pages">4</span> • Results limit: top 5 each category</div>
-  <div style="font-weight:700">About</div>
-  <div class="muted">We use CoinGecko endpoints: coins/list (include_platform) to obtain contract addresses, then /coins/markets to get pricing & 24h% for top market-cap coins, then filter by platform. This lets us show chain badges and a copy-address button for each token.</div>
-</aside>
-
-  </div>  <script>
-    const API = 'https://api.coingecko.com/api/v3';
-    const PAGES = 4; // pages × 250 = scanned coins (adjustable)
-    const PER_PAGE = 250;
-    document.getElementById('pages').textContent = PAGES;
-    document.getElementById('stat-pages').textContent = PAGES;
-
-    function fmtMoney(n){if(n==null) return '—'; return '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:6})}
-    function fmtVol(n){if(n==null) return '—'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; return '$'+Number(n).toLocaleString()}
-    function fmtPerc(n){if(n==null) return '—'; return (n>0?'+':'')+Number(n).toFixed(2)+'%'}
-
-    async function fetchJSON(url){
-      const res = await fetch(url);
-      if(!res.ok) throw new Error('HTTP '+res.status);
-      return await res.json();
-    }
-
-    // 1) fetch coins list with platforms (single request)
-    async function getPlatformsMap(){
-      const url = `${API}/coins/list?include_platform=true`;
-      const list = await fetchJSON(url);
-      // map id -> platforms object
-      const map = {};
-      for(const item of list){
-        map[item.id] = item.platforms || {};
-      }
-      return map;
-    }
-
-    // 2) fetch top market-cap pages (combined)
-    async function fetchTopMarkets(pages = PAGES){
-      const calls = [];
-      for(let p=1;p<=pages;p++){
-        const url = `${API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${PER_PAGE}&page=${p}&sparkline=false&price_change_percentage=24h`;
-        calls.push(fetchJSON(url));
-      }
-      const results = await Promise.all(calls);
-      return results.flat();
-    }
-
-    // chain detection helpers
-    function detectChain(platforms){
-      // `platforms` is an object mapping platform name -> contract address (string or '')
-      // Look for ethereum platform key or values that contain 'polygon' or 'matic'
-      const keys = Object.keys(platforms||{});
-      for(const k of keys){
-        if(!platforms[k]) continue;
-        const low = k.toLowerCase();
-        if(low.includes('ethereum')) return {chain:'ETH', key:k, address:platforms[k]};
-        if(low.includes('polygon')||low.includes('matic')||low.includes('polygon-pos')) return {chain:'POL', key:k, address:platforms[k]};
-      }
-      // fallback: check values
-      for(const k of keys){
-        const v = (platforms[k]||'').toLowerCase();
-        if(!v) continue;
-        if(v.startsWith('0x') && (k.toLowerCase().includes('polygon')||k.toLowerCase().includes('matic'))) return {chain:'POL', key:k, address:platforms[k]};
-        if(v.startsWith('0x') && k.toLowerCase().includes('ethereum')) return {chain:'ETH', key:k, address:platforms[k]};
-      }
-      return null;
-    }
-
-    function makeTokenRow(token, chainInfo){
-      const tr = document.createElement('tr');
-      const addr = chainInfo && chainInfo.address ? chainInfo.address : '';
-      const short = addr ? addr.slice(0,6)+'...'+addr.slice(-4) : '—';
-      const chainBadge = chainInfo ? (chainInfo.chain === 'ETH' ? '<div class="chain-badge"><div class="icon eth"></div><div>ETH</div></div>' : '<div class="chain-badge"><div class="icon pol"></div><div>POL</div></div>') : '<div class="muted">—</div>';
-      tr.innerHTML = `
-        <td style="display:flex;gap:10px;align-items:center"><img src='${token.image}' style='width:28px;height:28px;border-radius:6px'/> <div><strong>${token.symbol.toUpperCase()}</strong><div class='muted' style='font-size:12px'>${token.name}</div></div></td>
-        <td>${fmtMoney(token.current_price)}</td>
-        <td class='${token.price_change_percentage_24h>=0?"change up":"change down"}'>${fmtPerc(token.price_change_percentage_24h)}</td>
-        <td>${fmtVol(token.total_volume)}</td>
-        <td>${chainBadge}</td>
-        <td>${addr ? `<button class='copy-btn' data-addr='${addr}'>Copy</button> <span style='font-size:12px;color:var(--muted);margin-left:6px'>${short}</span>` : '<span class="muted">n/a</span>'}</td>
-      `;
-      return tr;
-    }
-
-    // render lists
-    function renderList(containerId, items, platformsMap){
-      const root = document.getElementById(containerId);
-      root.innerHTML = '';
-      items.forEach(it=>{
-        const chainInfo = platformsMap[it.id] ? detectChain(platformsMap[it.id]) : null;
-        const wrap = document.createElement('div');
-        wrap.style.display='flex';wrap.style.justifyContent='space-between';wrap.style.alignItems='center';
-        wrap.innerHTML = `<div style='display:flex;gap:10px;align-items:center'><img src='${it.image}' style='width:28px;height:28px;border-radius:6px'/> <div><strong>${it.name}</strong><div class='muted' style='font-size:12px'>${it.symbol.toUpperCase()}</div></div></div><div style='text-align:right'><div style='font-weight:700'>${fmtPerc(it.price_change_percentage_24h)}</div>${chainInfo && chainInfo.address ? `<div style='font-size:12px;margin-top:6px'><button class='copy-btn' data-addr='${chainInfo.address}'>Copy</button></div>` : '<div class="muted" style="font-size:12px">no address</div>'}</div>`;
-        root.appendChild(wrap);
-      });
-    }
-
-    async function scanAndRender(){
-      try{
-        document.getElementById('updated').textContent = 'scanning...';
-        // 1. platforms map
-        const platformsMap = await getPlatformsMap();
-        // 2. market pages
-        const markets = await fetchTopMarkets(PAGES);
-        document.getElementById('updated').textContent = new Date().toLocaleString();
-
-        // filter markets to tokens which have platforms mapping where detectChain(...) returns non-null
-        const filtered = markets.map(m=>({ ...m, platforms: platformsMap[m.id] || {} })).filter(m=>detectChain(m.platforms));
-
-        // populate table
-        const tbody = document.querySelector('#market-table tbody'); tbody.innerHTML='';
-        filtered.forEach(tok=>{
-          const chainInfo = detectChain(tok.platforms);
-          const tr = makeTokenRow(tok, chainInfo);
-          tbody.appendChild(tr);
+          tbody.innerHTML += `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${coin.name} (${coin.symbol.toUpperCase()})</td>
+              <td>$${coin.current_price.toLocaleString()}</td>
+              <td style="color:${coin.price_change_percentage_24h >= 0 ? 'lime' : 'red'};">
+                ${coin.price_change_percentage_24h?.toFixed(2)}%
+              </td>
+              <td>$${coin.total_volume.toLocaleString()}</td>
+              <td>
+                <div class="chain-badge">${chain}</div>
+              </td>
+              <td>
+                ${addr !== '-' ? `<button class="copy-btn" onclick="navigator.clipboard.writeText('${addr}')">Copy</button>` : '-'}
+              </td>
+            </tr>
+          `;
         });
 
-        // compute top 5 lists
-        const sortedByPerc = [...filtered].sort((a,b)=>(b.price_change_percentage_24h||0)-(a.price_change_percentage_24h||0));
-        const gainers = sortedByPerc.slice(0,5);
-        const losers = sortedByPerc.slice(-5).reverse();
-        const movers = [...filtered].sort((a,b)=>Math.abs(b.price_change_percentage_24h||0)-Math.abs(a.price_change_percentage_24h||0)).slice(0,5);
-
-        renderList('gainers', gainers, platformsMap);
-        renderList('losers', losers, platformsMap);
-        renderList('movers', movers, platformsMap);
-
-        // wire copy buttons
-        document.querySelectorAll('.copy-btn').forEach(btn=>{
-          btn.onclick = async ()=>{
-            const a = btn.getAttribute('data-addr');
-            if(!a) return;
-            try{ await navigator.clipboard.writeText(a); btn.textContent='Copied'; setTimeout(()=>btn.textContent='Copy',900);}catch(e){ alert('Copy failed: '+e.message) }
-          };
-        });
-
-      }catch(err){
-        console.error('scan error',err);
-        document.getElementById('updated').textContent = 'error';
+      } catch (e) {
+        console.error(e);
       }
     }
 
-    document.getElementById('refresh').addEventListener('click', scanAndRender);
-    // initial
-    scanAndRender();
+    fetchTokens();
+    setInterval(fetchTokens, 30000);
   </script></body>
 </html>
