@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Groq AI Chat (Enhanced)</title>
+<title>Captain Nol AI Chat</title>
 <style>
 body { margin:0; font-family:Arial; background:#0e1320; color:#e7eeff; display:flex; justify-content:center; align-items:center; height:100vh; }
 .chat-box { background:#121a2b; border-radius:12px; width:90%; max-width:600px; display:flex; flex-direction:column; height:90vh; box-shadow:0 0 30px rgba(0,0,0,0.5); }
@@ -30,13 +30,17 @@ button { margin-left:8px; padding:10px 16px; border-radius:8px; border:none; bac
 
 <script>
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const API_KEY = "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";
+const API_KEY = "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";
 const MODEL = "llama-3.1-8b-instant";
+
+// System prompt to make Captain Nol
+const SYSTEM_PROMPT = "You are Captain Nol, a confident AI assistant who always says 'I am Captain Nol' when asked your name. Always respond in-character. You cannot access the live internet, but if you are given external data (like crypto prices), use it correctly in your answers.";
 
 const messagesEl = document.getElementById("messages");
 const inputEl = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 
+// Log messages
 function addMessage(text, from) {
     const div = document.createElement("div");
     div.className = "message " + from;
@@ -51,49 +55,77 @@ function addMessage(text, from) {
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
     // Optional: text-to-speech for bot
-    if (from === "bot" && "speechSynthesis" in window) {
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = "en-US";
+    if(from==="bot" && "speechSynthesis" in window){
+        const utter=new SpeechSynthesisUtterance(text);
+        utter.lang="en-US";
         speechSynthesis.speak(utter);
     }
 }
 
-async function sendMessage(text) {
-    if (!text.trim()) return;
-    addMessage(text, "user");
-    inputEl.value = "";
+// Fetch price from CoinGecko
+async function getCryptoPrice(symbol){
+    const idMap = {BTC:"bitcoin", ETH:"ethereum", DOGE:"dogecoin"}; // Extend as needed
+    const coinId = idMap[symbol.toUpperCase()];
+    if(!coinId) return null;
+    try{
+        const res=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`);
+        const data=await res.json();
+        return data[coinId]?.usd || null;
+    }catch(e){return null;}
+}
 
-    try {
+// Send message
+async function sendMessage(text){
+    if(!text.trim()) return;
+    addMessage(text,"user");
+    inputEl.value="";
+
+    // Detect if user asked crypto price
+    const cryptoMatch = text.match(/\b(BTC|ETH|DOGE)\b/i);
+    if(cryptoMatch){
+        const symbol=cryptoMatch[1].toUpperCase();
+        const price = await getCryptoPrice(symbol);
+        if(price !== null){
+            addMessage(`Captain Nol: The current ${symbol} price is $${price}`, "bot");
+            return;
+        } else {
+            addMessage("Captain Nol: I cannot fetch that crypto price at the moment.", "bot");
+            return;
+        }
+    }
+
+    // Normal AI response
+    try{
         const body = {
             model: MODEL,
-            messages: [{ role: "user", content: text }]
+            messages: [
+                {role:"system", content:SYSTEM_PROMPT},
+                {role:"user", content:text}
+            ]
         };
         const res = await fetch(API_URL, {
             method:"POST",
-            headers: {
+            headers:{
                 "Authorization":"Bearer "+API_KEY,
                 "Content-Type":"application/json"
             },
             body: JSON.stringify(body)
         });
-
-        if (!res.ok) {
+        if(!res.ok){
             const txt = await res.text();
-            addMessage("Error: " + txt, "bot");
+            addMessage("Error: "+txt,"bot");
             return;
         }
-
         const data = await res.json();
         const ans = data.choices?.[0]?.message?.content || "No response";
-        addMessage(ans, "bot");
-    } catch(e) {
-        addMessage("Error: "+e.message, "bot");
+        addMessage(ans,"bot");
+    }catch(e){
+        addMessage("Error: "+e.message,"bot");
     }
 }
 
-sendBtn.onclick = () => sendMessage(inputEl.value);
-inputEl.addEventListener("keydown", e => { if(e.key === "Enter") sendMessage(inputEl.value); });
-
+sendBtn.onclick = ()=>sendMessage(inputEl.value);
+inputEl.addEventListener("keydown",e=>{if(e.key==="Enter") sendMessage(inputEl.value);});
 </script>
 
 </body>
