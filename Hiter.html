@@ -1,122 +1,251 @@
-<!-- Clean 100-token dashboard (no gainers/losers/movers, no refresh button, no CoinGecko text) --><!DOCTYPE html><html lang="en">
+<!doctype html>
+
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>NOL Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d0d0d;
-      color: #fff;
-      margin: 0;
-      padding: 20px;
+    :root{
+      --bg-1: #071021; --bg-2:#071726; --card:#071322; --glass: rgba(255,255,255,0.03);
+      --muted:#9aa4b2; --accent:#7c3aed; --accent-2:#5eead4; --green:#12b76a; --red:#ff6b6b;
+      --card-radius:14px; --pad:14px; --glass-2: rgba(255,255,255,0.02);
     }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 32px;
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    header img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      padding: 10px;
-      text-align: left;
-      border-bottom: 1px solid #333;
-    }
-    th {
-      background: #111;
-    }
-    .chain-badge {
-      font-size: 10px;
-      padding: 3px 6px;
-      border-radius: 4px;
-      display: inline-block;
-      background: #222;
-      margin-top: 4px;
-    }
-    .copy-btn {
-      padding: 4px 6px;
-      font-size: 10px;
-      cursor: pointer;
-      border: none;
-      border-radius: 4px;
-      background: #444;
-      color: #fff;
-    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#e6eef6;-webkit-font-smoothing:antialiased}.container{max-width:1400px;margin:28px auto;padding:20px;display:grid;grid-template-columns:1fr 360px;gap:20px}
+
+header{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{width:44px;height:44px;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.6)}
+h1{font-size:20px;margin:0;font-weight:700}
+.sub{color:var(--muted);font-size:13px}
+
+/* Main card */
+.main{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:var(--card-radius);padding:16px;box-shadow:0 10px 40px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+
+/* table-as-cards layout */
+.table-grid{display:grid;grid-template-columns:repeat(1,1fr);gap:10px}
+.token-card{display:grid;grid-template-columns: 1fr 120px 90px 100px 90px 160px;gap:12px;align-items:center;padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 30px rgba(2,6,23,0.5);transition:transform .18s ease,box-shadow .18s ease}
+.token-card:hover{transform:translateY(-6px);box-shadow:0 18px 50px rgba(2,6,23,0.7)}
+
+.token-info{display:flex;align-items:center;gap:12px}
+.token-info img{width:40px;height:40px;border-radius:8px;flex:0 0 40px}
+.token-name{font-weight:600}
+.token-symbol{color:var(--muted);font-size:12px}
+
+.price{font-weight:700}
+.pct.up{color:var(--green)}
+.pct.down{color:var(--red)}
+.vol{color:var(--muted);font-size:13px}
+
+.chain-badge{display:inline-flex;align-items:center;gap:8px;padding:6px 8px;border-radius:999px;background:linear-gradient(90deg, rgba(255,255,255,0.01), transparent);font-size:12px}
+.chain-dot{width:10px;height:10px;border-radius:50%}
+.dot-eth{background:linear-gradient(180deg,#3c3c3f,#1e1e1f);box-shadow:0 6px 18px rgba(60,60,60,0.2)}
+.dot-pol{background:linear-gradient(180deg,#8247e5,#6b3ddf);box-shadow:0 6px 18px rgba(130,71,229,0.14)}
+
+.copy-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 10px;border-radius:8px;color:var(--muted);cursor:pointer;font-size:13px}
+
+/* sparkline canvas styling */
+.spark-wrap{width:100%;height:36px;display:flex;align-items:center}
+canvas.spark{width:100px;height:36px}
+
+/* sidebar */
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.side-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
+.side-title{font-weight:700}
+.muted{color:var(--muted)}
+
+footer{grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;margin-top:8px}
+
+/* Responsive: convert to stacked cards on mobile */
+@media (max-width:1100px){
+  .container{grid-template-columns:1fr}
+  .token-card{grid-template-columns: 1fr 120px 90px;grid-template-rows:auto auto;gap:8px}
+  .token-card .spark-wrap{grid-column:1/2}
+  .token-card .chain-area{grid-column:2/4;justify-self:end}
+  .token-card .addr-area{grid-column:1/4;justify-self:end}
+}
+@media (max-width:520px){
+  .token-card{grid-template-columns:1fr;grid-template-rows:repeat(6,auto);gap:8px;padding:10px}
+  .token-card .addr-area{justify-self:start}
+}
+
   </style>
 </head>
 <body>
-  <header>
-    <span>NOL</span>
-    <img src="logo.gif" alt="Logo" />
-  </header>  <table id="token-table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Token</th>
-        <th>Price</th>
-        <th>24h %</th>
-        <th>Volume</th>
-        <th>Chain</th>
-        <th>Address</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>  <script>
-    async function fetchTokens() {
-      try {
-        const market = await fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h").then(r => r.json());
-        const list = await fetch("https://api.coingecko.com/api/v3/coins/list?include_platform=true").then(r => r.json());
+  <div class="container">
+    <header>
+      <div class="brand">
+        <img src="logo.gif" alt="NOL"/>
+        <div>
+          <h1>NOL</h1>
+          <div class="sub">Market snapshot — Top 100 by market cap</div>
+        </div>
+      </div>
+      <div style="margin-left:auto;color:var(--muted);font-size:13px">Updated: <span id="updated">—</span></div>
+    </header><main class="main">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="font-weight:700">Tokens</div>
+    <div class="muted">Top 100 • Auto-refresh every 30s</div>
+  </div>
 
-        const tbody = document.querySelector('#token-table tbody');
-        tbody.innerHTML = '';
+  <div class="table-grid" id="table-grid"></div>
+</main>
 
-        market.forEach((coin, index) => {
-          const full = list.find(x => x.id === coin.id);
-          const ethAddr = full?.platforms?.ethereum || null;
-          const polAddr = full?.platforms?.polygon_pos || full?.platforms?."polygon" || null;
+<aside class="sidebar">
+  <div class="side-card">
+    <div class="side-title">Quick Stats</div>
+    <div class="muted" style="margin-top:8px">Scanning top 100 tokens and detecting chain by contract address.</div>
+  </div>
 
-          let chain = "-";
-          let addr = "-";
-          if (ethAddr) { chain = "ETH"; addr = ethAddr; }
-          if (polAddr) { chain = "POL"; addr = polAddr; }
+  <div class="side-card">
+    <div class="side-title">Mobile</div>
+    <div class="muted" style="margin-top:8px">Cards collapse into stacked compact views for smaller screens.</div>
+  </div>
+</aside>
 
-          tbody.innerHTML += `
-            <tr>
-              <td>${index + 1}</td>
-              <td>${coin.name} (${coin.symbol.toUpperCase()})</td>
-              <td>$${coin.current_price.toLocaleString()}</td>
-              <td style="color:${coin.price_change_percentage_24h >= 0 ? 'lime' : 'red'};">
-                ${coin.price_change_percentage_24h?.toFixed(2)}%
-              </td>
-              <td>$${coin.total_volume.toLocaleString()}</td>
-              <td>
-                <div class="chain-badge">${chain}</div>
-              </td>
-              <td>
-                ${addr !== '-' ? `<button class="copy-btn" onclick="navigator.clipboard.writeText('${addr}')">Copy</button>` : '-'}
-              </td>
-            </tr>
-          `;
+<footer></footer>
+
+  </div>  <script>
+    const API = 'https://api.coingecko.com/api/v3';
+    const PER_PAGE = 100;
+
+    function fmtMoney(n){if(n==null) return '—'; return '$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:6})}
+    function fmtVol(n){if(n==null) return '—'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; return '$'+Number(n).toLocaleString()}
+    function fmtPerc(n){if(n==null) return '—'; return (n>0?'+':'')+Number(n).toFixed(2)+'%'}
+
+    async function fetchJSON(url){
+      const res = await fetch(url);
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      return res.json();
+    }
+
+    // get platforms map for quick lookup (coins/list includes platforms)
+    async function getPlatformsMap(){
+      const url = `${API}/coins/list?include_platform=true`;
+      const list = await fetchJSON(url);
+      const map = {};
+      for(const item of list){ map[item.id] = item.platforms || {}; }
+      return map;
+    }
+
+    // draw sparkline into canvas using array of numbers
+    function drawSpark(canvas, values, positive){
+      if(!canvas || !values || !values.length) return;
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth; const h = canvas.clientHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr; ctx.scale(dpr,dpr);
+      ctx.clearRect(0,0,w,h);
+      // normalize
+      const min = Math.min(...values); const max = Math.max(...values); const range = max-min || 1;
+      ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.strokeStyle = positive ? 'rgba(92,234,212,0.95)' : 'rgba(124,58,237,0.95)';
+      ctx.beginPath();
+      for(let i=0;i<values.length;i++){
+        const x = (i/(values.length-1)) * (w-4) + 2; // padding 2px
+        const y = h - 4 - ((values[i]-min)/range) * (h-6);
+        if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+      // final point dot
+      ctx.fillStyle = positive ? 'rgba(18,183,106,0.95)' : 'rgba(255,107,107,0.95)';
+      const lastX = ( (values.length-1)/(values.length-1)) * (w-4) + 2;
+      const lastY = h - 4 - ((values[values.length-1]-min)/range) * (h-6);
+      ctx.beginPath(); ctx.arc(lastX,lastY,2.4,0,Math.PI*2); ctx.fill();
+    }
+
+    function detectChain(platforms){
+      const keys = Object.keys(platforms||{});
+      for(const k of keys){ if(!platforms[k]) continue; const low=k.toLowerCase(); if(low.includes('ethereum')) return {chain:'ETH', address:platforms[k]}; if(low.includes('polygon')||low.includes('matic')) return {chain:'POL', address:platforms[k]}; }
+      // check values
+      for(const k of keys){ const v=(platforms[k]||'').toLowerCase(); if(!v) continue; if(v.startsWith('0x') && (k.toLowerCase().includes('polygon')||k.toLowerCase().includes('matic'))) return {chain:'POL', address:platforms[k]}; if(v.startsWith('0x') && k.toLowerCase().includes('ethereum')) return {chain:'ETH', address:platforms[k]}; }
+      return null;
+    }
+
+    async function render(){
+      try{
+        document.getElementById('updated').textContent = 'loading...';
+        const [platformsMap, market] = await Promise.all([
+          getPlatformsMap(),
+          fetchJSON(`${API}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${PER_PAGE}&page=1&sparkline=true&price_change_percentage=24h`)
+        ]);
+
+        const grid = document.getElementById('table-grid'); grid.innerHTML = '';
+        const now = new Date(); document.getElementById('updated').textContent = now.toLocaleString();
+
+        for(let i=0;i<market.length;i++){
+          const coin = market[i];
+          const platforms = platformsMap[coin.id] || {};
+          const chainInfo = detectChain(platforms);
+
+          const card = document.createElement('div'); card.className = 'token-card';
+
+          // left: token info
+          const info = document.createElement('div'); info.className = 'token-info';
+          info.innerHTML = `<img src='${coin.image}' alt='logo'/> <div><div class='token-name'>${coin.name}</div><div class='token-symbol'>${coin.symbol.toUpperCase()}</div></div>`;
+
+          // sparkline
+          const sparkWrap = document.createElement('div'); sparkWrap.className='spark-wrap';
+          const canvas = document.createElement('canvas'); canvas.className='spark'; sparkWrap.appendChild(canvas);
+
+          // price
+          const priceDiv = document.createElement('div'); priceDiv.className='price'; priceDiv.textContent = fmtMoney(coin.current_price);
+
+          // pct
+          const pct = document.createElement('div'); pct.className = 'pct'; pct.textContent = fmtPerc(coin.price_change_percentage_24h); pct.classList.add((coin.price_change_percentage_24h>=0)?'up':'down');
+
+          // vol
+          const vol = document.createElement('div'); vol.className='vol'; vol.textContent = fmtVol(coin.total_volume);
+
+          // chain
+          const chainArea = document.createElement('div'); chainArea.className='chain-area';
+          if(chainInfo && chainInfo.chain){
+            chainArea.innerHTML = `<div class='chain-badge'><span class='chain-dot ${chainInfo.chain==='ETH'?'dot-eth':'dot-pol'}'></span>${chainInfo.chain}</div>`;
+          } else { chainArea.innerHTML = `<div class='muted'>-</div>` }
+
+          // address / copy
+          const addrArea = document.createElement('div'); addrArea.className='addr-area';
+          if(chainInfo && chainInfo.address){
+            const short = chainInfo.address.slice(0,6)+'...'+chainInfo.address.slice(-4);
+            addrArea.innerHTML = `<button class='copy-btn' data-addr='${chainInfo.address}'>Copy</button> <span class='muted' style='margin-left:8px;font-size:13px'>${short}</span>`;
+          } else { addrArea.innerHTML = `<div class='muted'>n/a</div>` }
+
+          // assemble into grid columns (match grid-template-columns)
+          card.appendChild(info);
+          const sparkCol = document.createElement('div'); sparkCol.appendChild(sparkWrap); card.appendChild(sparkCol);
+          card.appendChild(priceDiv);
+          card.appendChild(pct);
+          card.appendChild(vol);
+          const chainCol = document.createElement('div'); chainCol.appendChild(chainArea); chainCol.appendChild(addrArea); card.appendChild(chainCol);
+
+          grid.appendChild(card);
+
+          // draw sparkline (use coin.sparkline_in_7d.price if available)
+          let sparkData = coin.sparkline_in_7d && coin.sparkline_in_7d.price ? coin.sparkline_in_7d.price.slice(-30) : null; // last 30 points
+          if(sparkData && sparkData.length>0){
+            const positive = (coin.price_change_percentage_24h||0) >= 0;
+            drawSpark(canvas, sparkData, positive);
+          }
+        }
+
+        // wire copy buttons
+        document.querySelectorAll('.copy-btn').forEach(btn=>{
+          btn.onclick = async ()=>{
+            const a = btn.getAttribute('data-addr');
+            try{ await navigator.clipboard.writeText(a); const old = btn.textContent; btn.textContent='Copied'; setTimeout(()=>btn.textContent=old,900);}catch(e){ alert('Copy failed') }
+          };
         });
 
-      } catch (e) {
-        console.error(e);
+      }catch(err){
+        console.error(err); document.getElementById('updated').textContent = 'error';
       }
     }
 
-    fetchTokens();
-    setInterval(fetchTokens, 30000);
+    // initial render and auto refresh (but avoid when tab is hidden)
+    render();
+    setInterval(()=>{ if(document.hidden) return; render(); },30000);
+
   </script></body>
 </html>
