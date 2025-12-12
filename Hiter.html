@@ -1,149 +1,310 @@
-<!DOCTYPE html>
+<!doctype html>
+
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Worker AI Chat</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NOL — Market Dashboard</title>
+  <link rel="icon" href="logo.gif" />
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #1e1e2f;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#7c3aed; --glass: rgba(255,255,255,0.03);
+      --green:#12b76a; --red:#ff6b6b; --glass-2: rgba(255,255,255,0.02);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
     }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#071025 0%, #071726 60%);color:#e6eef6}
+    .wrap{max-width:1400px;margin:28px auto;padding:28px;display:grid;grid-template-columns: 1fr 360px;gap:20px}
+    header{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand img{width:36px;height:36px;border-radius:6px}
+    h1{font-size:20px;margin:0}
+    .subtitle{color:var(--muted);font-size:13px}/* main area */
+.main{background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);border-radius:16px;padding:18px;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--card);padding:12px;border-radius:12px;min-height:96px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+.ticker{display:flex;align-items:center;gap:10px}
+.ticker img{width:38px;height:38px;border-radius:8px}
+.price{font-weight:700;font-size:18px}
+.muted{color:var(--muted);font-size:13px}
 
-    header {
-      background: #28293d;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-    }
+.change.up{color:var(--green)}
+.change.down{color:var(--red)}
 
-    #chat-container {
-      flex: 1;
-      padding: 1rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      background: #1b1b2b;
-    }
+/* right sidebar */
+.sidebar{display:flex;flex-direction:column;gap:12px}
+.small-card{background:var(--glass);padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.02)}
 
-    .message {
-      max-width: 70%;
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      line-height: 1.4;
-      word-wrap: break-word;
-    }
+/* chain icon */
+.chain-flag{display:inline-flex;align-items:center;gap:8px;padding:8px;border-radius:999px;background:linear-gradient(90deg, rgba(255,255,255,0.02), transparent);}
+.flag{width:18px;height:18px;display:inline-grid;place-items:center;border-radius:4px}
+.eth{background:linear-gradient(180deg,#3c3c3f,#1e1e1f);}
+.pol{background:linear-gradient(180deg,#8247e5,#6b3ddf);}
 
-    .user {
-      background: #4a90e2;
-      align-self: flex-end;
-    }
+/* indicators */
+.indicator{width:10px;height:10px;border-radius:50%;box-shadow:0 0 8px rgba(0,0,0,0.6);}
+.pulse{animation:pulse 1.6s infinite}
+@keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:0.45}100%{transform:scale(1);opacity:1}}
 
-    .ai {
-      background: #3c3c5c;
-      align-self: flex-start;
-    }
+/* top sections */
+.top-list{display:flex;flex-direction:column;gap:10px}
+.top-row{display:flex;justify-content:space-between;align-items:center}
 
-    footer {
-      display: flex;
-      gap: 0.5rem;
-      padding: 0.5rem;
-      background: #28293d;
-    }
+/* highlight card */
+.highlight{display:flex;align-items:center;gap:12px}
+.spark{width:46px;height:46px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.03), transparent);display:grid;place-items:center}
 
-    input[type="text"] {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      border: none;
-      outline: none;
-      font-size: 1rem;
-    }
+footer{grid-column:1/-1;color:var(--muted);font-size:12px;text-align:center;margin-top:10px}
 
-    button {
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      border: none;
-      background: #4a90e2;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-    }
+/* responsive for 16:9 widescreen */
+@media (max-width:1200px){.wrap{grid-template-columns:1fr;}.grid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:700px){.grid{grid-template-columns:1fr}}
 
-    button:hover {
-      background: #357ABD;
-    }
+/* small animations */
+.grow{transform-origin:left center;transition:transform 0.3s ease}
+.grow:hover{transform:scale(1.03)}
+
+/* table */
+.table{width:100%;border-collapse:collapse;margin-top:10px}
+.table th{color:var(--muted);font-size:12px;text-align:left;padding:8px}
+.table td{padding:8px;border-top:1px dashed rgba(255,255,255,0.02);font-size:14px}
+
   </style>
 </head>
 <body>
-  <header>Worker AI Chat</header>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="logo.gif" alt="NOL logo"/>
+        <div>
+          <h1>NOL <small style="font-weight:600;color:var(--muted);margin-left:6px">— Market Dashboard</small></h1>
+          <div class="subtitle">ETH & POL (Polygon) — live data powered by CoinGecko</div>
+        </div>
+      </div>
+      <div style="margin-left:auto;color:var(--muted);font-size:13px">Updated: <span id="updated">—</span></div>
+    </header><main class="main">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <div style="display:flex;gap:12px;align-items:center">
+      <div style="font-size:13px;color:var(--muted)">Tracked tickers</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="chain-flag"><div class="flag eth" title="Ethereum"><svg width="12" height="12" viewBox="0 0 256 417" xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="M127.6 0L124.8 9.5v253.9l2.8 2.8 127.6-73.8z" opacity=".3"/></svg></div><div class="muted" style="font-size:12px">ETH</div></div>
+        <div class="chain-flag"><div class="flag pol" title="Polygon"><svg width="12" height="12" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg"><circle cx="128" cy="128" r="120" fill="white" opacity="0.06"/></svg></div><div class="muted" style="font-size:12px">POL</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="refresh" style="background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer">Refresh</button>
+    </div>
+  </div>
 
-  <div id="chat-container"></div>
+  <div class="grid">
+    <!-- ETH card -->
+    <div class="card grow" id="card-eth">
+      <div class="ticker">
+        <img src="https://assets.coingecko.com/coins/images/279/large/ethereum.png" alt="eth"/>
+        <div>
+          <div style="display:flex;gap:8px;align-items:center"><div style="font-size:14px">Ethereum (ETH)</div><div class="muted">Mainnet</div></div>
+          <div class="price" id="eth-price">—</div>
+          <div class="muted">24h: <span id="eth-change">—</span> • Vol: <span id="eth-vol">—</span></div>
+        </div>
+      </div>
+      <div style="position:absolute;right:12px;bottom:12px;display:flex;gap:8px;align-items:center">
+        <div class="indicator" id="eth-indicator" style="background:var(--green);"/>
+        <div class="muted" style="font-size:12px">Top mover</div>
+      </div>
+    </div>
 
-  <footer>
-    <input type="text" id="user-input" placeholder="Type your message..." />
-    <button id="send-btn">Send</button>
-  </footer>
+    <!-- POL card -->
+    <div class="card grow" id="card-pol">
+      <div class="ticker">
+        <img src="https://assets.coingecko.com/coins/images/8006/large/polygon.png" alt="polygon"/>
+        <div>
+          <div style="display:flex;gap:8px;align-items:center"><div style="font-size:14px">Polygon (POL)</div><div class="muted">Chain</div></div>
+          <div class="price" id="pol-price">—</div>
+          <div class="muted">24h: <span id="pol-change">—</span> • Vol: <span id="pol-vol">—</span></div>
+        </div>
+      </div>
+      <div style="position:absolute;right:12px;bottom:12px;display:flex;gap:8px;align-items:center">
+        <div class="indicator" id="pol-indicator" style="background:var(--red);"/>
+        <div class="muted" style="font-size:12px">Top loser</div>
+      </div>
+    </div>
 
-  <script>
-    const chatContainer = document.getElementById('chat-container');
-    const userInput = document.getElementById('user-input');
-    const sendBtn = document.getElementById('send-btn');
+    <!-- Summary chart / table placeholder -->
+    <div class="card" style="grid-column:span 3;padding:14px" id="market-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Market Snapshot</div>
+        <div class="muted">Prices in USD • Source: CoinGecko</div>
+      </div>
+      <table class="table" id="market-table">
+        <thead>
+          <tr><th>Symbol</th><th>Price</th><th>24h %</th><th>24h Volume</th><th>Chain</th></tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
 
-    // Store last 5 messages for context
-    let sessionMessages = [];
+    <!-- Top sections -->
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">Top Gainer</div>
+      <div class="top-list" id="gainer-list">
+        <div class="top-row"><div><strong id="gainer-name">—</strong><div class="muted" id="gainer-sub">—</div></div><div><span id="gainer-val">—</span></div></div>
+      </div>
+    </div>
 
-    function addMessage(text, sender) {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = 'message ' + sender;
-      msgDiv.textContent = text;
-      chatContainer.appendChild(msgDiv);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">Top Loser</div>
+      <div class="top-list" id="loser-list">
+        <div class="top-row"><div><strong id="loser-name">—</strong><div class="muted" id="loser-sub">—</div></div><div><span id="loser-val">—</span></div></div>
+      </div>
+    </div>
 
-    async function sendMessage() {
-      const message = userInput.value.trim();
-      if (!message) return;
+    <div class="card">
+      <div style="font-weight:700;margin-bottom:8px">Top Mover</div>
+      <div class="top-list" id="mover-list">
+        <div class="top-row"><div><strong id="mover-name">—</strong><div class="muted" id="mover-sub">—</div></div><div><span id="mover-val">—</span></div></div>
+      </div>
+    </div>
 
-      addMessage(message, 'user');
-      sessionMessages.push({ role: 'user', content: message });
-      if (sessionMessages.length > 5) sessionMessages.shift();
-      userInput.value = '';
+    <div class="card" style="grid-column:span 3">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700">Highlights</div>
+        <div class="muted">Auto-updates every 30s • fallback to cached on failure</div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <div class="small-card" style="flex:1;min-width:220px">
+          <div class="highlight"><div class="spark">⛓️</div><div><div style="font-weight:700">Network strength</div><div class="muted">ETH shows higher volume vs Polygon</div></div></div>
+        </div>
+        <div class="small-card" style="flex:1;min-width:220px">
+          <div class="highlight"><div class="spark">⚡</div><div><div style="font-weight:700">Volatility</div><div class="muted">Polygon price moving faster 24h</div></div></div>
+        </div>
+        <div class="small-card" style="flex:1;min-width:220px">
+          <div class="highlight"><div class="spark">📈</div><div><div style="font-weight:700">Gainers/Lossers</div><div class="muted">Easy view of top gainer / loser</div></div></div>
+        </div>
+      </div>
+    </div>
 
-      // Send session context to Worker
-      try {
-        const response = await fetch('https://nolui.nolspace.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            prompt: sessionMessages.map(m => `${m.role === 'user' ? 'User' : 'AI'}: ${m.content}`).join('\n')
-          })
-        });
+  </div>
+</main>
 
-        const data = await response.json();
-        const aiText = data.response || "No response from AI.";
-        addMessage(aiText, 'ai');
+<aside class="sidebar">
+  <div class="small-card">
+    <div style="font-weight:700">Quick Stats</div>
+    <div class="muted" style="margin-top:8px">ETH market cap rank: <span id="eth-rank">—</span></div>
+    <div class="muted">Polygon market cap rank: <span id="pol-rank">—</span></div>
+  </div>
+  <div class="small-card">
+    <div style="font-weight:700">Chain Indicators</div>
+    <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+      <div class="chain-flag"><div class="flag eth"></div><div class="muted">ETH</div></div>
+      <div class="chain-flag"><div class="flag pol"></div><div class="muted">POL</div></div>
+    </div>
+  </div>
+  <div class="small-card">
+    <div style="font-weight:700">About</div>
+    <div class="muted" style="margin-top:8px">Built using CoinGecko public API. For precise metric names & rate limits see API docs (links in footer).</div>
+  </div>
+</aside>
 
-        sessionMessages.push({ role: 'ai', content: aiText });
-        if (sessionMessages.length > 5) sessionMessages.shift();
-      } catch (err) {
-        console.error(err);
-        addMessage("Error contacting AI.", 'ai');
+<footer>
+  Data provided by CoinGecko. • <a href="https://www.coingecko.com/en/api" target="_blank" style="color:inherit">CoinGecko API</a>
+</footer>
+
+  </div>  <script>
+    // Configuration
+    const API_BASE = 'https://api.coingecko.com/api/v3';
+    const IDS = ['ethereum','polygon']; // CoinGecko IDs
+    const VS = 'usd';
+    const UPDATE_INTERVAL = 30000; // ms
+
+    const selectors = {
+      eth: {price:'#eth-price', change:'#eth-change', vol:'#eth-vol', indicator:'#eth-indicator', rank:'#eth-rank'},
+      pol: {price:'#pol-price', change:'#pol-change', vol:'#pol-vol', indicator:'#pol-indicator', rank:'#pol-rank'}
+    };
+
+    async function fetchMarkets(){
+      const url = `${API_BASE}/coins/markets?vs_currency=${VS}&ids=${IDS.join(',')}&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h`;
+      try{
+        const res = await fetch(url);
+        if(!res.ok) throw new Error('API error '+res.status);
+        const data = await res.json();
+        return data;
+      }catch(err){
+        console.error('Fetch error',err);
+        return null;
       }
     }
 
-    sendBtn.addEventListener('click', sendMessage);
-    userInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
-  </script>
-</body>
+    function fmtMoney(n){if(n===null||n===undefined) return '—'; return '$' + Number(n).toLocaleString(undefined,{maximumFractionDigits:6});}
+    function fmtVol(n){if(n===null||n===undefined) return '—'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; return '$'+Number(n).toLocaleString();}
+    function fmtPerc(n){if(n===null||n===undefined) return '—'; return (n>0?'+':'')+n.toFixed(2)+'%';}
+
+    function updateUI(list){
+      if(!list || !list.length) return;
+      const now = new Date(); document.getElementById('updated').textContent = now.toLocaleString();
+      // Map by id
+      const map = {};
+      list.forEach(it=>{map[it.id]=it});
+
+      // ETH
+      const eth = map['ethereum'];
+      const pol = map['polygon'];
+      if(eth){
+        document.querySelector(selectors.eth.price).textContent = fmtMoney(eth.current_price);
+        document.querySelector(selectors.eth.change).textContent = fmtPerc(eth.price_change_percentage_24h);
+        document.querySelector(selectors.eth.vol).textContent = fmtVol(eth.total_volume);
+        document.querySelector(selectors.eth.rank).textContent = eth.market_cap_rank || '—';
+        document.querySelector(selectors.eth.indicator).style.background = eth.price_change_percentage_24h>=0? 'var(--green)':'var(--red)';
+      }
+      if(pol){
+        document.querySelector(selectors.pol.price).textContent = fmtMoney(pol.current_price);
+        document.querySelector(selectors.pol.change).textContent = fmtPerc(pol.price_change_percentage_24h);
+        document.querySelector(selectors.pol.vol).textContent = fmtVol(pol.total_volume);
+        document.querySelector(selectors.pol.rank).textContent = pol.market_cap_rank || '—';
+        document.querySelector(selectors.pol.indicator).style.background = pol.price_change_percentage_24h>=0? 'var(--green)':'var(--red)';
+      }
+
+      // Fill market table
+      const tbody = document.querySelector('#market-table tbody'); tbody.innerHTML='';
+      list.forEach(it=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td style="display:flex;gap:8px;align-items:center"><img src='${it.image}' style='width:20px;height:20px;border-radius:4px'/> <strong>${it.symbol.toUpperCase()}</strong><div class='muted' style='margin-left:6px;font-size:12px'>${it.name}</div></td><td>${fmtMoney(it.current_price)}</td><td class='${it.price_change_percentage_24h>=0?"change up":"change down"}'>${fmtPerc(it.price_change_percentage_24h)}</td><td>${fmtVol(it.total_volume)}</td><td>${it.id==='ethereum'? 'ETH':'POL'}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      // Compute top gainer / loser / mover based on 24h% and abs change
+      let sortedByPerc = [...list].sort((a,b)=> (b.price_change_percentage_24h||0)-(a.price_change_percentage_24h||0));
+      let sortedByAbs = [...list].sort((a,b)=> Math.abs(b.price_change_percentage_24h||0)-Math.abs(a.price_change_percentage_24h||0));
+      const g = sortedByPerc[0]; const l = sortedByPerc[sortedByPerc.length-1]; const m = sortedByAbs[0];
+      if(g){ document.getElementById('gainer-name').textContent = g.name; document.getElementById('gainer-sub').textContent = g.symbol.toUpperCase(); document.getElementById('gainer-val').textContent = fmtPerc(g.price_change_percentage_24h); }
+      if(l){ document.getElementById('loser-name').textContent = l.name; document.getElementById('loser-sub').textContent = l.symbol.toUpperCase(); document.getElementById('loser-val').textContent = fmtPerc(l.price_change_percentage_24h); }
+      if(m){ document.getElementById('mover-name').textContent = m.name; document.getElementById('mover-sub').textContent = m.symbol.toUpperCase(); document.getElementById('mover-val').textContent = fmtPerc(m.price_change_percentage_24h); }
+
+      // small highlight text (simple heuristics)
+      // change highlights text depending on which chain has larger volume
+      if(eth && pol){
+        const highlightText = eth.total_volume > pol.total_volume ? 'ETH shows higher 24h trading volume' : 'Polygon shows higher 24h trading volume';
+        document.querySelectorAll('.small-card .muted')[0].textContent = highlightText;
+      }
+    }
+
+    // fallback cached data (localStorage)
+    async function loadAndUpdate(){
+      const data = await fetchMarkets();
+      if(data){
+        updateUI(data);
+        try{ localStorage.setItem('cg_snapshot', JSON.stringify({ts:Date.now(),data})); }catch(e){}
+      } else {
+        // fallback to cache
+        try{
+          const raw = localStorage.getItem('cg_snapshot');
+          if(raw){ const obj = JSON.parse(raw); updateUI(obj.data); document.getElementById('updated').textContent += ' (cached)'; }
+        }catch(e){ console.warn('no cache available') }
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', loadAndUpdate);
+    loadAndUpdate();
+    setInterval(loadAndUpdate, UPDATE_INTERVAL);
+  </script></body>
 </html>
