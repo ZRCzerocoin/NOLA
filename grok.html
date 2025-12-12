@@ -2,149 +2,78 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Groq Auto Bot</title>
+<title>Groq Chat Bot</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-    body { background:#0e1320; color:#e7eeff; font-family:Arial; display:flex;
-           justify-content:center; align-items:center; height:100vh; margin:0; }
-    .box { background:#121a2b; padding:20px; border-radius:12px; width:90%; max-width:600px;
-           box-shadow:0 0 20px rgba(0,0,0,0.4);}
-    button { padding:10px 16px; background:#3b82f6; color:white; border:0;
-             border-radius:8px; cursor:pointer; }
-    button.stop { background:#ef4444; }
-    textarea { width:100%; height:100px; background:#0b1120; color:#cfe0ff;
-               border:1px solid #1f2b40; border-radius:8px; padding:10px; }
-    #log { margin-top:12px; background:#0b1120; height:160px; overflow:auto;
-           padding:10px; border-radius:8px; font-size:13px; }
+body { background:#0e1320; color:#e7eeff; font-family:Arial; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+.chat-container { background:#121a2b; padding:20px; border-radius:12px; width:90%; max-width:600px; box-shadow:0 0 20px rgba(0,0,0,0.4); display:flex; flex-direction:column; }
+.messages { flex:1; overflow-y:auto; border:1px solid #1f2b40; border-radius:8px; padding:10px; margin-bottom:10px; background:#0b1120; }
+.message { margin-bottom:10px; padding:8px 12px; border-radius:12px; max-width:80%; word-wrap:break-word; }
+.user { background:#3b82f6; align-self:flex-end; color:white; }
+.bot { background:#1f2937; align-self:flex-start; color:#cfe0ff; }
+input { border-radius:8px; border:1px solid #1f2b40; padding:10px; background:#0b1120; color:#cfe0ff; flex:1; }
+button { margin-left:8px; padding:10px 16px; border-radius:8px; border:none; background:#3b82f6; color:white; cursor:pointer; }
+.input-container { display:flex; }
 </style>
 </head>
 <body>
 
-<div class="box">
-
-<h2>Groq Auto-Asking Bot</h2>
-
-<p>Asks one question every 7 minutes and shows popup answers.</p>
-
-<label>Questions (one per line):</label>
-<textarea id="questions">
-Tell me something interesting.
-Give me a fact.
-Tell me something new.
-</textarea>
-
-<div style="margin-top:10px;">
-    <button id="startBtn">Start</button>
-    <button id="stopBtn" class="stop" disabled>Stop</button>
-</div>
-
-<div id="log"></div>
-
+<div class="chat-container">
+    <div class="messages" id="messages"></div>
+    <div class="input-container">
+        <input type="text" id="userInput" placeholder="Type your message...">
+        <button id="sendBtn">Send</button>
+    </div>
 </div>
 
 <script>
-// ---- CONFIG ----
 const API_URL = "https://api.groq.com/openai/v1/chat/completions";
-const API_KEY = "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";  // ← your key goes here
+const API_KEY = "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";
 const MODEL = "llama-3.1-8b-instant";
 
-let timer = null;
-let index = 0;
+const messagesEl = document.getElementById("messages");
+const inputEl = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
 
-// Log helper
-function log(msg) {
-    const el = document.getElementById("log");
-    const t = new Date().toLocaleTimeString();
-    el.innerHTML = `[${t}] ${msg}<br>` + el.innerHTML;
+function addMessage(text, from) {
+    const div = document.createElement("div");
+    div.className = "message " + from;
+    div.innerText = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// Show popup
-function popup(msg) {
+async function sendMessage(text) {
+    if (!text.trim()) return;
+    addMessage(text, "user");
+    inputEl.value = "";
     try {
-        if (Notification.permission === "granted") {
-            new Notification("Bot Answer", { body: msg });
-        } else {
-            alert("Bot Answer:\n\n" + msg);
+        const body = { model: MODEL, messages: [{ role: "user", content: text }] };
+        const res = await fetch(API_URL, {
+            method:"POST",
+            headers: {
+                "Authorization":"Bearer "+API_KEY,
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) {
+            const txt = await res.text();
+            addMessage("Error: " + txt, "bot");
+            return;
         }
-    } catch {
-        alert("Bot Answer:\n\n" + msg);
+        const data = await res.json();
+        const ans = data.choices?.[0]?.message?.content || "No response";
+        addMessage(ans, "bot");
+    } catch(e) {
+        addMessage("Error: "+e.message, "bot");
     }
 }
 
-// API call
-async function ask(question) {
-    log("Asking: " + question);
+sendBtn.onclick = () => sendMessage(inputEl.value);
+inputEl.addEventListener("keydown", e => { if(e.key === "Enter") sendMessage(inputEl.value); });
 
-    const body = {
-        model: MODEL,
-        messages: [
-            { role: "user", content: question }
-        ]
-    };
-
-    const r = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-            "Authorization": "Bearer " + API_KEY,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body)
-    });
-
-    if (!r.ok) {
-        const txt = await r.text();
-        log("Error: " + txt);
-        popup("Error: " + txt);
-        return;
-    }
-
-    const data = await r.json();
-    const ans = data.choices?.[0]?.message?.content || "No answer";
-
-    log("Answer: " + ans);
-    popup(ans);
-}
-
-// Start loop
-function startBot() {
-    Notification.requestPermission();
-
-    const lines = document.getElementById("questions").value
-        .split("\n")
-        .map(x => x.trim())
-        .filter(x => x);
-
-    if (lines.length === 0) {
-        alert("No questions found.");
-        return;
-    }
-
-    document.getElementById("startBtn").disabled = true;
-    document.getElementById("stopBtn").disabled = false;
-
-    // Ask immediately
-    ask(lines[index % lines.length]);
-    index++;
-
-    // Then ask every 7 minutes
-    timer = setInterval(() => {
-        ask(lines[index % lines.length]);
-        index++;
-    }, 420000);
-}
-
-// Stop loop
-function stopBot() {
-    clearInterval(timer);
-    timer = null;
-    document.getElementById("startBtn").disabled = false;
-    document.getElementById("stopBtn").disabled = true;
-    log("Bot stopped.");
-}
-
-document.getElementById("startBtn").onclick = startBot;
-document.getElementById("stopBtn").onclick = stopBot;
 </script>
-
 </body>
 </html>
+
