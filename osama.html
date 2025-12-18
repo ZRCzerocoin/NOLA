@@ -1,0 +1,302 @@
+<!DOCTYPE html><html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Osama Study in Egypt | الدراسة في مصر</title>  <!-- Google Font -->  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">  <style>
+    :root {
+      --gold: #d4af37;
+      --dark: #0b0f1a;
+      --dark-soft: #12182a;
+      --white: #ffffff;
+      --glass: rgba(255,255,255,0.08);
+      --border: rgba(255,255,255,0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1a2240, #05070f 70%);
+      color: var(--white);
+      overflow-x: hidden;
+    }
+
+    /* ===== Animated Background ===== */
+    .bg-orbs span {
+      position: fixed;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(212,175,55,0.25), transparent 70%);
+      filter: blur(60px);
+      animation: float 18s infinite ease-in-out;
+      z-index: 0;
+    }
+
+    .bg-orbs span:nth-child(1) { top: 10%; right: 10%; animation-delay: 0s; }
+    .bg-orbs span:nth-child(2) { top: 60%; right: 70%; animation-delay: 4s; }
+    .bg-orbs span:nth-child(3) { top: 80%; right: 20%; animation-delay: 8s; }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-60px); }
+    }
+
+    /* ===== Header ===== */
+    header {
+      position: relative;
+      z-index: 2;
+      padding: 40px 8%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold), #fff2b0);
+      display: grid;
+      place-items: center;
+      color: #000;
+      font-weight: 900;
+      font-size: 22px;
+      box-shadow: 0 0 25px rgba(212,175,55,0.6);
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+      position: relative;
+      z-index: 2;
+      padding: 80px 8% 120px;
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 60px;
+      align-items: center;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      line-height: 1.3;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #fff, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      font-size: 18px;
+      color: #d7d7d7;
+      margin-bottom: 30px;
+      max-width: 520px;
+    }
+
+    .cta {
+      display: inline-block;
+      padding: 14px 36px;
+      border-radius: 40px;
+      background: linear-gradient(135deg, var(--gold), #fff2b0);
+      color: #000;
+      font-weight: 800;
+      text-decoration: none;
+      box-shadow: 0 10px 30px rgba(212,175,55,0.5);
+      transition: transform .3s;
+    }
+
+    .cta:hover { transform: translateY(-4px); }
+
+    /* ===== Visual Card ===== */
+    .visual {
+      background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.02));
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      animation: glow 6s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 30px rgba(212,175,55,0.2); }
+      to { box-shadow: 0 0 60px rgba(212,175,55,0.5); }
+    }
+
+    .visual ul {
+      list-style: none;
+      display: grid;
+      gap: 16px;
+    }
+
+    .visual li::before {
+      content: '✦';
+      color: var(--gold);
+      margin-left: 10px;
+    }
+
+    /* ===== Form Section ===== */
+    section.form {
+      position: relative;
+      z-index: 2;
+      padding: 100px 8%;
+      background: linear-gradient(180deg, transparent, #05070f 60%);
+    }
+
+    .form-box {
+      max-width: 900px;
+      margin: auto;
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 50px;
+      backdrop-filter: blur(18px);
+    }
+
+    .form-box h2 {
+      text-align: center;
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .form-box p {
+      text-align: center;
+      color: #ccc;
+      margin-bottom: 40px;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    form input, form select {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,0.4);
+      color: var(--white);
+      font-size: 15px;
+    }
+
+    form input::placeholder { color: #aaa; }
+
+    .full { grid-column: span 2; }
+
+    button {
+      grid-column: span 2;
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 40px;
+      border: none;
+      background: linear-gradient(135deg, var(--gold), #fff2b0);
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    footer {
+      text-align: center;
+      padding: 40px 0 60px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      form { grid-template-columns: 1fr; }
+      .full, button { grid-column: span 1; }
+    }
+  </style></head>
+<body>  <div class="bg-orbs">
+    <span></span><span></span><span></span>
+  </div>  <header>
+    <div class="logo">
+      <div class="logo-icon">OE</div>
+      <div class="logo-text">Osama Study in Egypt</div>
+    </div>
+  </header>  <section class="hero">
+    <div>
+      <h1>ابدأ رحلتك الجامعية في مصر بثقة</h1>
+      <p>
+        نحن نساعد الطلاب العرب على التقديم في أفضل الجامعات المصرية الحكومية والخاصة،
+        مع متابعة كاملة من أول خطوة حتى القبول النهائي.
+      </p>
+      <a href="#apply" class="cta">قدّم طلبك الآن</a>
+    </div><div class="visual">
+  <ul>
+    <li>جامعات حكومية وخاصة معتمدة</li>
+    <li>تخصصات طبية، هندسية، أدبية وعلمية</li>
+    <li>متابعة ملف الطالب خطوة بخطوة</li>
+    <li>إرشاد كامل للطلاب العرب والدوليين</li>
+  </ul>
+</div>
+
+  </section>  <section class="form" id="apply">
+    <div class="form-box">
+      <h2>نموذج التقديم المبدئي</h2>
+      <p>يرجى إدخال بياناتك بدقة ليتم التواصل معك</p><form>
+    <input type="text" placeholder="الاسم الكامل" required>
+    <input type="number" placeholder="العمر" required>
+
+    <input type="text" placeholder="الجنسية">
+    <input type="text" placeholder="الدولة الحالية">
+
+    <input type="text" placeholder="المدرسة / الثانوية">
+    <select>
+      <option>المؤهل الدراسي</option>
+      <option>ثانوية عامة</option>
+      <option>ثانوية علمي</option>
+      <option>ثانوية أدبي</option>
+      <option>بكالوريوس</option>
+    </select>
+
+    <select>
+      <option>الدرجة أو المعدل</option>
+      <option>ممتاز</option>
+      <option>جيد جدًا</option>
+      <option>جيد</option>
+      <option>مقبول</option>
+    </select>
+    <input type="text" placeholder="التخصص المطلوب">
+
+    <input type="email" placeholder="البريد الإلكتروني" class="full" required>
+    <input type="tel" placeholder="رقم الهاتف (واتساب)" class="full" required>
+
+    <button type="submit">إرسال الطلب</button>
+  </form>
+</div>
+
+  </section>  <footer>
+    © 2025 Osama Study in Egypt — جميع الحقوق محفوظة
+  </footer></body>
+</html>  <div class="panel" id="top-gainers-section">
+    <div class="list-title">Top Gainers (24h) – ETH / POL</div>
+    <div class="list" id="gainers"> <div class="loader"></div> </div>
+  </div>
+
+  <div class="panel" id="top-losers-section">
+    <div class="list-title">Top Losers (24h) – ETH / POL</div>
+    <div class="list" id="losers"> <div class="loader"></div> </div>
+  </div>
+</div>
+
+<script>
+// (frontend script remains here)
+</script>
+</body>
