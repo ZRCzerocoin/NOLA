@@ -133,6 +133,13 @@
 
     @keyframes glow {
       from { box-shadow: 0 0 30px rgba(212,175,55,0.2); }
+      to { box-shadow: 0 0 70px rgba(212,175,55,0.6); }
+    }
+
+    @keyframes slideUp {
+      from { opacity:0; transform: translateY(60px); }
+      to { opacity:1; transform: translateY(0); }
+    }
       to { box-shadow: 0 0 60px rgba(212,175,55,0.5); }
     }
 
@@ -282,21 +289,32 @@
   </form>
 </div>
 
+  </section><section class="form" id="payment">
+<div class="form-box" style="animation: slideUp 1.2s ease both">
+  <h2 style="background:linear-gradient(90deg,#fff,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent">رسوم فتح الملف والتقديم</h2>
+  <p>يرجى إتمام عملية الدفع ثم رفع صورة الإيصال لإكمال الطلب</p>
+
+  <div class="visual" style="margin-bottom:40px;animation: glow 5s infinite alternate">
+    <ul>
+      <li><strong>المبلغ المطلوب:</strong> <span style="color:var(--gold);font-weight:900">2,000,000 جنيه سوداني</span></li>
+      <li><strong>طريقة الدفع:</strong> تطبيق بنكك</li>
+      <li><strong>رقم الحساب:</strong> <span style="color:var(--gold);font-weight:900;font-size:18px">334455</span></li>
+      <li>الرسوم غير قابلة للاسترجاع بعد فتح الملف</li>
+      <li>يجب أن تكون صورة الإيصال واضحة وكاملة</li>
+      <li>سيتم التواصل معك خلال 24 ساعة بعد التأكيد</li>
+    </ul>
+  </div>
+
+  <form>
+    <input type="text" placeholder="الاسم الكامل كما في الإيصال" class="full" required>
+    <input type="tel" placeholder="رقم الهاتف (واتساب)" class="full" required>
+    <label class="full" style="color:#ccc;font-size:14px">تحميل صورة الإيصال</label>
+    <input type="file" class="full" accept="image/*" required>
+    <button type="submit" style="box-shadow:0 15px 40px rgba(212,175,55,.6)">تأكيد الدفع وإرسال الإيصال</button>
+  </form>
+</div>
+
   </section>  <footer>
     © 2025 Osama Study in Egypt — جميع الحقوق محفوظة
   </footer></body>
-</html>  <div class="panel" id="top-gainers-section">
-    <div class="list-title">Top Gainers (24h) – ETH / POL</div>
-    <div class="list" id="gainers"> <div class="loader"></div> </div>
-  </div>
-
-  <div class="panel" id="top-losers-section">
-    <div class="list-title">Top Losers (24h) – ETH / POL</div>
-    <div class="list" id="losers"> <div class="loader"></div> </div>
-  </div>
-</div>
-
-<script>
-// (frontend script remains here)
-</script>
-</body>
+</html>
